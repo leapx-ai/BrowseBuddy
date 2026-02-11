@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>权限详解 - BrowseBuddy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f7fa;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin: 35px 0 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3 {
+            color: #555;
+            margin: 25px 0 10px;
+            font-size: 1.2em;
+        }
+        
+        .permission-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+        
+        .permission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .permission-tag {
+            background: #667eea;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .required-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .optional-badge {
+            background: #6c757d;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            color: #666;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px 20px;
+            }
+            
+            .permission-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← 返回首页</a>
+            <a href="permissions_en.html">English Version</a>
+        </div>
+        
+        <h1>🔑 权限详解</h1>
+        <p class="subtitle">详细说明 BrowseBuddy 每个权限的用途、使用方式和必要性</p>
+        
+        <div class="highlight">
+            <strong>最小权限原则：</strong>我们只请求功能必需的最少权限。每个权限都有明确的单一用途，不会用于其他目的。
+        </div>
+        
+        <h2>必需权限</h2>
+        <p>以下权限是 BrowseBuddy 核心功能所必需的，缺一不可：</p>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">history</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>读取、搜索和删除浏览器历史记录。这是 BrowseBuddy 的核心功能所需。</p>
+            
+            <h3>使用场景</h3>
+            <ul>
+                <li>显示历史记录列表供用户查看和管理</li>
+                <li>按日期、域名、关键词搜索历史记录</li>
+                <li>删除用户选择的特定历史条目</li>
+                <li>黑名单匹配后自动删除敏感网站历史</li>
+            </ul>
+            
+            <h3>代码示例</h3>
+            <div class="code-block">// 读取历史记录
+chrome.history.search({text: '', maxResults: 100})
+
+// 删除特定URL
+chrome.history.deleteUrl({url: 'https://example.com'})
+
+// 删除日期范围
+chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now()})</div>
+            
+            <div class="warning">
+                <strong>注意：</strong>此权限允许访问完整的浏览历史。我们仅将数据用于显示给用户，不会上传或分享。
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">storage</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>本地存储插件配置、黑名单数据和用户偏好设置。</p>
+            
+            <h3>存储内容</h3>
+            <table>
+                <tr>
+                    <th>数据类型</th>
+                    <th>用途</th>
+                    <th>存储位置</th>
+                </tr>
+                <tr>
+                    <td>用户设置</td>
+                    <td>语言、主题等偏好</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>黑名单</td>
+                    <td>用户添加的隐私保护域名</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>缓存统计</td>
+                    <td>历史记录统计缓存（可重建）</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+            </table>
+            
+            <div class="highlight">
+                <strong>数据隔离：</strong>使用 chrome.storage.local 确保数据仅保存在本地，不会自动同步到 Google 账户。
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">tabs</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>获取当前标签页信息，用于"添加当前页面到黑名单"快捷功能。</p>
+            
+            <h3>使用场景</h3>
+            <ul>
+                <li>获取当前活动标签页的 URL</li>
+                <li>提取主域名显示在"添加当前页面"按钮上</li>
+                <li>检查当前页面是否已在黑名单中</li>
+            </ul>
+            
+            <h3>代码示例</h3>
+            <div class="code-block">// 获取当前活动标签页
+const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+const currentUrl = tabs[0]?.url;
+
+// 提取主域名
+currentUrl && extractMainDomain(currentUrl);</div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">activeTab</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>获取当前活动标签页的临时权限，配合 tabs 权限使用，无需请求所有网站的主机权限即可获取当前页面信息。</p>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">&lt;all_urls&gt;</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>监控所有网站 URL 变更，实现黑名单实时保护功能。</p>
+            
+            <h3>工作原理</h3>
+            <div class="code-block">chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    // 检查 URL 是否匹配黑名单
+    if (isUrlBlacklisted(tab.url, blacklist)) {
+      // 立即从历史记录中删除
+      chrome.history.deleteUrl({url: tab.url});
+    }
+  }
+});</div>
+            
+            <h3>安全保障</h3>
+            <ul>
+                <li>仅读取 URL，不读取页面内容</li>
+                <li>匹配后立即删除，不存储访问信息</li>
+                <li>所有处理在本地完成，无网络传输</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>常见误解：</strong>此权限通常被认为风险较高，因为它允许访问所有网站。但在 BrowseBuddy 中，我们仅使用它来监控 URL 变更，不注入脚本、不读取页面内容、不上传任何数据。
+            </div>
+        </div>
+        
+        <h2>可选权限</h2>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">contextMenus</span>
+                <span class="optional-badge">可选</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>在浏览器右键菜单中添加"添加到 BrowseBuddy 黑名单"选项，提供更便捷的添加方式。</p>
+            
+            <h3>使用场景</h3>
+            <ul>
+                <li>在网页上右键点击，选择添加到黑名单</li>
+                <li>在链接上右键点击，添加链接域名到黑名单</li>
+            </ul>
+            
+            <div class="highlight">
+                <strong>提示：</strong>此权限是可选的，即使不授予，您仍可通过扩展弹窗手动添加域名。
+            </div>
+        </div>
+        
+        <h2>我们不会请求的权限</h2>
+        <p>为明确边界，以下是 BrowseBuddy <strong>绝对不会</strong>请求的权限：</p>
+        
+        <table>
+            <tr>
+                <th>权限</th>
+                <th>原因</th>
+            </tr>
+            <tr>
+                <td>cookies</td>
+                <td>不需要访问或修改 Cookie</td>
+            </tr>
+            <tr>
+                <td>bookmarks</td>
+                <td>不管理书签</td>
+            </tr>
+            <tr>
+                <td>downloads</td>
+                <td>不自动下载文件（仅用户主动导出）</td>
+            </tr>
+            <tr>
+                <td>notifications</td>
+                <td>不使用系统通知</td>
+            </tr>
+            <tr>
+                <td>webRequest</td>
+                <td>不需要拦截网络请求</td>
+            </tr>
+            <tr>
+                <td>webNavigation</td>
+                <td>tabs 权限已满足导航监控需求</td>
+            </tr>
+        </table>
+        
+        <footer>
+            <p>© 2026 BrowseBuddy. 保留所有权利。</p>
+            <p>如有疑问，请通过 GitHub Issues 联系我们。</p>
+        </footer>
+    </div>
+</body>
+</html>

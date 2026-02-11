@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permissions - BrowseBuddy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f7fa;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #667eea;
+            margin: 35px 0 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h3 {
+            color: #555;
+            margin: 25px 0 10px;
+            font-size: 1.2em;
+        }
+        .permission-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+        .permission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .permission-tag {
+            background: #667eea;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .required-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .optional-badge {
+            background: #6c757d;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 25px 20px; }
+            .permission-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index_en.html">← Back to Home</a>
+            <a href="permissions.html">中文版本</a>
+        </div>
+        
+        <h1>🔑 Permissions</h1>
+        <p class="subtitle">Detailed explanation of each permission BrowseBuddy uses, its purpose, and necessity</p>
+        
+        <div class="highlight">
+            <strong>Principle of Least Privilege:</strong> We only request the minimum permissions necessary for functionality. Each permission has a specific single purpose and is not used for other purposes.
+        </div>
+        
+        <h2>Required Permissions</h2>
+        <p>The following permissions are essential for BrowseBuddy's core functionality:</p>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">history</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Read, search, and delete browser history. This is required for BrowseBuddy's core functionality.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Display history list for user viewing and management</li>
+                <li>Search history by date, domain, or keyword</li>
+                <li>Delete specific history entries selected by user</li>
+                <li>Automatically delete sensitive website history after blacklist match</li>
+            </ul>
+            
+            <h3>Code Example</h3>
+            <div class="code-block">// Read history records
+chrome.history.search({text: '', maxResults: 100})
+
+// Delete specific URL
+chrome.history.deleteUrl({url: 'https://example.com'})
+
+// Delete date range
+chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now()})</div>
+            
+            <div class="warning">
+                <strong>Note:</strong> This permission allows access to complete browsing history. We only use this data to display to you and do not upload or share it.
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">storage</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Store extension configuration, blacklist data, and user preferences locally.</p>
+            
+            <h3>Stored Data</h3>
+            <table>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Purpose</th>
+                    <th>Storage Location</th>
+                </tr>
+                <tr>
+                    <td>User Settings</td>
+                    <td>Language, theme preferences</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Blacklist</td>
+                    <td>User-added privacy protection domains</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Stats Cache</td>
+                    <td>History statistics cache (rebuildable)</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+            </table>
+            
+            <div class="highlight">
+                <strong>Data Isolation:</strong> Using chrome.storage.local ensures data is saved locally only and not automatically synced to Google accounts.
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">tabs</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Get current tab information for the "Add current page to blacklist" shortcut feature.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Get URL of currently active tab</li>
+                <li>Extract main domain displayed on "Add Current Page" button</li>
+                <li>Check if current page is already in blacklist</li>
+            </ul>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">activeTab</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Get temporary permission for the currently active tab, used in conjunction with tabs permission, without needing to request host permissions for all websites.</p>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">&lt;all_urls&gt;</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Monitor URL changes on all websites for real-time blacklist protection.</p>
+            
+            <h3>How It Works</h3>
+            <div class="code-block">chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    // Check if URL matches blacklist
+    if (isUrlBlacklisted(tab.url, blacklist)) {
+      // Immediately delete from history
+      chrome.history.deleteUrl({url: tab.url});
+    }
+  }
+});</div>
+            
+            <h3>Security Guarantees</h3>
+            <ul>
+                <li>Only reads URL, not page content</li>
+                <li>Deletes immediately after match, no visit information stored</li>
+                <li>All processing done locally, no network transmission</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>Common Misconception:</strong> This permission is often considered high-risk because it allows access to all websites. However, in BrowseBuddy, we only use it to monitor URL changes - we don't inject scripts, read page content, or upload any data.
+            </div>
+        </div>
+        
+        <h2>Optional Permissions</h2>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">contextMenus</span>
+                <span class="optional-badge">Optional</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Add "Add to BrowseBuddy Blacklist" option to browser context menu for more convenient addition.</p>
+            
+            <div class="highlight">
+                <strong>Note:</strong> This permission is optional. Even without granting it, you can still manually add domains through the extension popup.
+            </div>
+        </div>
+        
+        <h2>Permissions We Will Never Request</h2>
+        <p>To clarify boundaries, here are permissions BrowseBuddy <strong>will never</strong> request:</p>
+        
+        <table>
+            <tr>
+                <th>Permission</th>
+                <th>Reason</th>
+            </tr>
+            <tr>
+                <td>cookies</td>
+                <td>No need to access or modify cookies</td>
+            </tr>
+            <tr>
+                <td>bookmarks</td>
+                <td>Does not manage bookmarks</td>
+            </tr>
+            <tr>
+                <td>downloads</td>
+                <td>Only user-initiated exports (not automatic downloads)</td>
+            </tr>
+            <tr>
+                <td>notifications</td>
+                <td>Does not use system notifications</td>
+            </tr>
+            <tr>
+                <td>webRequest</td>
+                <td>No need to intercept network requests</td>
+            </tr>
+            <tr>
+                <td>webNavigation</td>
+                <td>tabs permission already satisfies navigation monitoring needs</td>
+            </tr>
+        </table>
+        
+        <footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>Questions? Contact us via GitHub Issues.</p>
+        </footer>
+    </div>
+</body>
+</html>

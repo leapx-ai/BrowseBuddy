@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - BrowseBuddy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f7fa;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .effective-date {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        h2 {
+            color: #667eea;
+            margin: 30px 0 15px;
+            font-size: 1.4em;
+        }
+        h3 {
+            color: #555;
+            margin: 20px 0 10px;
+            font-size: 1.15em;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 30px 20px; }
+            h1 { font-size: 1.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index_en.html">← Back to Home</a>
+            <a href="privacy.html">中文版本</a>
+        </div>
+        
+        <h1>🔒 Privacy Policy</h1>
+        <p class="effective-date">Effective Date: February 11, 2026</p>
+        
+        <div class="highlight">
+            <strong>Core Commitment:</strong> BrowseBuddy is a <strong>purely local</strong> browser extension. We <strong>do not collect, store, or transmit</strong> any of your personal data or browsing information.
+        </div>
+        
+        <h2>1. Information We Collect</h2>
+        <p><strong>We do not collect any information.</strong></p>
+        <p>All features of BrowseBuddy run locally in your browser, including but not limited to:</p>
+        <ul>
+            <li>History record reading and analysis</li>
+            <li>Blacklist matching and automatic deletion</li>
+            <li>Statistics generation</li>
+            <li>User settings storage</li>
+        </ul>
+        
+        <h2>2. Data Storage</h2>
+        <p>All data is stored locally on your device using browser-provided storage APIs:</p>
+        
+        <h3>2.1 Storage Locations</h3>
+        <ul>
+            <li><strong>Extension Settings:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Blacklist Data:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>History Records:</strong> Only reads built-in browser history, no additional storage</li>
+            <li><strong>Exported Files:</strong> Saved only to user-selected locations when actively exported</li>
+        </ul>
+        
+        <h3>2.2 Storage Limitations</h3>
+        <p>Browser local storage is typically limited to 5-10MB, which is sufficient to store thousands of blacklist entries and settings, but cannot store large history copies (this is intentional design to ensure data remains in the browser).</p>
+        
+        <h2>3. Data Usage</h2>
+        <p>Your data is used solely for:</p>
+        <ul>
+            <li>Displaying your history list and statistics</li>
+            <li>Automatically deleting specific history entries based on blacklist</li>
+            <li>Saving your extension preferences</li>
+        </ul>
+        
+        <h2>4. Data Sharing</h2>
+        <p><strong>We do not share your data with any third parties.</strong></p>
+        <p>The reason is simple: we have no access to your data — all processing is done locally with no server-side components or data transmission.</p>
+        
+        <h2>5. Permission Usage</h2>
+        <p>Each permission requested by BrowseBuddy has a specific purpose:</p>
+        <ul>
+            <li><strong>history:</strong> Read and delete browser history (core functionality)</li>
+            <li><strong>storage:</strong> Save extension settings and blacklist (local storage)</li>
+            <li><strong>tabs / activeTab:</strong> Get current page information (add current page to blacklist)</li>
+            <li><strong>&lt;all_urls&gt;:</strong> Monitor all URL changes (real-time blacklist protection)</li>
+        </ul>
+        
+        <h2>6. Security Measures</h2>
+        <ul>
+            <li>All code runs in browser sandbox environment</li>
+            <li>No network requests (except extension store update checks)</li>
+            <li>No scripts injected into web pages</li>
+            <li>Open source code available for security audit</li>
+        </ul>
+        
+        <h2>7. Your Rights</h2>
+        <p>You have full control over your data:</p>
+        <ul>
+            <li>Export blacklist data at any time</li>
+            <li>Clear all extension data via browser extension management</li>
+            <li>Uninstall the extension at any time — all related data will be automatically cleared</li>
+        </ul>
+        
+        <h2>8. Privacy Policy Updates</h2>
+        <p>We may update this privacy policy from time to time. Any significant changes will be notified through extension update notes or website announcements.</p>
+        
+        <h2>9. Contact Us</h2>
+        <p>If you have any questions about this privacy policy, please contact us:</p>
+        <ul>
+            <li>GitHub Issues: <a href="https://github.com/yourusername/browsebuddy/issues" target="_blank">https://github.com/yourusername/browsebuddy/issues</a></li>
+            <li>Email: privacy@browsebuddy.example.com</li>
+        </ul>
+        
+        <footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>This page is hosted on GitHub Pages and is publicly accessible.</p>
+        </footer>
+    </div>
+</body>
+</html>
