@@ -1,0 +1,274 @@
+import React, { useState, useEffect } from 'react';
+import { getMessage } from '../../utils/i18n';
+import { 
+  getBlacklist, 
+  removeFromBlacklist, 
+  updateBlacklistEntry,
+  addUrlToBlacklist,
+  extractMainDomain,
+  type BlacklistEntry 
+} from '../../utils/storage';
+
+const PrivacyModule: React.FC = () => {
+  const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newUrl, setNewUrl] = useState('');
+  const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [extractedDomain, setExtractedDomain] = useState('');
+
+  useEffect(() => {
+    loadBlacklist();
+    getCurrentTab();
+  }, []);
+
+  useEffect(() => {
+    if (newUrl.trim()) {
+      setExtractedDomain(extractMainDomain(newUrl));
+    } else {
+      setExtractedDomain('');
+    }
+  }, [newUrl]);
+
+  const loadBlacklist = async () => {
+    setIsLoading(true);
+    try {
+      const list = await getBlacklist();
+      setBlacklist(list);
+    } catch (error) {
+      console.error('Failed to load blacklist:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCurrentTab = async () => {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        setCurrentTab(tabs[0]);
+      }
+    } catch (error) {
+      console.error('Failed to get current tab:', error);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!newUrl.trim()) return;
+
+    try {
+      const result = await addUrlToBlacklist(newUrl.trim());
+      if (result) {
+        setNewUrl('');
+        setShowAddForm(false);
+        await loadBlacklist();
+      } else {
+        // Already exists, show feedback or just close
+        setNewUrl('');
+        setShowAddForm(false);
+      }
+    } catch (error) {
+      console.error('Failed to add to blacklist:', error);
+    }
+  };
+
+  const handleAddCurrentPage = async () => {
+    if (!currentTab?.url) return;
+
+    try {
+      await addUrlToBlacklist(currentTab.url);
+      await loadBlacklist();
+    } catch (error) {
+      console.error('Failed to add current page to blacklist:', error);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      await removeFromBlacklist(id);
+      await loadBlacklist();
+    } catch (error) {
+      console.error('Failed to remove from blacklist:', error);
+    }
+  };
+
+  const handleToggle = async (id: string, enabled: boolean) => {
+    try {
+      await updateBlacklistEntry(id, { enabled: !enabled });
+      await loadBlacklist();
+    } catch (error) {
+      console.error('Failed to toggle blacklist entry:', error);
+    }
+  };
+
+  const isCurrentPageBlacklisted = currentTab?.url ? 
+    blacklist.some(entry => entry.enabled && entry.pattern === extractMainDomain(currentTab.url!)) : 
+    false;
+
+  if (isLoading) {
+    return (
+      <div className="loading">
+        <div className="spinner" />
+        {getMessage('loading')}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Info Card */}
+      <div className="alert alert-info" style={{ marginBottom: '12px' }}>
+        <strong>{getMessage('realtimeProtection')}</strong>
+        <p style={{ marginTop: '4px', marginBottom: 0 }}>
+          {getMessage('blacklistDescription')}
+        </p>
+      </div>
+
+      {/* Current Domain Display */}
+      {currentTab?.url && (
+        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          {getMessage('currentDomain')}: {extractMainDomain(currentTab.url)}
+        </div>
+      )}
+
+      {/* Quick Add Current Page */}
+      {currentTab?.url && !currentTab.url.startsWith('chrome://') && !currentTab.url.startsWith('chrome-extension://') && !currentTab.url.startsWith('about:') && !currentTab.url.startsWith('edge://') && (
+        <button
+          className={`btn btn-block ${isCurrentPageBlacklisted ? 'btn-secondary' : 'btn-primary'}`}
+          onClick={handleAddCurrentPage}
+          disabled={isCurrentPageBlacklisted}
+          style={{ marginBottom: '12px' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+            {isCurrentPageBlacklisted ? (
+              <polyline points="20 6 9 17 4 12" />
+            ) : (
+              <>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </>
+            )}
+          </svg>
+          {isCurrentPageBlacklisted 
+            ? getMessage('alreadyInBlacklist', extractMainDomain(currentTab.url))
+            : getMessage('addCurrentPage', extractMainDomain(currentTab.url))}
+        </button>
+      )}
+
+      {/* Add Button */}
+      <button
+        className="btn btn-secondary btn-block"
+        onClick={() => setShowAddForm(!showAddForm)}
+        style={{ marginBottom: '12px' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {getMessage('manualAddDomain')}
+      </button>
+
+      {/* Add Form */}
+      {showAddForm && (
+        <div className="card" style={{ marginBottom: '12px' }}>
+          <div className="input-group">
+            <label className="input-label">{getMessage('enterUrlOrDomain')}</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="https://example.com 或 example.com"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+            />
+            {extractedDomain && (
+              <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                {getMessage('willAddMainDomain')} <strong>{extractedDomain}</strong>{getMessage('includesAllSubdomains')}
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-secondary" onClick={() => setShowAddForm(false)}>
+              {getMessage('cancel')}
+            </button>
+            <button className="btn btn-primary" onClick={handleAdd} disabled={!extractedDomain}>
+              {getMessage('add')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Blacklist */}
+      <div>
+        <h3 className="card-title" style={{ marginBottom: '12px' }}>
+          {getMessage('blacklist')} ({blacklist.length})
+        </h3>
+        
+        {blacklist.length === 0 ? (
+          <div className="empty-state" style={{ padding: '30px 20px' }}>
+            <div className="empty-icon">🛡️</div>
+            <div className="empty-title">{getMessage('noBlacklistEntries')}</div>
+            <div className="empty-desc">{getMessage('addDomainsToProtectPrivacy')}</div>
+          </div>
+        ) : (
+          <div>
+            {blacklist.map((entry) => (
+              <div key={entry.id} className="blacklist-item">
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                  <label className="checkbox-wrapper" style={{ flex: 1 }}>
+                    <div className={`checkbox ${entry.enabled ? 'checked' : ''}`}>
+                      {entry.enabled && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={entry.enabled}
+                      onChange={() => handleToggle(entry.id, entry.enabled)}
+                      style={{ display: 'none' }}
+                    />
+                    <span className="blacklist-pattern" style={{ 
+                      opacity: entry.enabled ? 1 : 0.5,
+                      textDecoration: entry.enabled ? 'none' : 'line-through'
+                    }}>
+                      {entry.pattern}
+                    </span>
+                  </label>
+                </div>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => handleRemove(entry.id)}
+                  style={{ padding: '4px 8px' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pattern Examples */}
+      <div className="card" style={{ marginTop: '16px' }}>
+        <h3 className="card-title">{getMessage('usageInstructions')}</h3>
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+          <p style={{ marginBottom: '8px' }}>
+            {getMessage('autoExtractDescription')}
+          </p>
+          <p style={{ marginBottom: '8px' }}>
+            <strong>{getMessage('example')}:</strong> <code>https://www.example.com/page</code> → <code>example.com</code>
+          </p>
+          <p>
+            {getMessage('autoMatchDescription')}: <code>example.com</code>、<code>www.example.com</code>、<code>sub.example.com</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PrivacyModule;

@@ -1,0 +1,480 @@
+{
+  "extName": {
+    "message": "BrowseBuddy - 历史记录管理器",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "强大的浏览器历史记录管理工具，注重隐私保护。所有数据本地处理。",
+    "description": "Extension description"
+  },
+  "navDelete": {
+    "message": "删除",
+    "description": "Navigation - Delete"
+  },
+  "navView": {
+    "message": "查看",
+    "description": "Navigation - View"
+  },
+  "navStats": {
+    "message": "统计",
+    "description": "Navigation - Statistics"
+  },
+  "navPrivacy": {
+    "message": "隐私",
+    "description": "Navigation - Privacy"
+  },
+  "navSettings": {
+    "message": "设置",
+    "description": "Navigation - Settings"
+  },
+  "searchPlaceholder": {
+    "message": "搜索历史记录...",
+    "description": "Search placeholder"
+  },
+  "deleteByDate": {
+    "message": "按日期删除",
+    "description": "Delete by date title"
+  },
+  "deleteByDomain": {
+    "message": "按域名删除",
+    "description": "Delete by domain title"
+  },
+  "deleteByKeyword": {
+    "message": "按关键词删除",
+    "description": "Delete by keyword title"
+  },
+  "startDate": {
+    "message": "开始日期",
+    "description": "Start date label"
+  },
+  "endDate": {
+    "message": "结束日期",
+    "description": "End date label"
+  },
+  "domain": {
+    "message": "域名",
+    "description": "Domain label"
+  },
+  "keyword": {
+    "message": "关键词",
+    "description": "Keyword label"
+  },
+  "preview": {
+    "message": "预览",
+    "description": "Preview button"
+  },
+  "delete": {
+    "message": "删除",
+    "description": "Delete button"
+  },
+  "cancel": {
+    "message": "取消",
+    "description": "Cancel button"
+  },
+  "confirmDelete": {
+    "message": "确认删除",
+    "description": "Confirm delete title"
+  },
+  "recordsWillBeDeleted": {
+    "message": "将删除 $count$ 条记录。此操作不可撤销。",
+    "description": "Delete confirmation message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "groupByDate": {
+    "message": "按日期分组",
+    "description": "Group by date"
+  },
+  "groupByDomain": {
+    "message": "按域名分组",
+    "description": "Group by domain"
+  },
+  "calendarView": {
+    "message": "日历视图",
+    "description": "Calendar view"
+  },
+  "blacklist": {
+    "message": "黑名单",
+    "description": "Blacklist title"
+  },
+  "addToBlacklist": {
+    "message": "添加到黑名单",
+    "description": "Add to blacklist"
+  },
+  "privacyMode": {
+    "message": "隐私模式",
+    "description": "Privacy mode"
+  },
+  "realtimeProtection": {
+    "message": "实时保护",
+    "description": "Real-time protection"
+  },
+  "exportCSV": {
+    "message": "导出CSV",
+    "description": "Export CSV"
+  },
+  "exportHTML": {
+    "message": "导出HTML报告",
+    "description": "Export HTML"
+  },
+  "visitStats": {
+    "message": "访问统计",
+    "description": "Visit statistics"
+  },
+  "topSites": {
+    "message": "热门网站",
+    "description": "Top sites"
+  },
+  "timeDistribution": {
+    "message": "时段分布",
+    "description": "Time distribution"
+  },
+  "privacyPromise": {
+    "message": "隐私承诺：所有数据仅保存在您的设备上，不上传云端。",
+    "description": "Privacy promise"
+  },
+  "noHistoryFound": {
+    "message": "未找到历史记录",
+    "description": "No history found"
+  },
+  "loading": {
+    "message": "加载中...",
+    "description": "Loading text"
+  },
+  "settings": {
+    "message": "设置",
+    "description": "Settings title"
+  },
+  "language": {
+    "message": "语言",
+    "description": "Language setting"
+  },
+  "theme": {
+    "message": "主题",
+    "description": "Theme setting"
+  },
+  "dark": {
+    "message": "深色",
+    "description": "Dark theme"
+  },
+  "light": {
+    "message": "浅色",
+    "description": "Light theme"
+  },
+  "dataBackup": {
+    "message": "数据备份",
+    "description": "Data backup"
+  },
+  "backup": {
+    "message": "备份",
+    "description": "Backup button"
+  },
+  "restore": {
+    "message": "恢复",
+    "description": "Restore button"
+  },
+  "totalRecords": {
+    "message": "总记录数",
+    "description": "Total records"
+  },
+  "storageUsed": {
+    "message": "存储使用",
+    "description": "Storage used"
+  },
+  "saved": {
+    "message": "已保存",
+    "description": "Saved status"
+  },
+  "generalSettings": {
+    "message": "常规设置",
+    "description": "General settings section"
+  },
+  "chooseLanguage": {
+    "message": "选择您偏好的语言",
+    "description": "Language selection description"
+  },
+  "chooseTheme": {
+    "message": "选择界面外观",
+    "description": "Theme selection description"
+  },
+  "systemDefault": {
+    "message": "跟随系统",
+    "description": "System default theme option"
+  },
+  "privacySettings": {
+    "message": "隐私设置",
+    "description": "Privacy settings section"
+  },
+  "realtimeProtectionDesc": {
+    "message": "自动删除匹配黑名单模式的历史记录",
+    "description": "Real-time protection description"
+  },
+  "privacyReminder": {
+    "message": "隐私提醒",
+    "description": "Privacy reminder setting"
+  },
+  "privacyReminderDesc": {
+    "message": "访问黑名单网站时显示徽章提示",
+    "description": "Privacy reminder description"
+  },
+  "used": {
+    "message": "已使用",
+    "description": "Used storage"
+  },
+  "total": {
+    "message": "总计",
+    "description": "Total storage"
+  },
+  "about": {
+    "message": "关于",
+    "description": "About section"
+  },
+  "privacyPromiseTitle": {
+    "message": "隐私承诺：",
+    "description": "Privacy promise title"
+  },
+  "allDataLocal": {
+    "message": "所有数据都保留在您的设备上。",
+    "description": "All data local notice"
+  },
+  "welcomeTitle": {
+    "message": "欢迎使用 BrowseBuddy！",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "您的个人浏览器历史管理器，提供强大的隐私保护。",
+    "description": "Welcome page subtitle"
+  },
+  "smartDelete": {
+    "message": "智能删除",
+    "description": "Smart delete feature"
+  },
+  "statistics": {
+    "message": "数据统计",
+    "description": "Statistics feature"
+  },
+  "statsDesc": {
+    "message": "可视化您的浏览习惯",
+    "description": "Statistics description"
+  },
+  "privacyProtection": {
+    "message": "隐私保护",
+    "description": "Privacy protection feature"
+  },
+  "blacklistDesc": {
+    "message": "将敏感网站加入黑名单",
+    "description": "Blacklist description"
+  },
+  "localStorage": {
+    "message": "本地存储",
+    "description": "Local storage feature"
+  },
+  "localStorageDesc": {
+    "message": "您的数据永远不会离开您的设备",
+    "description": "Local storage description"
+  },
+  "permissionNotice": {
+    "message": "权限说明：",
+    "description": "Permission notice title"
+  },
+  "permissionHistory": {
+    "message": "历史记录访问 - 用于读取和管理您的浏览历史",
+    "description": "History permission description"
+  },
+  "permissionStorage": {
+    "message": "存储访问 - 用于本地保存设置",
+    "description": "Storage permission description"
+  },
+  "getStarted": {
+    "message": "开始使用",
+    "description": "Get started button"
+  },
+  "success": {
+    "message": "成功",
+    "description": "Success status"
+  },
+  "listView": {
+    "message": "列表",
+    "description": "List view mode"
+  },
+  "quickActions": {
+    "message": "快速操作",
+    "description": "Quick actions section"
+  },
+  "deleteYesterday": {
+    "message": "删除昨天",
+    "description": "Delete yesterday's history"
+  },
+  "deleteLast7Days": {
+    "message": "删除最近7天",
+    "description": "Delete last 7 days history"
+  },
+  "deleteLast30Days": {
+    "message": "删除最近30天",
+    "description": "Delete last 30 days history"
+  },
+  "domainsVisited": {
+    "message": "访问域名数",
+    "description": "Domains visited stats label"
+  },
+  "24HourDistribution": {
+    "message": "24小时分布",
+    "description": "24 hour time distribution label"
+  },
+  "dailyTrend": {
+    "message": "每日趋势",
+    "description": "Daily trend chart title"
+  },
+  "export": {
+    "message": "导出",
+    "description": "Export section title"
+  },
+  "blacklistDescription": {
+    "message": "匹配黑名单模式的网站将不会被记录到浏览历史中。",
+    "description": "Blacklist feature description"
+  },
+  "domainPattern": {
+    "message": "域名模式",
+    "description": "Domain pattern input label"
+  },
+  "matchType": {
+    "message": "匹配类型",
+    "description": "Match type select label"
+  },
+  "exactMatchExample": {
+    "message": "精确匹配 (example.com)",
+    "description": "Exact match option"
+  },
+  "wildcardExample": {
+    "message": "通配符 (*.example.com)",
+    "description": "Wildcard option"
+  },
+  "regularExpression": {
+    "message": "正则表达式",
+    "description": "Regex option"
+  },
+  "add": {
+    "message": "添加",
+    "description": "Add button"
+  },
+  "noBlacklistEntries": {
+    "message": "暂无黑名单条目",
+    "description": "Empty blacklist message"
+  },
+  "addDomainsToProtectPrivacy": {
+    "message": "添加域名以保护您的隐私",
+    "description": "Blacklist empty state description"
+  },
+  "patternExamples": {
+    "message": "模式示例",
+    "description": "Pattern examples section"
+  },
+  "exactColon": {
+    "message": "精确匹配：",
+    "description": "Exact match label"
+  },
+  "matchesOnly": {
+    "message": "仅匹配",
+    "description": "Matches only description"
+  },
+  "wildcardColon": {
+    "message": "通配符：",
+    "description": "Wildcard label"
+  },
+  "matchesAllSubdomains": {
+    "message": "匹配所有子域名",
+    "description": "Matches all subdomains description"
+  },
+  "regexColon": {
+    "message": "正则：",
+    "description": "Regex label"
+  },
+  "matchesAnyDomainContaining": {
+    "message": "匹配包含指定内容的任何域名",
+    "description": "Matches any domain containing description"
+  },
+  "items": {
+    "message": "条记录",
+    "description": "Items count"
+  },
+  "more": {
+    "message": "更多",
+    "description": "More items indicator"
+  },
+  "tryAdjustingSearch": {
+    "message": "尝试调整您的搜索",
+    "description": "Empty search result suggestion"
+  },
+  "noDataAvailable": {
+    "message": "暂无数据",
+    "description": "No data available message"
+  },
+  "startBrowsing": {
+    "message": "开始浏览以查看统计",
+    "description": "Start browsing message"
+  },
+  "visits": {
+    "message": "次访问",
+    "description": "Visits count"
+  },
+  "addCurrentPage": {
+    "message": "添加当前页面 ($1$)",
+    "description": "Add current page to blacklist button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "alreadyInBlacklist": {
+    "message": "$1$ 已在黑名单",
+    "description": "Domain already in blacklist message",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "currentDomain": {
+    "message": "当前",
+    "description": "Current domain label"
+  },
+  "manualAddDomain": {
+    "message": "手动添加域名",
+    "description": "Manual add domain button"
+  },
+  "enterUrlOrDomain": {
+    "message": "输入网址或域名",
+    "description": "Input placeholder for URL or domain"
+  },
+  "willAddMainDomain": {
+    "message": "将添加主域名:",
+    "description": "Label showing extracted main domain"
+  },
+  "includesAllSubdomains": {
+    "message": "（包含所有子域名）",
+    "description": "Note that all subdomains are included"
+  },
+  "usageInstructions": {
+    "message": "使用说明",
+    "description": "Usage instructions title"
+  },
+  "autoExtractDescription": {
+    "message": "输入任意网址或域名，系统会自动提取主域名，并屏蔽该域名及其所有子域名",
+    "description": "Auto extract main domain description"
+  },
+  "example": {
+    "message": "示例",
+    "description": "Example label"
+  },
+  "autoMatchDescription": {
+    "message": "自动匹配",
+    "description": "Auto matches description"
+  }
+}

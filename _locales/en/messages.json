@@ -1,0 +1,480 @@
+{
+  "extName": {
+    "message": "BrowseBuddy - History Manager",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Powerful browser history management with privacy protection. All data stays local.",
+    "description": "Extension description"
+  },
+  "navDelete": {
+    "message": "Delete",
+    "description": "Navigation - Delete"
+  },
+  "navView": {
+    "message": "View",
+    "description": "Navigation - View"
+  },
+  "navStats": {
+    "message": "Statistics",
+    "description": "Navigation - Statistics"
+  },
+  "navPrivacy": {
+    "message": "Privacy",
+    "description": "Navigation - Privacy"
+  },
+  "navSettings": {
+    "message": "Settings",
+    "description": "Navigation - Settings"
+  },
+  "searchPlaceholder": {
+    "message": "Search history...",
+    "description": "Search placeholder"
+  },
+  "deleteByDate": {
+    "message": "Delete by Date",
+    "description": "Delete by date title"
+  },
+  "deleteByDomain": {
+    "message": "Delete by Domain",
+    "description": "Delete by domain title"
+  },
+  "deleteByKeyword": {
+    "message": "Delete by Keyword",
+    "description": "Delete by keyword title"
+  },
+  "startDate": {
+    "message": "Start Date",
+    "description": "Start date label"
+  },
+  "endDate": {
+    "message": "End Date",
+    "description": "End date label"
+  },
+  "domain": {
+    "message": "Domain",
+    "description": "Domain label"
+  },
+  "keyword": {
+    "message": "Keyword",
+    "description": "Keyword label"
+  },
+  "preview": {
+    "message": "Preview",
+    "description": "Preview button"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button"
+  },
+  "confirmDelete": {
+    "message": "Confirm Delete",
+    "description": "Confirm delete title"
+  },
+  "recordsWillBeDeleted": {
+    "message": "$count$ records will be deleted. This action cannot be undone.",
+    "description": "Delete confirmation message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "groupByDate": {
+    "message": "Group by Date",
+    "description": "Group by date"
+  },
+  "groupByDomain": {
+    "message": "Group by Domain",
+    "description": "Group by domain"
+  },
+  "calendarView": {
+    "message": "Calendar View",
+    "description": "Calendar view"
+  },
+  "blacklist": {
+    "message": "Blacklist",
+    "description": "Blacklist title"
+  },
+  "addToBlacklist": {
+    "message": "Add to Blacklist",
+    "description": "Add to blacklist"
+  },
+  "privacyMode": {
+    "message": "Privacy Mode",
+    "description": "Privacy mode"
+  },
+  "realtimeProtection": {
+    "message": "Real-time Protection",
+    "description": "Real-time protection"
+  },
+  "exportCSV": {
+    "message": "Export CSV",
+    "description": "Export CSV"
+  },
+  "exportHTML": {
+    "message": "Export HTML Report",
+    "description": "Export HTML"
+  },
+  "visitStats": {
+    "message": "Visit Statistics",
+    "description": "Visit statistics"
+  },
+  "topSites": {
+    "message": "Top Sites",
+    "description": "Top sites"
+  },
+  "timeDistribution": {
+    "message": "Time Distribution",
+    "description": "Time distribution"
+  },
+  "privacyPromise": {
+    "message": "Privacy Promise: All data stays on your device. No cloud upload.",
+    "description": "Privacy promise"
+  },
+  "noHistoryFound": {
+    "message": "No history records found",
+    "description": "No history found"
+  },
+  "loading": {
+    "message": "Loading...",
+    "description": "Loading text"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings title"
+  },
+  "language": {
+    "message": "Language",
+    "description": "Language setting"
+  },
+  "theme": {
+    "message": "Theme",
+    "description": "Theme setting"
+  },
+  "dark": {
+    "message": "Dark",
+    "description": "Dark theme"
+  },
+  "light": {
+    "message": "Light",
+    "description": "Light theme"
+  },
+  "dataBackup": {
+    "message": "Data Backup",
+    "description": "Data backup"
+  },
+  "backup": {
+    "message": "Backup",
+    "description": "Backup button"
+  },
+  "restore": {
+    "message": "Restore",
+    "description": "Restore button"
+  },
+  "totalRecords": {
+    "message": "Total Records",
+    "description": "Total records"
+  },
+  "storageUsed": {
+    "message": "Storage Used",
+    "description": "Storage used"
+  },
+  "saved": {
+    "message": "Saved",
+    "description": "Saved status"
+  },
+  "generalSettings": {
+    "message": "General Settings",
+    "description": "General settings section"
+  },
+  "chooseLanguage": {
+    "message": "Choose your preferred language",
+    "description": "Language selection description"
+  },
+  "chooseTheme": {
+    "message": "Select the interface appearance",
+    "description": "Theme selection description"
+  },
+  "systemDefault": {
+    "message": "System Default",
+    "description": "System default theme option"
+  },
+  "privacySettings": {
+    "message": "Privacy Settings",
+    "description": "Privacy settings section"
+  },
+  "realtimeProtectionDesc": {
+    "message": "Automatically delete history entries matching blacklist patterns",
+    "description": "Real-time protection description"
+  },
+  "privacyReminder": {
+    "message": "Privacy Reminder",
+    "description": "Privacy reminder setting"
+  },
+  "privacyReminderDesc": {
+    "message": "Show a badge when visiting a blacklisted site",
+    "description": "Privacy reminder description"
+  },
+  "used": {
+    "message": "used",
+    "description": "Used storage"
+  },
+  "total": {
+    "message": "total",
+    "description": "Total storage"
+  },
+  "about": {
+    "message": "About",
+    "description": "About section"
+  },
+  "privacyPromiseTitle": {
+    "message": "Privacy Promise:",
+    "description": "Privacy promise title"
+  },
+  "allDataLocal": {
+    "message": "All data stays on your device.",
+    "description": "All data local notice"
+  },
+  "welcomeTitle": {
+    "message": "Welcome to BrowseBuddy!",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Your personal browser history manager with powerful privacy protection.",
+    "description": "Welcome page subtitle"
+  },
+  "smartDelete": {
+    "message": "Smart Delete",
+    "description": "Smart delete feature"
+  },
+  "statistics": {
+    "message": "Statistics",
+    "description": "Statistics feature"
+  },
+  "statsDesc": {
+    "message": "Visualize your browsing patterns",
+    "description": "Statistics description"
+  },
+  "privacyProtection": {
+    "message": "Privacy Protection",
+    "description": "Privacy protection feature"
+  },
+  "blacklistDesc": {
+    "message": "Blacklist sensitive websites",
+    "description": "Blacklist description"
+  },
+  "localStorage": {
+    "message": "Local Storage",
+    "description": "Local storage feature"
+  },
+  "localStorageDesc": {
+    "message": "Your data never leaves your device",
+    "description": "Local storage description"
+  },
+  "permissionNotice": {
+    "message": "Permission Notice:",
+    "description": "Permission notice title"
+  },
+  "permissionHistory": {
+    "message": "History access - to read and manage your browsing history",
+    "description": "History permission description"
+  },
+  "permissionStorage": {
+    "message": "Storage access - to save settings locally",
+    "description": "Storage permission description"
+  },
+  "getStarted": {
+    "message": "Get Started",
+    "description": "Get started button"
+  },
+  "success": {
+    "message": "Success",
+    "description": "Success status"
+  },
+  "listView": {
+    "message": "List",
+    "description": "List view mode"
+  },
+  "quickActions": {
+    "message": "Quick Actions",
+    "description": "Quick actions section"
+  },
+  "deleteYesterday": {
+    "message": "Delete Yesterday",
+    "description": "Delete yesterday's history"
+  },
+  "deleteLast7Days": {
+    "message": "Delete Last 7 Days",
+    "description": "Delete last 7 days history"
+  },
+  "deleteLast30Days": {
+    "message": "Delete Last 30 Days",
+    "description": "Delete last 30 days history"
+  },
+  "domainsVisited": {
+    "message": "Domains Visited",
+    "description": "Domains visited stats label"
+  },
+  "24HourDistribution": {
+    "message": "24-Hour Distribution",
+    "description": "24 hour time distribution label"
+  },
+  "dailyTrend": {
+    "message": "Daily Trend",
+    "description": "Daily trend chart title"
+  },
+  "export": {
+    "message": "Export",
+    "description": "Export section title"
+  },
+  "blacklistDescription": {
+    "message": "Websites matching blacklist patterns will not be recorded in browser history.",
+    "description": "Blacklist feature description"
+  },
+  "domainPattern": {
+    "message": "Domain Pattern",
+    "description": "Domain pattern input label"
+  },
+  "matchType": {
+    "message": "Match Type",
+    "description": "Match type select label"
+  },
+  "exactMatchExample": {
+    "message": "Exact Match (example.com)",
+    "description": "Exact match option"
+  },
+  "wildcardExample": {
+    "message": "Wildcard (*.example.com)",
+    "description": "Wildcard option"
+  },
+  "regularExpression": {
+    "message": "Regular Expression",
+    "description": "Regex option"
+  },
+  "add": {
+    "message": "Add",
+    "description": "Add button"
+  },
+  "noBlacklistEntries": {
+    "message": "No blacklist entries",
+    "description": "Empty blacklist message"
+  },
+  "addDomainsToProtectPrivacy": {
+    "message": "Add domains to protect your privacy",
+    "description": "Blacklist empty state description"
+  },
+  "patternExamples": {
+    "message": "Pattern Examples",
+    "description": "Pattern examples section"
+  },
+  "exactColon": {
+    "message": "Exact:",
+    "description": "Exact match label"
+  },
+  "matchesOnly": {
+    "message": "matches only",
+    "description": "Matches only description"
+  },
+  "wildcardColon": {
+    "message": "Wildcard:",
+    "description": "Wildcard label"
+  },
+  "matchesAllSubdomains": {
+    "message": "matches all subdomains",
+    "description": "Matches all subdomains description"
+  },
+  "regexColon": {
+    "message": "Regex:",
+    "description": "Regex label"
+  },
+  "matchesAnyDomainContaining": {
+    "message": "matches any domain containing",
+    "description": "Matches any domain containing description"
+  },
+  "items": {
+    "message": "items",
+    "description": "Items count"
+  },
+  "more": {
+    "message": "more",
+    "description": "More items indicator"
+  },
+  "tryAdjustingSearch": {
+    "message": "Try adjusting your search",
+    "description": "Empty search result suggestion"
+  },
+  "noDataAvailable": {
+    "message": "No data available",
+    "description": "No data available message"
+  },
+  "startBrowsing": {
+    "message": "Start browsing to see statistics",
+    "description": "Start browsing message"
+  },
+  "visits": {
+    "message": "visits",
+    "description": "Visits count"
+  },
+  "addCurrentPage": {
+    "message": "Add Current Page ($1$)",
+    "description": "Add current page to blacklist button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "alreadyInBlacklist": {
+    "message": "$1$ is already in blacklist",
+    "description": "Domain already in blacklist message",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "currentDomain": {
+    "message": "Current",
+    "description": "Current domain label"
+  },
+  "manualAddDomain": {
+    "message": "Add Domain Manually",
+    "description": "Manual add domain button"
+  },
+  "enterUrlOrDomain": {
+    "message": "Enter URL or Domain",
+    "description": "Input placeholder for URL or domain"
+  },
+  "willAddMainDomain": {
+    "message": "Will add main domain:",
+    "description": "Label showing extracted main domain"
+  },
+  "includesAllSubdomains": {
+    "message": "(includes all subdomains)",
+    "description": "Note that all subdomains are included"
+  },
+  "usageInstructions": {
+    "message": "Usage Instructions",
+    "description": "Usage instructions title"
+  },
+  "autoExtractDescription": {
+    "message": "Enter any URL or domain. The system will automatically extract the main domain and block it along with all its subdomains.",
+    "description": "Auto extract main domain description"
+  },
+  "example": {
+    "message": "Example",
+    "description": "Example label"
+  },
+  "autoMatchDescription": {
+    "message": "Auto-matches",
+    "description": "Auto matches description"
+  }
+}
