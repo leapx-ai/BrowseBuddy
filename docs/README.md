@@ -68,8 +68,8 @@ git push origin main
 | 占位符 | 说明 | 位置 |
 |--------|------|------|
 | `yourusername` | 你的 GitHub 用户名 | 所有页面中的 GitHub 链接 |
-| `privacy@browsebuddy.example.com` | 联系邮箱 | privacy.html, terms.html |
-| `support@browsebuddy.example.com` | 支持邮箱 | terms.html |
+| `liuzhaooo@outlook.com` | 联系邮箱 | privacy.html, terms.html |
+| `liuzhaooo@outlook.com` | 支持邮箱 | terms.html |
 | `Coming Soon to Chrome Web Store` | Chrome 商店状态 | index.html, index_en.html |
 
 ### 更新版本号
