@@ -1,6 +1,6 @@
 # BrowseBuddy
 
-A powerful browser extension for managing browsing history with privacy protection. All data stays local on your device - no cloud uploads, no data sharing.
+A powerful browser extension for managing browsing history with privacy protection. All data stays local on your device - no cloud uploads, no data sharing. [home page](https://leapx-ai.github.io/BrowseBuddy)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
@@ -8,11 +8,13 @@ A powerful browser extension for managing browsing history with privacy protecti
 ## Features
 
 ### 🔍 History Management
+
 - **Smart Search**: Search by title, URL, or date range
 - **Multiple Views**: List view, date-grouped view, domain-grouped view
 - **Quick Navigation**: Calendar view with quick date jumping
 
 ### 🗑️ Bulk Delete
+
 - Delete by date range
 - Delete by domain
 - Delete by keyword
@@ -20,6 +22,7 @@ A powerful browser extension for managing browsing history with privacy protecti
 - Delete confirmation
 
 ### 📊 Statistics & Analysis
+
 - Visit frequency trends
 - Top visited sites
 - Time distribution (24-hour heatmap)
@@ -27,12 +30,14 @@ A powerful browser extension for managing browsing history with privacy protecti
 - Export to CSV and HTML
 
 ### 🛡️ Privacy Protection
+
 - Domain blacklist with wildcard support
 - Real-time protection (auto-delete blacklisted sites)
 - Privacy mode with visual indicators
 - All data stored locally
 
 ### ⚙️ Settings & Backup
+
 - Language selection (English/中文)
 - Dark/Light theme
 - Data backup and restore
@@ -43,17 +48,20 @@ A powerful browser extension for managing browsing history with privacy protecti
 ### From Source
 
 1. Clone this repository:
+
 ```bash
 git clone https://github.com/yourusername/browsebuddy.git
 cd browsebuddy
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Build the extension:
+
 ```bash
 npm run build
 ```
@@ -65,6 +73,7 @@ npm run build
 ### Development
 
 Run in development mode with hot reload:
+
 ```bash
 npm run watch
 ```
@@ -129,4 +138,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Icons powered by [Feather Icons](https://feathericons.com/)
 - Built with [React](https://reactjs.org/)
+
 # BrowseBuddy
