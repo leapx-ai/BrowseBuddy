@@ -1,4 +1,5 @@
 import type { Settings, BlacklistEntry } from '../types';
+import { fetchHistory, deleteSingleUrl } from './history';
 
 // Re-export types for convenience
 export type { Settings, BlacklistEntry } from '../types';
@@ -123,11 +124,15 @@ export function isUrlBlacklisted(url: string, blacklist: BlacklistEntry[]): bool
 }
 
 // Add URL to blacklist - automatically extracts main domain
-export async function addUrlToBlacklist(url: string): Promise<BlacklistEntry | null> {
+// If deleteExisting is true, also delete existing history entries for this domain
+export async function addUrlToBlacklist(
+  url: string, 
+  deleteExisting: boolean = false
+): Promise<{ entry: BlacklistEntry | null; deletedCount: number }> {
   const mainDomain = extractMainDomain(url);
   
   if (!mainDomain) {
-    return null;
+    return { entry: null, deletedCount: 0 };
   }
   
   // Check if already exists
@@ -135,14 +140,98 @@ export async function addUrlToBlacklist(url: string): Promise<BlacklistEntry | n
   const exists = blacklist.some(entry => entry.pattern === mainDomain);
   
   if (exists) {
-    return null; // Already in blacklist
+    return { entry: null, deletedCount: 0 }; // Already in blacklist
   }
   
-  return await addToBlacklist({
+  let deletedCount = 0;
+  
+  // Delete existing history entries if requested
+  if (deleteExisting) {
+    deletedCount = await deleteHistoryByDomain(mainDomain);
+  }
+  
+  // Add to blacklist
+  const entry = await addToBlacklist({
     pattern: mainDomain,
     type: 'exact', // We store main domain as exact match
     enabled: true,
   });
+  
+  return { entry, deletedCount };
+}
+
+// Delete all history entries matching a domain (including subdomains)
+async function deleteHistoryByDomain(domain: string): Promise<number> {
+  try {
+    // Fetch all history
+    const allHistory = await fetchHistory({ maxResults: 10000 });
+    
+    // Filter items matching the domain (including subdomains)
+    const matchingItems = allHistory.filter(item => {
+      try {
+        const itemDomain = extractMainDomain(item.url);
+        return itemDomain === domain;
+      } catch {
+        return false;
+      }
+    });
+    
+    // Get unique URLs to delete (avoid duplicates)
+    const uniqueUrls = new Set(matchingItems.map(item => item.url));
+    
+    // Also add URL variants (http/https, www/non-www) to ensure thorough cleanup
+    const urlsToDelete = new Set<string>();
+    uniqueUrls.forEach(url => {
+      urlsToDelete.add(url);
+      
+      try {
+        const urlObj = new URL(url);
+        // Add variant with/without www
+        if (urlObj.hostname.startsWith('www.')) {
+          const withoutWww = url.replace('://www.', '://');
+          urlsToDelete.add(withoutWww);
+        } else {
+          const withWww = url.replace('://', '://www.');
+          urlsToDelete.add(withWww);
+        }
+        // Add protocol variant
+        if (urlObj.protocol === 'https:') {
+          urlsToDelete.add(url.replace('https://', 'http://'));
+        } else if (urlObj.protocol === 'http:') {
+          urlsToDelete.add(url.replace('http://', 'https://'));
+        }
+      } catch {
+        // Invalid URL, skip variants
+      }
+    });
+    
+    // Delete each URL with a small delay to ensure Chrome processes the deletion
+    let deletedCount = 0;
+    const urlsArray = Array.from(urlsToDelete);
+    
+    for (let i = 0; i < urlsArray.length; i++) {
+      const url = urlsArray[i];
+      try {
+        await deleteSingleUrl(url);
+        // Check if this was an original URL (not a variant)
+        if (uniqueUrls.has(url)) {
+          deletedCount++;
+        }
+      } catch {
+        // Continue with next item
+      }
+      
+      // Add a small delay every 10 items to avoid overwhelming Chrome
+      if ((i + 1) % 10 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
+    return deletedCount;
+  } catch (error) {
+    console.error('Failed to delete history by domain:', error);
+    return 0;
+  }
 }
 
 // Backup and restore

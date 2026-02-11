@@ -476,5 +476,39 @@
   "autoMatchDescription": {
     "message": "自动匹配",
     "description": "Auto matches description"
+  },
+  "alsoDeleteExistingHistory": {
+    "message": "同时删除该域名的已有历史记录",
+    "description": "Option to also delete existing history when adding to blacklist"
+  },
+  "domainAddedToBlacklist": {
+    "message": "$1$ 已添加到黑名单",
+    "description": "Success message when domain is added to blacklist",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "deletedNHistoryRecords": {
+    "message": "已删除 $1$ 条历史记录",
+    "description": "Message showing how many history records were deleted",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "domainAlreadyInBlacklist": {
+    "message": "$1$ 已在黑名单中",
+    "description": "Message when domain is already in blacklist",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
   }
 }

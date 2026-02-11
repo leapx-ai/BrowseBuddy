@@ -476,5 +476,39 @@
   "autoMatchDescription": {
     "message": "Auto-matches",
     "description": "Auto matches description"
+  },
+  "alsoDeleteExistingHistory": {
+    "message": "Also delete existing history for this domain",
+    "description": "Option to also delete existing history when adding to blacklist"
+  },
+  "domainAddedToBlacklist": {
+    "message": "$1$ added to blacklist",
+    "description": "Success message when domain is added to blacklist",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "deletedNHistoryRecords": {
+    "message": "$1$ history records deleted",
+    "description": "Message showing how many history records were deleted",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "domainAlreadyInBlacklist": {
+    "message": "$1$ is already in blacklist",
+    "description": "Message when domain is already in blacklist",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
   }
 }

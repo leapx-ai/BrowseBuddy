@@ -16,6 +16,8 @@ const PrivacyModule: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [extractedDomain, setExtractedDomain] = useState('');
+  const [deleteExisting, setDeleteExisting] = useState(true);
+  const [lastAction, setLastAction] = useState<{type: 'add'|'delete', message: string} | null>(null);
 
   useEffect(() => {
     loadBlacklist();
@@ -57,15 +59,24 @@ const PrivacyModule: React.FC = () => {
     if (!newUrl.trim()) return;
 
     try {
-      const result = await addUrlToBlacklist(newUrl.trim());
-      if (result) {
+      const { entry, deletedCount } = await addUrlToBlacklist(newUrl.trim(), deleteExisting);
+      if (entry) {
+        let message = getMessage('domainAddedToBlacklist', extractedDomain);
+        if (deleteExisting && deletedCount > 0) {
+          message += ` (${getMessage('deletedNHistoryRecords', deletedCount.toString())})`;
+        }
+        setLastAction({ type: 'add', message });
         setNewUrl('');
         setShowAddForm(false);
         await loadBlacklist();
+        // Clear message after 3 seconds
+        setTimeout(() => setLastAction(null), 3000);
       } else {
-        // Already exists, show feedback or just close
+        // Already exists
+        setLastAction({ type: 'add', message: getMessage('domainAlreadyInBlacklist', extractedDomain) });
         setNewUrl('');
         setShowAddForm(false);
+        setTimeout(() => setLastAction(null), 3000);
       }
     } catch (error) {
       console.error('Failed to add to blacklist:', error);
@@ -76,8 +87,16 @@ const PrivacyModule: React.FC = () => {
     if (!currentTab?.url) return;
 
     try {
-      await addUrlToBlacklist(currentTab.url);
-      await loadBlacklist();
+      const { entry, deletedCount } = await addUrlToBlacklist(currentTab.url, deleteExisting);
+      if (entry) {
+        let message = getMessage('domainAddedToBlacklist', extractMainDomain(currentTab.url));
+        if (deleteExisting && deletedCount > 0) {
+          message += ` (${getMessage('deletedNHistoryRecords', deletedCount.toString())})`;
+        }
+        setLastAction({ type: 'add', message });
+        await loadBlacklist();
+        setTimeout(() => setLastAction(null), 3000);
+      }
     } catch (error) {
       console.error('Failed to add current page to blacklist:', error);
     }
@@ -122,6 +141,42 @@ const PrivacyModule: React.FC = () => {
         <p style={{ marginTop: '4px', marginBottom: 0 }}>
           {getMessage('blacklistDescription')}
         </p>
+      </div>
+
+      {/* Action Result Message */}
+      {lastAction && (
+        <div className={`alert ${lastAction.type === 'add' ? 'alert-success' : 'alert-info'}`} style={{ marginBottom: '12px' }}>
+          {lastAction.message}
+        </div>
+      )}
+
+      {/* Delete Existing History Option */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px', 
+        marginBottom: '12px',
+        padding: '10px 12px',
+        background: 'var(--bg-secondary)',
+        borderRadius: '8px',
+        fontSize: '13px'
+      }}>
+        <label className="checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <div className={`checkbox ${deleteExisting ? 'checked' : ''}`} style={{ width: '18px', height: '18px' }}>
+            {deleteExisting && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+          <input
+            type="checkbox"
+            checked={deleteExisting}
+            onChange={(e) => setDeleteExisting(e.target.checked)}
+            style={{ display: 'none' }}
+          />
+          <span>{getMessage('alsoDeleteExistingHistory') || '同时删除已有历史记录'}</span>
+        </label>
       </div>
 
       {/* Current Domain Display */}
