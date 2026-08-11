@@ -141,6 +141,72 @@
     "message": "关闭",
     "description": "Close button"
   },
+  "favorites": {
+    "message": "收藏（受保护域名）",
+    "description": "Favorites title"
+  },
+  "favoritesDescription": {
+    "message": "收藏的域名在进行批量删除和自动清理时受到保护，其历史记录不会被删除。",
+    "description": "Favorites description"
+  },
+  "addCurrentToFavorites": {
+    "message": "收藏当前页面 ($1$)",
+    "description": "Add current page to favorites",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "enterDomainForFavorites": {
+    "message": "输入要收藏的网址或域名",
+    "description": "Input for favorite domain"
+  },
+  "addFavorite": {
+    "message": "添加到收藏",
+    "description": "Add favorite button"
+  },
+  "noFavorites": {
+    "message": "暂无收藏域名",
+    "description": "No favorites"
+  },
+  "addToFavorites": {
+    "message": "添加到收藏",
+    "description": "Add to favorites tooltip"
+  },
+  "removeFromFavorites": {
+    "message": "从收藏中移除",
+    "description": "Remove from favorites tooltip"
+  },
+  "allVisitTypes": {
+    "message": "所有访问类型",
+    "description": "All visit types filter"
+  },
+  "visitTypeTyped": {
+    "message": "手动输入地址",
+    "description": "Typed visit type"
+  },
+  "visitTypeLink": {
+    "message": "通过链接访问",
+    "description": "Link visit type"
+  },
+  "visitTypeAuto": {
+    "message": "自动跳转/重定向",
+    "description": "Auto toplevel visit type"
+  },
+  "visitTypeReload": {
+    "message": "刷新",
+    "description": "Reload visit type"
+  },
+  "visitTypeForm": {
+    "message": "表单提交",
+    "description": "Form submit visit type"
+  },
+  "visitTypeKeyword": {
+    "message": "地址栏关键词",
+    "description": "Keyword visit type"
+  },
   "realtimeProtection": {
     "message": "实时保护",
     "description": "Real-time protection"
@@ -229,7 +295,7 @@
     "message": "备份失败：$1$",
     "description": "Backup failure message",
     "placeholders": {
-      "error": {
+      "1": {
         "content": "$1",
         "example": "Error message"
       }
@@ -243,7 +309,7 @@
     "message": "恢复失败：$1$",
     "description": "Restore failure message",
     "placeholders": {
-      "error": {
+      "1": {
         "content": "$1",
         "example": "Error message"
       }
@@ -264,6 +330,18 @@
   "days": {
     "message": "天",
     "description": "Days unit"
+  },
+  "autoCleanup": {
+    "message": "自动清理",
+    "description": "Auto cleanup"
+  },
+  "autoCleanupDesc": {
+    "message": "定期自动删除超过保留期的历史记录。收藏的域名不会被删除。",
+    "description": "Auto cleanup description"
+  },
+  "cleanupRetention": {
+    "message": "保留期",
+    "description": "Cleanup retention period"
   },
   "permissionTabs": {
     "message": "标签页访问 - 用于实时黑名单保护和添加当前页面到黑名单",
@@ -416,6 +494,26 @@
   "dailyTrend": {
     "message": "每日趋势",
     "description": "Daily trend chart title"
+  },
+  "range_all": {
+    "message": "全部",
+    "description": "All time range"
+  },
+  "range_7": {
+    "message": "近7天",
+    "description": "Last 7 days range"
+  },
+  "range_30": {
+    "message": "近30天",
+    "description": "Last 30 days range"
+  },
+  "range_90": {
+    "message": "近90天",
+    "description": "Last 90 days range"
+  },
+  "allFilteredByBlacklist": {
+    "message": "历史记录已被黑名单过滤，或当前时间范围内没有数据。",
+    "description": "Empty state when all history is filtered by blacklist"
   },
   "export": {
     "message": "导出",
@@ -573,7 +671,7 @@
     "message": "将 $1$ 加入黑名单并删除其全部历史记录，此操作不可撤销。确定继续？",
     "description": "Confirmation before adding a domain to blacklist with history deletion",
     "placeholders": {
-      "domain": {
+      "1": {
         "content": "$1",
         "example": "example.com"
       }
@@ -583,7 +681,7 @@
     "message": "确定将 $1$ 加入黑名单？",
     "description": "Confirmation before adding a domain to blacklist without history deletion",
     "placeholders": {
-      "domain": {
+      "1": {
         "content": "$1",
         "example": "example.com"
       }

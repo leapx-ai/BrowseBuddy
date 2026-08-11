@@ -16,6 +16,8 @@ export const defaultSettings: Settings = {
   autoBackup: false,
   backupInterval: 7,
   sessionIncognito: false,
+  autoCleanup: false,
+  cleanupRetentionDays: 30,
 };
 
 // Storage keys
@@ -25,7 +27,37 @@ const STORAGE_KEYS = {
   STATS_CACHE: 'browsebuddy_stats_cache',
   BACKUP_DATA: 'browsebuddy_backup',
   DURATIONS: 'browsebuddy_durations',
+  FAVORITES: 'browsebuddy_favorites',
 };
+
+// Favorited (protected) main domains - never auto-cleaned, never counted for deletion
+export async function getFavorites(): Promise<string[]> {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.FAVORITES);
+    return result[STORAGE_KEYS.FAVORITES] || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveFavorites(domains: string[]): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEYS.FAVORITES]: domains });
+}
+
+export async function addFavorite(domain: string): Promise<void> {
+  const mainDomain = extractMainDomain(domain);
+  if (!mainDomain) return;
+  const favorites = await getFavorites();
+  if (!favorites.includes(mainDomain)) {
+    await saveFavorites([...favorites, mainDomain]);
+  }
+}
+
+export async function removeFavorite(domain: string): Promise<void> {
+  const mainDomain = extractMainDomain(domain);
+  const favorites = await getFavorites();
+  await saveFavorites(favorites.filter(d => d !== mainDomain));
+}
 
 // Per-domain accumulated dwell time (ms)
 export async function getDomainDurations(): Promise<Record<string, number>> {
@@ -286,6 +318,36 @@ export async function restoreBackup(backupJson: string): Promise<void> {
 
   await chrome.storage.local.set(backup.data);
   await saveBlacklist(mergedBlacklist);
+}
+
+// Delete history older than the retention cutoff, protecting favorited domains.
+export async function cleanupOldHistory(retentionDays: number): Promise<number> {
+  const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+  const favorites = await getFavorites();
+
+  const items = await fetchHistory({ maxResults: 10000, dateRange: { start: 0, end: cutoff } });
+
+  const toDelete = items.filter(item => {
+    if (!item.url) return false;
+    const mainDomain = extractMainDomain(item.url);
+    // Never delete favorited domains
+    if (favorites.includes(mainDomain)) return false;
+    return true;
+  });
+
+  let deleted = 0;
+  for (let i = 0; i < toDelete.length; i++) {
+    try {
+      await deleteSingleUrl(toDelete[i].url);
+      deleted++;
+    } catch {
+      // Continue
+    }
+    if ((i + 1) % 10 === 0) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+  return deleted;
 }
 
 // Get storage usage

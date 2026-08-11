@@ -7,6 +7,7 @@ import {
   getDomainDurations,
   saveDomainDurations,
   createBackup,
+  cleanupOldHistory,
 } from "../utils/storage";
 import { extractMainDomain } from "../utils/blacklist";
 
@@ -50,11 +51,44 @@ async function settleTabDuration(tabId: number) {
   saveDomainDurations(domainDurations).catch(() => {});
 }
 
+// Periodically persist the currently-active tab's running time so it is not
+// lost if the service worker is terminated (MV3 swarms sleep aggressively).
+// This does NOT finalize the tab - it snapshots elapsed time into the totals
+// and resets the start time, keeping the tab "still active" for timing.
+async function persistActiveTabDuration() {
+  for (const tab of activeTabs.values()) {
+    const elapsed = Date.now() - tab.startTime;
+    if (elapsed < 1000) continue;
+
+    const domain = extractMainDomain(tab.url);
+    if (!domain) continue;
+
+    const settings = await getSettings();
+    const blacklist = await getBlacklist();
+    if (settings.sessionIncognito || isUrlBlacklisted(tab.url, blacklist)) {
+      continue;
+    }
+
+    domainDurations[domain] = (domainDurations[domain] || 0) + elapsed;
+    // Reset the snapshot point so we don't double count next time
+    tab.startTime = Date.now();
+    saveDomainDurations(domainDurations).catch(() => {});
+  }
+}
+
 // Sync badge with persisted session incognito state on startup
 getSettings().then(settings => {
   syncIncognitoBadge(settings.sessionIncognito);
   syncAutoBackupAlarm(settings.autoBackup, settings.backupInterval);
+  syncAutoCleanupAlarm(settings.autoCleanup);
+  ensureDwellSnapshotAlarm();
 });
+
+// Run a per-minute snapshot alarm so dwell time is never lost to SW restarts.
+function ensureDwellSnapshotAlarm() {
+  if (!chrome.alarms) return;
+  chrome.alarms.create("dwell-snapshot", { periodInMinutes: 1 });
+}
 
 // Manage the periodic auto-backup alarm based on settings.
 // MV3 alarms fire at most once per minute; a minimum interval of 1 hour
@@ -67,6 +101,17 @@ function syncAutoBackupAlarm(enabled: boolean, intervalDays: number) {
     chrome.alarms.create("auto-backup", { periodInMinutes: minutes });
   } else {
     chrome.alarms.clear("auto-backup");
+  }
+}
+
+// Manage the auto-cleanup alarm. Runs daily when enabled.
+function syncAutoCleanupAlarm(enabled: boolean) {
+  if (!chrome.alarms) return;
+
+  if (enabled) {
+    chrome.alarms.create("auto-cleanup", { periodInMinutes: 24 * 60 });
+  } else {
+    chrome.alarms.clear("auto-cleanup");
   }
 }
 
@@ -190,21 +235,48 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-// Periodic tasks driven by alarms (auto-backup, etc.)
+// When a window loses focus (e.g. user switches to another app), finalize the
+// running time of all tracked tabs. On refocus the next onActivated/onUpdated
+// will re-record them.
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId === chrome.windows.WINDOW_ID_NONE) {
+    // Browser lost focus - settle everything
+    for (const tabId of Array.from(activeTabs.keys())) {
+      settleTabDuration(tabId);
+    }
+  }
+});
+
+// Persist the active tab's running time every minute as a safety net against
+// service worker termination.
 chrome.alarms?.onAlarm?.addListener((alarm) => {
+  if (alarm.name === "dwell-snapshot") {
+    persistActiveTabDuration();
+  }
+});
+
+// Periodic tasks driven by alarms (auto-backup, auto-cleanup)
+chrome.alarms?.onAlarm?.addListener(async (alarm) => {
   if (alarm.name === "auto-backup") {
     createBackup().catch(() => {});
+  }
+  if (alarm.name === "auto-cleanup") {
+    const settings = await getSettings();
+    if (settings.autoCleanup) {
+      cleanupOldHistory(settings.cleanupRetentionDays).catch(() => {});
+    }
   }
 });
 
 // Keep the toolbar badge in sync with session incognito state,
-// and keep the auto-backup alarm in sync with settings changes.
+// and keep the auto-backup / auto-cleanup alarms in sync with settings changes.
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.browsebuddy_settings) {
     const settings = changes.browsebuddy_settings.newValue;
     if (settings) {
       syncIncognitoBadge(settings.sessionIncognito);
       syncAutoBackupAlarm(settings.autoBackup, settings.backupInterval);
+      syncAutoCleanupAlarm(settings.autoCleanup);
     }
   }
 });

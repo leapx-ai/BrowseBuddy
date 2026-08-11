@@ -1,25 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getMessage, formatNumber, formatDuration } from '../../utils/i18n';
 import { calculateStatistics, fetchVisibleHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
 import { getBlacklist, getDomainDurations } from '../../utils/storage';
 import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
+
+type RangeKey = 'all' | '7' | '30' | '90';
+
+const RANGE_OPTIONS: { key: RangeKey; label: string; days?: number }[] = [
+  { key: 'all', label: '全部' },
+  { key: '7', label: '近7天', days: 7 },
+  { key: '30', label: '近30天', days: 30 },
+  { key: '90', label: '近90天', days: 90 },
+];
 
 const StatsModule: React.FC = () => {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [durations, setDurations] = useState<Record<string, number>>({});
+  const [range, setRange] = useState<RangeKey>('all');
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     setIsLoading(true);
     try {
       const list = await getBlacklist();
       setBlacklist(list);
-      const data = await calculateStatistics(list);
+      const option = RANGE_OPTIONS.find(o => o.key === range);
+      const dateRange = option?.days
+        ? { start: Date.now() - option.days * 24 * 60 * 60 * 1000, end: Date.now() }
+        : undefined;
+      const data = await calculateStatistics(list, dateRange);
       setStats(data);
       const durationData = await getDomainDurations();
       setDurations(durationData);
@@ -28,7 +38,11 @@ const StatsModule: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [range]);
+
+  useEffect(() => {
+    loadStats();
+  }, [range, loadStats]);
 
   const handleExportCSV = async () => {
     if (!stats) return;
@@ -40,7 +54,7 @@ const StatsModule: React.FC = () => {
   const handleExportHTML = async () => {
     if (!stats) return;
     const items = await fetchVisibleHistory({ maxResults: 10000 }, blacklist);
-    const html = exportToHtml(items, stats);
+    const html = exportToHtml(items, stats, durations);
     downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
   };
 
@@ -58,13 +72,29 @@ const StatsModule: React.FC = () => {
       <div className="empty-state">
         <div className="empty-icon">📊</div>
         <div className="empty-title">{getMessage('noDataAvailable')}</div>
-        <div className="empty-desc">{getMessage('startBrowsing')}</div>
+        <div className="empty-desc">
+          {blacklist.length > 0 ? getMessage('allFilteredByBlacklist') : getMessage('startBrowsing')}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {/* Time range switcher */}
+      <div className="segmented" style={{ marginBottom: '12px', width: '100%', justifyContent: 'space-between' }}>
+        {RANGE_OPTIONS.map(opt => (
+          <button
+            key={opt.key}
+            className={`segmented-item ${range === opt.key ? 'active' : ''}`}
+            onClick={() => setRange(opt.key)}
+            style={{ flex: 1 }}
+          >
+            {getMessage(`range_${opt.key}`)}
+          </button>
+        ))}
+      </div>
+
       {/* Stats Overview */}
       <div className="stats-grid">
         <div className="stat-card">
@@ -103,7 +133,7 @@ const StatsModule: React.FC = () => {
                 <div className="progress-bar" style={{ marginTop: '4px' }}>
                   <div 
                     className="progress-fill" 
-                    style={{ width: `${(site.count / stats.topSites[0].count) * 100}%` }}
+                    style={{ width: `${(site.count / Math.max(stats.topSites[0].count, 1)) * 100}%` }}
                   />
                 </div>
               </div>
@@ -145,7 +175,7 @@ const StatsModule: React.FC = () => {
                     <div className="progress-bar" style={{ marginTop: '4px' }}>
                       <div
                         className="progress-fill progress-fill-secondary"
-                        style={{ width: `${(ms / Math.max(...Object.values(durations))) * 100}%` }}
+                        style={{ width: `${(ms / Math.max(...Object.values(durations), 1)) * 100}%` }}
                       />
                     </div>
                   </div>

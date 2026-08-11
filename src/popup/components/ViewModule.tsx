@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
 import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type HistoryItem, type SearchOptions } from '../../utils/history';
-import { getBlacklist } from '../../utils/storage';
+import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
 import { extractMainDomain } from '../../utils/blacklist';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
@@ -45,16 +45,59 @@ function parseSearchQuery(query: string): SearchOptions {
   return options;
 }
 
-// Load favicons from Chrome's local favicon cache - no network request,
-// so no domain is ever sent to a third party.
-function faviconUrl(url: string): string {
+// Render a deterministic colored letter avatar for a domain.
+// Fully local - no network request, no CSP issues, no domain leaks.
+function domainLetter(url: string): string {
   try {
-    const parsed = new URL(url);
-    return `chrome://favicon/size/16@1x/${parsed.origin}`;
+    const host = new URL(url).hostname || '?';
+    const letter = host.replace(/^www\./, '').charAt(0).toUpperCase() || '?';
+    return letter;
   } catch {
-    return '';
+    return '?';
   }
 }
+
+function domainColor(url: string): string {
+  try {
+    const host = new URL(url).hostname;
+    let hash = 0;
+    for (let i = 0; i < host.length; i++) {
+      hash = (hash * 31 + host.charCodeAt(i)) >>> 0;
+    }
+    const palette = [
+      '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
+      '#10b981', '#06b6d4', '#ef4444', '#84cc16',
+    ];
+    return palette[hash % palette.length];
+  } catch {
+    return '#6366f1';
+  }
+}
+
+const DomainIcon: React.FC<{ url: string; size?: number }> = ({ url, size = 16 }) => {
+  return (
+    <div
+      className="history-favicon"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '4px',
+        background: domainColor(url),
+        color: '#fff',
+        fontSize: Math.round(size * 0.6),
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        overflow: 'hidden',
+        marginTop: 0,
+      }}
+    >
+      {domainLetter(url)}
+    </div>
+  );
+};
 
 // Recently closed tabs/windows restore panel
 const RestoreSession: React.FC = () => {
@@ -136,8 +179,7 @@ const RestoreSession: React.FC = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   {url ? (
-                    <img src={faviconUrl(url)} alt="" className="history-favicon"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <DomainIcon url={url} />
                   ) : (
                     <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
                   )}
@@ -163,7 +205,9 @@ const ViewModule: React.FC = () => {
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [dayLoading, setDayLoading] = useState(false);
   const [activeSearch, setActiveSearch] = useState('');
+  const [transitionType, setTransitionType] = useState('');
   const debounceTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -183,8 +227,12 @@ const ViewModule: React.FC = () => {
 
   useEffect(() => {
     if (viewMode === 'calendar') return;
-    loadHistory(parseSearchQuery(activeSearch));
-  }, [activeSearch, viewMode]);
+    const options = parseSearchQuery(activeSearch);
+    if (transitionType) {
+      options.transitionType = transitionType;
+    }
+    loadHistory(options);
+  }, [activeSearch, viewMode, transitionType]);
 
   const loadHistory = async (options?: SearchOptions) => {
     setIsLoading(true);
@@ -199,9 +247,11 @@ const ViewModule: React.FC = () => {
     }
   };
 
-  // Load history for a specific day when a calendar cell is clicked
+  // Load history for a specific day when a calendar cell is clicked.
+  // Uses a dedicated loading state so the calendar itself stays visible.
   const loadDayHistory = async (date: string) => {
-    setIsLoading(true);
+    setSelectedDay(date);
+    setDayLoading(true);
     try {
       const blacklist = await getBlacklist();
       const start = new Date(date + 'T00:00:00').getTime();
@@ -211,16 +261,15 @@ const ViewModule: React.FC = () => {
         blacklist
       );
       setHistory(items);
-      setSelectedDay(date);
     } catch (error) {
       console.error('Failed to load day history:', error);
     } finally {
-      setIsLoading(false);
+      setDayLoading(false);
     }
   };
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && viewMode !== 'calendar') {
       return (
         <div className="loading">
           <div className="spinner" />
@@ -289,6 +338,26 @@ const ViewModule: React.FC = () => {
         </div>
       )}
 
+      {/* Transition type filter */}
+      {viewMode !== 'calendar' && (
+        <div className="input-group" style={{ marginBottom: '12px' }}>
+          <select
+            className="input"
+            value={transitionType}
+            onChange={(e) => setTransitionType(e.target.value)}
+            style={{ padding: '8px 10px', fontSize: '13px' }}
+          >
+            <option value="">{getMessage('allVisitTypes')}</option>
+            <option value="typed">{getMessage('visitTypeTyped')}</option>
+            <option value="link">{getMessage('visitTypeLink')}</option>
+            <option value="auto_toplevel">{getMessage('visitTypeAuto')}</option>
+            <option value="reload">{getMessage('visitTypeReload')}</option>
+            <option value="form_submit">{getMessage('visitTypeForm')}</option>
+            <option value="keyword">{getMessage('visitTypeKeyword')}</option>
+          </select>
+        </div>
+      )}
+
       {/* View Mode Tabs */}
       <div className="delete-tabs">
         <button
@@ -321,7 +390,7 @@ const ViewModule: React.FC = () => {
       {renderContent()}
 
       {/* Day detail below calendar */}
-      {viewMode === 'calendar' && selectedDay && !isLoading && (
+      {viewMode === 'calendar' && selectedDay && (
         <div style={{ marginTop: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 className="card-title" style={{ marginBottom: 0 }}>{selectedDay}</h3>
@@ -329,14 +398,20 @@ const ViewModule: React.FC = () => {
               {getMessage('close')}
             </button>
           </div>
-          {history.length > 0 ? (
-            <ListView items={history} />
-          ) : (
-            <div className="empty-state" style={{ padding: '20px' }}>
-              <div className="empty-icon">📭</div>
-              <div className="empty-title">{getMessage('noHistoryFound')}</div>
-            </div>
-          )}
+          <div className="day-history-list">
+            {dayLoading ? (
+              <div className="loading">
+                <div className="spinner" />
+              </div>
+            ) : history.length > 0 ? (
+              <ListView items={history} />
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon">📭</div>
+                <div className="empty-title">{getMessage('noHistoryFound')}</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -355,6 +430,7 @@ const CalendarView: React.FC<{
   const [data, setData] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [maxCount, setMaxCount] = useState(1);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -370,6 +446,7 @@ const CalendarView: React.FC<{
       setData(map);
       setMaxCount(max);
       setIsLoading(false);
+      setInitialized(true);
     }).catch(() => {
       if (!cancelled) setIsLoading(false);
     });
@@ -378,10 +455,10 @@ const CalendarView: React.FC<{
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthLabel = new Date(year, month, 1).toLocaleDateString(getCurrentLocale(), {
-    year: 'numeric',
-    month: 'long',
-  });
+  const monthLabel = new Date(year, month, 1).toLocaleDateString(
+    getCurrentLocale().replace('_', '-'),
+    { year: 'numeric', month: 'long' }
+  );
 
   const cells: (string | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -389,15 +466,18 @@ const CalendarView: React.FC<{
     cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
   }
 
-  if (isLoading) {
+  const today = new Date().toISOString().split('T')[0];
+
+  // On the very first load we have no data to render, so show a spinner.
+  // Month switches keep the previous grid on screen (faded) until the new
+  // month's data arrives, avoiding layout jumps.
+  if (!initialized && isLoading) {
     return (
       <div className="loading" style={{ padding: '20px' }}>
         <div className="spinner" />
       </div>
     );
   }
-
-  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div>
@@ -406,7 +486,10 @@ const CalendarView: React.FC<{
         <span style={{ fontWeight: 'bold' }}>{monthLabel}</span>
         <button className="btn btn-sm btn-secondary" onClick={onNextMonth}>›</button>
       </div>
-      <div className="calendar-grid">
+      <div
+        className="calendar-grid"
+        style={isLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+      >
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;
           const count = data[date] || 0;
@@ -486,12 +569,7 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
         <div key={domain} className="card" style={{ marginBottom: '12px' }}>
           <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img
-                src={faviconUrl(`https://${domain}`)}
-                alt=""
-                className="history-favicon"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <DomainIcon url={`https://${domain}`} />
               {domain}
             </span>
             <span style={{ 
@@ -522,33 +600,61 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
 
 // Single History Item
 const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ item, showDate = true }) => {
-  const [faviconError, setFaviconError] = useState(false);
+  const [isFav, setIsFav] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const mainDomain = extractMainDomain(item.url);
+    getFavorites().then(favs => {
+      if (!cancelled) setIsFav(favs.includes(mainDomain));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [item.url]);
 
   const handleClick = () => {
     chrome.tabs.create({ url: item.url });
   };
 
+  const handleToggleFav = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const mainDomain = extractMainDomain(item.url);
+    try {
+      if (isFav) {
+        await removeFavorite(mainDomain);
+        setIsFav(false);
+      } else {
+        await addFavorite(mainDomain);
+        setIsFav(true);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  const timeLabel = showDate
+    ? formatDateTime(item.visitTime)
+    : new Date(item.visitTime).toLocaleTimeString(getCurrentLocale().replace('_', '-'), {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
   return (
     <div className="history-item" onClick={handleClick}>
-      {!faviconError ? (
-        <img
-          src={faviconUrl(item.url)}
-          alt=""
-          className="history-favicon"
-          onError={() => setFaviconError(true)}
-        />
-      ) : (
-        <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
-      )}
+      <DomainIcon url={item.url} />
       <div className="history-content">
         <div className="history-title">{item.title || '(No title)'}</div>
         <div className="history-url">{item.url}</div>
       </div>
-      {showDate && (
-        <div className="history-time">
-          {formatDateTime(item.visitTime)}
-        </div>
-      )}
+      <div className="history-meta">
+        <button
+          className={`fav-btn ${isFav ? 'fav-btn-active' : ''}`}
+          onClick={handleToggleFav}
+          title={isFav ? getMessage('removeFromFavorites') : getMessage('addToFavorites')}
+        >
+          {isFav ? '★' : '☆'}
+        </button>
+        <span className="history-time">{timeLabel}</span>
+      </div>
     </div>
   );
 };

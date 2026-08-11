@@ -7,6 +7,8 @@ export interface HistoryItem {
   visitCount: number;
   typedCount?: number;
   lastVisitTime?: number;
+  // Primary navigation transition type from getVisits()
+  transition?: string;
 }
 
 export interface GroupedHistory {
@@ -48,6 +50,8 @@ export interface Settings {
   autoBackup: boolean;
   backupInterval: number; // days
   sessionIncognito: boolean;
+  autoCleanup: boolean;
+  cleanupRetentionDays: number; // keep history newer than this many days
 }
 
 // Export types
@@ -80,6 +84,7 @@ export interface SearchOptions {
   };
   domains?: string[];
   maxResults?: number;
+  transitionType?: string;
 }
 
 // Calendar data

@@ -8,7 +8,7 @@ import type {
   CalendarData,
   BlacklistEntry,
 } from '../types';
-import { filterBlacklistedItems } from './blacklist';
+import { filterBlacklistedItems, extractMainDomain } from './blacklist';
 
 // Re-export types for convenience
 export type { 
@@ -23,7 +23,7 @@ export type {
 
 // Fetch history from browser
 export async function fetchHistory(options: SearchOptions = {}): Promise<HistoryItem[]> {
-  const { keyword, dateRange, domains, maxResults = 10000 } = options;
+  const { keyword, dateRange, domains, maxResults = 10000, transitionType } = options;
   
   return new Promise((resolve, reject) => {
     const query: chrome.history.HistoryQuery = {
@@ -33,7 +33,7 @@ export async function fetchHistory(options: SearchOptions = {}): Promise<History
       endTime: dateRange?.end,
     };
 
-    chrome.history.search(query, (results) => {
+    chrome.history.search(query, async (results) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
         return;
@@ -61,6 +61,28 @@ export async function fetchHistory(options: SearchOptions = {}): Promise<History
         });
       }
 
+      // Filter by transition type if specified.
+      // Requires a getVisits() round-trip per record, so only runs when requested.
+      if (transitionType) {
+        const enriched = await Promise.all(
+          items.map(async (item) => {
+            try {
+              const visits = await chrome.history.getVisits({ url: item.url });
+              // Pick the most recent visit's transition
+              const sorted = [...visits].sort((a, b) => (b.visitTime || 0) - (a.visitTime || 0));
+              return { ...item, transition: sorted[0]?.transition };
+            } catch {
+              return { ...item, transition: undefined };
+            }
+          })
+        );
+
+        items = enriched.filter(item => {
+          if (!item.transition) return false;
+          return item.transition === transitionType;
+        });
+      }
+
       resolve(items);
     });
   });
@@ -75,12 +97,25 @@ export async function fetchVisibleHistory(
   return filterBlacklistedItems(items, blacklist);
 }
 
-// Delete history entries
+// Remove items whose main domain is favorited (protected from deletion).
+async function filterFavoritedItems(items: HistoryItem[]): Promise<HistoryItem[]> {
+  if (items.length === 0) return items;
+  const { getFavorites } = await import('./storage');
+  const favorites = await getFavorites();
+  if (favorites.length === 0) return items;
+  return items.filter(item => {
+    const mainDomain = extractMainDomain(item.url);
+    return !favorites.includes(mainDomain);
+  });
+}
+
+// Delete history entries (favorited domains are protected)
 export async function deleteHistory(options: DeleteOptions): Promise<number> {
   const items = await fetchHistoryForDelete(options);
+  const protectedItems = await filterFavoritedItems(items);
   let deletedCount = 0;
 
-  for (const item of items) {
+  for (const item of protectedItems) {
     try {
       await new Promise<void>((resolve, reject) => {
         chrome.history.deleteUrl({ url: item.url }, () => {
@@ -100,9 +135,10 @@ export async function deleteHistory(options: DeleteOptions): Promise<number> {
   return deletedCount;
 }
 
-// Preview items to be deleted
+// Preview items to be deleted (favorited domains are protected)
 export async function previewDelete(options: DeleteOptions): Promise<HistoryItem[]> {
-  return fetchHistoryForDelete(options);
+  const items = await fetchHistoryForDelete(options);
+  return filterFavoritedItems(items);
 }
 
 async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryItem[]> {
@@ -227,9 +263,12 @@ export function groupByHour(items: HistoryItem[]): Map<number, HistoryItem[]> {
 }
 
 // Calculate statistics
-export async function calculateStatistics(blacklist: BlacklistEntry[] = []): Promise<Statistics> {
+export async function calculateStatistics(
+  blacklist: BlacklistEntry[] = [],
+  dateRange?: { start: number; end: number }
+): Promise<Statistics> {
   const items = filterBlacklistedItems(
-    await fetchHistory({ maxResults: 10000 }),
+    await fetchHistory({ maxResults: 10000, dateRange }),
     blacklist
   );
   
@@ -354,9 +393,46 @@ export function exportToCsv(items: HistoryItem[]): string {
 }
 
 // Export to HTML report
-export function exportToHtml(items: HistoryItem[], stats: Statistics): string {
+export function exportToHtml(
+  items: HistoryItem[],
+  stats: Statistics,
+  durations?: Record<string, number>
+): string {
   const grouped = groupByDate(items);
-  
+
+  const topSitesHtml = stats.topSites
+    .slice(0, 10)
+    .map((site, i) => `
+    <div class="item">
+      <span class="rank">${i + 1}</span>
+      <span class="item-title">${site.domain}</span>
+      <span class="item-count">${site.count} visits</span>
+    </div>`)
+    .join('');
+
+  const topDurationHtml = durations && Object.keys(durations).length > 0
+    ? Object.entries(durations)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([domain, ms], i) => `
+    <div class="item">
+      <span class="rank">${i + 1}</span>
+      <span class="item-title">${domain}</span>
+      <span class="item-count">${formatReportDuration(ms)}</span>
+    </div>`)
+        .join('')
+    : '';
+
+  const hourBars = stats.timeDistribution
+    .map(h => `
+    <div class="hbar" style="height:${Math.max(h.count > 0 ? (h.count / Math.max(...stats.timeDistribution.map(x => x.count), 1)) * 100 : 0, 2)}%;" title="${h.hour}:00 - ${h.count}"></div>`)
+    .join('');
+
+  const dailyBars = stats.dailyStats.slice(-30)
+    .map(d => `
+    <div class="hbar hbar-alt" style="height:${Math.max((d.count / Math.max(...stats.dailyStats.map(x => x.count), 1)) * 100, 2)}%;" title="${d.date} - ${d.count}"></div>`)
+    .join('');
+
   let html = `<!DOCTYPE html>
 <html>
 <head>
@@ -365,13 +441,19 @@ export function exportToHtml(items: HistoryItem[], stats: Statistics): string {
   <style>
     body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
     h1 { color: #333; }
+    h2 { color: #444; margin-top: 30px; }
     .stats { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
     .date-group { margin: 20px 0; }
     .date-header { background: #e0e0e0; padding: 10px; font-weight: bold; }
-    .item { padding: 10px; border-bottom: 1px solid #eee; }
+    .item { padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
     .item-title { font-weight: bold; }
     .item-url { color: #666; font-size: 0.9em; }
     .item-time { color: #999; font-size: 0.85em; }
+    .item-count { color: #777; margin-left: auto; }
+    .rank { color: #999; width: 20px; }
+    .chart { display: flex; align-items: flex-end; height: 100px; gap: 2px; margin: 10px 0; }
+    .hbar { flex: 1; background: #6366f1; border-radius: 2px 2px 0 0; min-height: 2px; }
+    .hbar-alt { background: #8b5cf6; }
   </style>
 </head>
 <body>
@@ -380,7 +462,14 @@ export function exportToHtml(items: HistoryItem[], stats: Statistics): string {
     <p><strong>Total Records:</strong> ${stats.totalRecords}</p>
     <p><strong>Total Domains:</strong> ${stats.totalDomains}</p>
     <p><strong>Period:</strong> ${new Date(stats.dateRange.earliest).toLocaleDateString()} - ${new Date(stats.dateRange.latest).toLocaleDateString()}</p>
-  </div>`;
+  </div>
+  <h2>Top Sites</h2>
+  ${topSitesHtml || '<p>No data</p>'}
+  ${topDurationHtml ? `<h2>Most Time Spent</h2>${topDurationHtml}` : ''}
+  <h2>Hourly Distribution</h2>
+  <div class="chart">${hourBars || '<p>No data</p>'}</div>
+  <h2>Daily Trend (Last 30 days)</h2>
+  <div class="chart">${dailyBars || '<p>No data</p>'}</div>`;
 
   Array.from(grouped.entries())
     .sort((a, b) => b[0].localeCompare(a[0]))
@@ -407,6 +496,16 @@ export function exportToHtml(items: HistoryItem[], stats: Statistics): string {
 </html>`;
 
   return html;
+}
+
+// Format milliseconds into a human-readable duration for the HTML report
+function formatReportDuration(ms: number): string {
+  const sec = Math.round(ms / 1000);
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ${sec % 60}s`;
+  const hr = Math.floor(min / 60);
+  return `${hr}h ${min % 60}m`;
 }
 
 // Download file

@@ -5,12 +5,16 @@ import {
   removeFromBlacklist, 
   updateBlacklistEntry,
   addUrlToBlacklist,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
   extractMainDomain,
   type BlacklistEntry 
 } from '../../utils/storage';
 
 const PrivacyModule: React.FC = () => {
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newUrl, setNewUrl] = useState('');
   const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null);
@@ -24,8 +28,50 @@ const PrivacyModule: React.FC = () => {
 
   useEffect(() => {
     loadBlacklist();
+    loadFavorites();
     getCurrentTab();
   }, []);
+
+  const loadFavorites = async () => {
+    try {
+      const favs = await getFavorites();
+      setFavorites(favs);
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+    }
+  };
+
+  const handleAddFavorite = async () => {
+    if (!newUrl.trim()) return;
+    try {
+      const mainDomain = extractMainDomain(newUrl.trim());
+      if (!mainDomain) return;
+      await addFavorite(mainDomain);
+      setNewUrl('');
+      await loadFavorites();
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+    }
+  };
+
+  const handleAddCurrentAsFavorite = async () => {
+    if (!currentTab?.url) return;
+    try {
+      await addFavorite(currentTab.url);
+      await loadFavorites();
+    } catch (error) {
+      console.error('Failed to add current page to favorites:', error);
+    }
+  };
+
+  const handleRemoveFavorite = async (domain: string) => {
+    try {
+      await removeFavorite(domain);
+      await loadFavorites();
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
+  };
 
   useEffect(() => {
     if (newUrl.trim()) {
@@ -323,6 +369,74 @@ const PrivacyModule: React.FC = () => {
                 <button
                   className="btn btn-sm btn-danger"
                   onClick={() => handleRemove(entry.id)}
+                  style={{ padding: '4px 8px' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Favorites (Protected Domains) */}
+      <div className="card" style={{ marginTop: '16px' }}>
+        <h3 className="card-title">
+          {getMessage('favorites')} ({favorites.length})
+        </h3>
+        <div className="alert alert-info" style={{ marginBottom: '12px' }}>
+          <p style={{ margin: 0, fontSize: '12px' }}>
+            {getMessage('favoritesDescription')}
+          </p>
+        </div>
+
+        {currentTab?.url && !currentTab.url.startsWith('chrome://') && (
+          <button
+            className="btn btn-secondary btn-block"
+            onClick={handleAddCurrentAsFavorite}
+            style={{ marginBottom: '12px' }}
+          >
+            ★ {getMessage('addCurrentToFavorites', extractMainDomain(currentTab.url))}
+          </button>
+        )}
+
+        <div className="input-group">
+          <input
+            type="text"
+            className="input"
+            placeholder={getMessage('enterDomainForFavorites')}
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddFavorite(); }}
+          />
+        </div>
+        <button
+          className="btn btn-primary btn-block"
+          onClick={handleAddFavorite}
+          disabled={!extractedDomain}
+          style={{ marginBottom: '12px' }}
+        >
+          ★ {getMessage('addFavorite')}
+        </button>
+
+        {favorites.length === 0 ? (
+          <div className="empty-state" style={{ padding: '20px' }}>
+            <div className="empty-icon">⭐</div>
+            <div className="empty-title">{getMessage('noFavorites')}</div>
+          </div>
+        ) : (
+          <div>
+            {favorites.map((domain) => (
+              <div key={domain} className="blacklist-item">
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                  <span className="blacklist-pattern" style={{ flex: 1 }}>★ {domain}</span>
+                </div>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => handleRemoveFavorite(domain)}
                   style={{ padding: '4px 8px' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

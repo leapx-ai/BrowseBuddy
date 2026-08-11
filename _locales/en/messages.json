@@ -141,6 +141,72 @@
     "message": "Close",
     "description": "Close button"
   },
+  "favorites": {
+    "message": "Favorites (Protected Domains)",
+    "description": "Favorites title"
+  },
+  "favoritesDescription": {
+    "message": "Favorited domains are protected from bulk deletion and auto cleanup - their history is never removed.",
+    "description": "Favorites description"
+  },
+  "addCurrentToFavorites": {
+    "message": "Favorite current page ($1$)",
+    "description": "Add current page to favorites",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "enterDomainForFavorites": {
+    "message": "Enter a URL or domain to favorite",
+    "description": "Input for favorite domain"
+  },
+  "addFavorite": {
+    "message": "Add to favorites",
+    "description": "Add favorite button"
+  },
+  "noFavorites": {
+    "message": "No favorited domains",
+    "description": "No favorites"
+  },
+  "addToFavorites": {
+    "message": "Add to favorites",
+    "description": "Add to favorites tooltip"
+  },
+  "removeFromFavorites": {
+    "message": "Remove from favorites",
+    "description": "Remove from favorites tooltip"
+  },
+  "allVisitTypes": {
+    "message": "All visit types",
+    "description": "All visit types filter"
+  },
+  "visitTypeTyped": {
+    "message": "Typed in address bar",
+    "description": "Typed visit type"
+  },
+  "visitTypeLink": {
+    "message": "Opened via link",
+    "description": "Link visit type"
+  },
+  "visitTypeAuto": {
+    "message": "Auto redirect",
+    "description": "Auto toplevel visit type"
+  },
+  "visitTypeReload": {
+    "message": "Reload",
+    "description": "Reload visit type"
+  },
+  "visitTypeForm": {
+    "message": "Form submission",
+    "description": "Form submit visit type"
+  },
+  "visitTypeKeyword": {
+    "message": "Address bar keyword",
+    "description": "Keyword visit type"
+  },
   "realtimeProtection": {
     "message": "Real-time Protection",
     "description": "Real-time protection"
@@ -229,7 +295,7 @@
     "message": "Backup failed: $1$",
     "description": "Backup failure message",
     "placeholders": {
-      "error": {
+      "1": {
         "content": "$1",
         "example": "Error message"
       }
@@ -243,7 +309,7 @@
     "message": "Restore failed: $1$",
     "description": "Restore failure message",
     "placeholders": {
-      "error": {
+      "1": {
         "content": "$1",
         "example": "Error message"
       }
@@ -264,6 +330,18 @@
   "days": {
     "message": "days",
     "description": "Days unit"
+  },
+  "autoCleanup": {
+    "message": "Auto Cleanup",
+    "description": "Auto cleanup"
+  },
+  "autoCleanupDesc": {
+    "message": "Automatically delete history older than the retention period. Favorited domains are never deleted.",
+    "description": "Auto cleanup description"
+  },
+  "cleanupRetention": {
+    "message": "Retention period",
+    "description": "Cleanup retention period"
   },
   "permissionTabs": {
     "message": "Tab access - for real-time blacklist protection and adding the current page to the blacklist",
@@ -416,6 +494,26 @@
   "dailyTrend": {
     "message": "Daily Trend",
     "description": "Daily trend chart title"
+  },
+  "range_all": {
+    "message": "All",
+    "description": "All time range"
+  },
+  "range_7": {
+    "message": "7d",
+    "description": "Last 7 days range"
+  },
+  "range_30": {
+    "message": "30d",
+    "description": "Last 30 days range"
+  },
+  "range_90": {
+    "message": "90d",
+    "description": "Last 90 days range"
+  },
+  "allFilteredByBlacklist": {
+    "message": "History is filtered by blacklist, or there is no data in the selected time range.",
+    "description": "Empty state when all history is filtered by blacklist"
   },
   "export": {
     "message": "Export",
@@ -573,7 +671,7 @@
     "message": "Add $1$ to blacklist and delete all its history? This cannot be undone.",
     "description": "Confirmation before adding a domain to blacklist with history deletion",
     "placeholders": {
-      "domain": {
+      "1": {
         "content": "$1",
         "example": "example.com"
       }
@@ -583,7 +681,7 @@
     "message": "Add $1$ to blacklist?",
     "description": "Confirmation before adding a domain to blacklist without history deletion",
     "placeholders": {
-      "domain": {
+      "1": {
         "content": "$1",
         "example": "example.com"
       }

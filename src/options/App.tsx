@@ -8,7 +8,7 @@ const App: React.FC = () => {
   const [isWelcome, setIsWelcome] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>(null);
+
   const [storageInfo, setStorageInfo] = useState<{ used: number; total: number } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force re-render for i18n
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null);
@@ -65,7 +65,6 @@ const App: React.FC = () => {
     
     const newSettings = { ...settings, ...updates };
     setSettings(newSettings);
-    setSaveStatus('saving');
     
     try {
       await saveSettings(newSettings);
@@ -74,12 +73,8 @@ const App: React.FC = () => {
       if (updates.theme) {
         applyTheme(updates.theme);
       }
-      
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus(null), 2000);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setSaveStatus(null);
     }
   }, [settings]);
 
@@ -179,21 +174,16 @@ const App: React.FC = () => {
       )}
       <header className="options-header">
         <div className="options-logo">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <img
+            src={chrome.runtime.getURL('icons/icon64.png')}
+            alt="BrowseBuddy"
+            style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+          />
         </div>
         <div className="options-title">
           <h1>BrowseBuddy</h1>
           <p>{getMessage('extDescription')}</p>
         </div>
-        {saveStatus === 'saving' && (
-          <span style={{ color: 'var(--text-muted)' }}>{getMessage('loading')}</span>
-        )}
-        {saveStatus === 'saved' && (
-          <span style={{ color: 'var(--success-color)' }}>✓ {getMessage('saved') || 'Saved'}</span>
-        )}
       </header>
 
       <main className="options-content">
@@ -354,6 +344,44 @@ const App: React.FC = () => {
             </div>
           )}
 
+          <div className="toggle-wrapper">
+            <div className="toggle-info">
+              <div className="toggle-label">{getMessage('autoCleanup') || 'Auto Cleanup'}</div>
+              <div className="toggle-description">
+                {getMessage('autoCleanupDesc') || 'Automatically delete history older than the retention period'}
+              </div>
+            </div>
+            <div
+              className={`toggle-switch ${settings.autoCleanup ? 'active' : ''}`}
+              onClick={() => updateSettings({ autoCleanup: !settings.autoCleanup })}
+            >
+              <div className="toggle-knob" />
+            </div>
+          </div>
+
+          {settings.autoCleanup && (
+            <div className="form-group" style={{ marginTop: '12px' }}>
+              <label className="form-label">{getMessage('cleanupRetention') || 'Retention period'}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="number"
+                  className="form-input"
+                  min={1}
+                  max={3650}
+                  value={settings.cleanupRetentionDays}
+                  onChange={(e) => {
+                    const v = Math.max(1, Math.min(3650, Number(e.target.value) || 1));
+                    updateSettings({ cleanupRetentionDays: v });
+                  }}
+                  style={{ maxWidth: '120px' }}
+                />
+                <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                  {getMessage('days') || 'days'}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
             <button className="btn btn-primary" onClick={handleBackup}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -462,10 +490,11 @@ const WelcomePage: React.FC<{
       </div>
 
       <div className="welcome-logo">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" />
-        </svg>
+        <img
+          src={chrome.runtime.getURL('icons/icon64.png')}
+          alt="BrowseBuddy"
+          style={{ width: '80px', height: '80px', borderRadius: '20px' }}
+        />
       </div>
       <h1 className="welcome-title">{getMessage('welcomeTitle') || 'Welcome to BrowseBuddy!'}</h1>
       <p className="welcome-subtitle">
