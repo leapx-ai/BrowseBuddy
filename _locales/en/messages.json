@@ -31,6 +31,26 @@
     "message": "Search history...",
     "description": "Search placeholder"
   },
+  "searchPlaceholderAdvanced": {
+    "message": "Search history (try site: or before:/after:)...",
+    "description": "Advanced search placeholder"
+  },
+  "searchSyntaxHint": {
+    "message": "Syntax: site:example.com · before:2024-01-01 · after:2024-01-01 · keywords",
+    "description": "Search syntax hint"
+  },
+  "restoreClosedTabs": {
+    "message": "Restore recently closed tabs",
+    "description": "Restore recently closed tabs"
+  },
+  "noClosedTabs": {
+    "message": "No recently closed tabs",
+    "description": "No recently closed tabs"
+  },
+  "closedWindow": {
+    "message": "Closed window",
+    "description": "Closed window"
+  },
   "deleteByDate": {
     "message": "Delete by Date",
     "description": "Delete by date title"
@@ -109,6 +129,18 @@
     "message": "Privacy Mode",
     "description": "Privacy mode"
   },
+  "sessionIncognito": {
+    "message": "Session Incognito Mode",
+    "description": "Session incognito mode"
+  },
+  "sessionIncognitoDesc": {
+    "message": "While enabled, history is scrubbed in real time so this browsing session leaves no trace.",
+    "description": "Session incognito mode description"
+  },
+  "close": {
+    "message": "Close",
+    "description": "Close button"
+  },
   "realtimeProtection": {
     "message": "Real-time Protection",
     "description": "Real-time protection"
@@ -128,6 +160,10 @@
   "topSites": {
     "message": "Top Sites",
     "description": "Top sites"
+  },
+  "topSitesByTime": {
+    "message": "Most Time Spent",
+    "description": "Top sites by dwell time"
   },
   "timeDistribution": {
     "message": "Time Distribution",
@@ -184,6 +220,58 @@
   "storageUsed": {
     "message": "Storage Used",
     "description": "Storage used"
+  },
+  "backupSuccess": {
+    "message": "Backup created successfully",
+    "description": "Backup success message"
+  },
+  "backupFailed": {
+    "message": "Backup failed: $1$",
+    "description": "Backup failure message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Error message"
+      }
+    }
+  },
+  "restoreSuccess": {
+    "message": "Restore completed successfully",
+    "description": "Restore success message"
+  },
+  "restoreFailed": {
+    "message": "Restore failed: $1$",
+    "description": "Restore failure message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Error message"
+      }
+    }
+  },
+  "autoBackup": {
+    "message": "Auto Backup",
+    "description": "Auto backup"
+  },
+  "autoBackupDesc": {
+    "message": "Automatically create backups at a regular interval, stored in the local browser.",
+    "description": "Auto backup description"
+  },
+  "backupInterval": {
+    "message": "Backup interval",
+    "description": "Backup interval"
+  },
+  "days": {
+    "message": "days",
+    "description": "Days unit"
+  },
+  "permissionTabs": {
+    "message": "Tab access - for real-time blacklist protection and adding the current page to the blacklist",
+    "description": "Tabs permission"
+  },
+  "permissionSessions": {
+    "message": "Session access - to restore recently closed tabs",
+    "description": "Sessions permission"
   },
   "saved": {
     "message": "Saved",
@@ -480,6 +568,34 @@
   "alsoDeleteExistingHistory": {
     "message": "Also delete existing history for this domain",
     "description": "Option to also delete existing history when adding to blacklist"
+  },
+  "confirmAddBlacklist": {
+    "message": "Add $1$ to blacklist and delete all its history? This cannot be undone.",
+    "description": "Confirmation before adding a domain to blacklist with history deletion",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "confirmAddBlacklistNoDelete": {
+    "message": "Add $1$ to blacklist?",
+    "description": "Confirmation before adding a domain to blacklist without history deletion",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "confirmButton": {
+    "message": "Confirm",
+    "description": "Confirm button"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirmation dialog title"
   },
   "domainAddedToBlacklist": {
     "message": "$1$ added to blacklist",

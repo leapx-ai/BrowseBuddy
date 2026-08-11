@@ -18,6 +18,9 @@ const PrivacyModule: React.FC = () => {
   const [extractedDomain, setExtractedDomain] = useState('');
   const [deleteExisting, setDeleteExisting] = useState(true);
   const [lastAction, setLastAction] = useState<{type: 'add'|'delete', message: string} | null>(null);
+  const [pendingAdd, setPendingAdd] = useState<string | null>(null);
+  const [pendingDomain, setPendingDomain] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     loadBlacklist();
@@ -55,13 +58,25 @@ const PrivacyModule: React.FC = () => {
     }
   };
 
-  const handleAdd = async () => {
-    if (!newUrl.trim()) return;
+  const requestConfirmAdd = (url: string, domain: string) => {
+    setPendingAdd(url);
+    setPendingDomain(domain);
+    setIsConfirming(true);
+  };
 
+  const cancelConfirm = () => {
+    setPendingAdd(null);
+    setIsConfirming(false);
+  };
+
+  const executeAdd = async () => {
+    if (!pendingAdd) return;
     try {
-      const { entry, deletedCount } = await addUrlToBlacklist(newUrl.trim(), deleteExisting);
+      const { entry, deletedCount } = await addUrlToBlacklist(pendingAdd, deleteExisting);
+      setPendingAdd(null);
+      setIsConfirming(false);
       if (entry) {
-        let message = getMessage('domainAddedToBlacklist', extractedDomain);
+        let message = getMessage('domainAddedToBlacklist', pendingDomain);
         if (deleteExisting && deletedCount > 0) {
           message += ` (${getMessage('deletedNHistoryRecords', deletedCount.toString())})`;
         }
@@ -73,7 +88,7 @@ const PrivacyModule: React.FC = () => {
         setTimeout(() => setLastAction(null), 3000);
       } else {
         // Already exists
-        setLastAction({ type: 'add', message: getMessage('domainAlreadyInBlacklist', extractedDomain) });
+        setLastAction({ type: 'add', message: getMessage('domainAlreadyInBlacklist', pendingDomain) });
         setNewUrl('');
         setShowAddForm(false);
         setTimeout(() => setLastAction(null), 3000);
@@ -83,23 +98,14 @@ const PrivacyModule: React.FC = () => {
     }
   };
 
-  const handleAddCurrentPage = async () => {
-    if (!currentTab?.url) return;
+  const handleAdd = () => {
+    if (!newUrl.trim() || !extractedDomain) return;
+    requestConfirmAdd(newUrl.trim(), extractedDomain);
+  };
 
-    try {
-      const { entry, deletedCount } = await addUrlToBlacklist(currentTab.url, deleteExisting);
-      if (entry) {
-        let message = getMessage('domainAddedToBlacklist', extractMainDomain(currentTab.url));
-        if (deleteExisting && deletedCount > 0) {
-          message += ` (${getMessage('deletedNHistoryRecords', deletedCount.toString())})`;
-        }
-        setLastAction({ type: 'add', message });
-        await loadBlacklist();
-        setTimeout(() => setLastAction(null), 3000);
-      }
-    } catch (error) {
-      console.error('Failed to add current page to blacklist:', error);
-    }
+  const handleAddCurrentPage = () => {
+    if (!currentTab?.url) return;
+    requestConfirmAdd(currentTab.url, extractMainDomain(currentTab.url));
   };
 
   const handleRemove = async (id: string) => {
@@ -248,6 +254,29 @@ const PrivacyModule: React.FC = () => {
             <button className="btn btn-primary" onClick={handleAdd} disabled={!extractedDomain}>
               {getMessage('add')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {isConfirming && (
+        <div className="modal-overlay" onClick={cancelConfirm}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">{getMessage('confirm')}</h3>
+            <div className="modal-content">
+              {getMessage(
+                deleteExisting ? 'confirmAddBlacklist' : 'confirmAddBlacklistNoDelete',
+                pendingDomain
+              )}
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={cancelConfirm}>
+                {getMessage('cancel')}
+              </button>
+              <button className="btn btn-danger" onClick={executeAdd}>
+                {getMessage('confirmButton')}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getMessage, setUserLanguage, applyTheme, initI18n } from '../utils/i18n';
 import { getSettings, saveSettings, getStorageUsage, createBackup, restoreBackup, type Settings } from '../utils/storage';
 
+type ToastType = 'success' | 'error';
+
 const App: React.FC = () => {
   const [isWelcome, setIsWelcome] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -9,6 +11,7 @@ const App: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>(null);
   const [storageInfo, setStorageInfo] = useState<{ used: number; total: number } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force re-render for i18n
+  const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null);
 
   useEffect(() => {
     // Check if this is the welcome page
@@ -17,6 +20,17 @@ const App: React.FC = () => {
     
     initAndLoadSettings();
     loadStorageInfo();
+  }, []);
+
+  // Auto-dismiss toasts
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = useCallback((type: ToastType, message: string) => {
+    setToast({ type, message });
   }, []);
 
   const initAndLoadSettings = async () => {
@@ -56,12 +70,6 @@ const App: React.FC = () => {
     try {
       await saveSettings(newSettings);
       
-      // Apply language change immediately
-      if (updates.language) {
-        setUserLanguage(updates.language);
-        setRefreshKey(prev => prev + 1); // Force re-render
-      }
-      
       // Apply theme change immediately
       if (updates.theme) {
         applyTheme(updates.theme);
@@ -75,6 +83,21 @@ const App: React.FC = () => {
     }
   }, [settings]);
 
+  // Language changes are applied in a dedicated handler that re-inits i18n
+  // and re-renders, instead of relying on storage change propagation.
+  const handleLanguageChange = useCallback(async (lang: 'en' | 'zh_CN') => {
+    if (!settings) return;
+    const newSettings = { ...settings, language: lang };
+    setSettings(newSettings);
+    try {
+      await saveSettings(newSettings);
+      setUserLanguage(lang);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to save language:', error);
+    }
+  }, [settings]);
+
   const handleBackup = async () => {
     try {
       const backup = await createBackup();
@@ -85,9 +108,9 @@ const App: React.FC = () => {
       a.download = `browsebuddy-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      alert(getMessage('backup') + ' ' + getMessage('success') || 'Backup successful!');
+      showToast('success', getMessage('backupSuccess'));
     } catch (error) {
-      alert('Failed to create backup: ' + (error as Error).message);
+      showToast('error', getMessage('backupFailed', (error as Error).message));
     }
   };
 
@@ -102,10 +125,10 @@ const App: React.FC = () => {
       try {
         const text = await file.text();
         await restoreBackup(text);
-        alert('Restore completed successfully!');
-        window.location.reload();
+        showToast('success', getMessage('restoreSuccess'));
+        setTimeout(() => window.location.reload(), 800);
       } catch (error) {
-        alert('Failed to restore: ' + (error as Error).message);
+        showToast('error', getMessage('restoreFailed', (error as Error).message));
       }
     };
     input.click();
@@ -120,9 +143,21 @@ const App: React.FC = () => {
   }
 
   if (isWelcome) {
+    const handleGetStarted = () => {
+      setIsWelcome(false);
+      // Remove the ?welcome=true query param so refreshing the page
+      // doesn't re-enter the welcome flow.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('welcome');
+      window.history.replaceState({}, '', url.toString());
+    };
     return (
       <div className="options-container">
-        <WelcomePage onGetStarted={() => setIsWelcome(false)} />
+        <WelcomePage
+          onGetStarted={handleGetStarted}
+          language={settings?.language || 'zh_CN'}
+          onLanguageChange={handleLanguageChange}
+        />
       </div>
     );
   }
@@ -137,6 +172,11 @@ const App: React.FC = () => {
 
   return (
     <div className="options-container" key={refreshKey}>
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          {toast.type === 'success' ? '✓' : '✕'} {toast.message}
+        </div>
+      )}
       <header className="options-header">
         <div className="options-logo">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -164,28 +204,45 @@ const App: React.FC = () => {
           <div className="form-group">
             <label className="form-label">{getMessage('language')}</label>
             <p className="form-description">{getMessage('chooseLanguage') || 'Choose your preferred language'}</p>
-            <select
-              className="form-select"
-              value={settings.language}
-              onChange={(e) => updateSettings({ language: e.target.value as 'en' | 'zh_CN' })}
-            >
-              <option value="zh_CN">简体中文</option>
-              <option value="en">English</option>
-            </select>
+            <div className="segmented" role="tablist">
+              <button
+                className={`segmented-item ${settings.language === 'zh_CN' ? 'active' : ''}`}
+                onClick={() => handleLanguageChange('zh_CN')}
+              >
+                简体中文
+              </button>
+              <button
+                className={`segmented-item ${settings.language === 'en' ? 'active' : ''}`}
+                onClick={() => handleLanguageChange('en')}
+              >
+                English
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">{getMessage('theme')}</label>
             <p className="form-description">{getMessage('chooseTheme') || 'Select the interface appearance'}</p>
-            <select
-              className="form-select"
-              value={settings.theme}
-              onChange={(e) => updateSettings({ theme: e.target.value as 'dark' | 'light' | 'system' })}
-            >
-              <option value="dark">{getMessage('dark')}</option>
-              <option value="light">{getMessage('light')}</option>
-              <option value="system">{getMessage('systemDefault') || 'System Default'}</option>
-            </select>
+            <div className="segmented" role="tablist">
+              <button
+                className={`segmented-item ${settings.theme === 'light' ? 'active' : ''}`}
+                onClick={() => updateSettings({ theme: 'light' })}
+              >
+                {getMessage('light')}
+              </button>
+              <button
+                className={`segmented-item ${settings.theme === 'dark' ? 'active' : ''}`}
+                onClick={() => updateSettings({ theme: 'dark' })}
+              >
+                {getMessage('dark')}
+              </button>
+              <button
+                className={`segmented-item ${settings.theme === 'system' ? 'active' : ''}`}
+                onClick={() => updateSettings({ theme: 'system' })}
+              >
+                {getMessage('systemDefault') || 'System Default'}
+              </button>
+            </div>
           </div>
         </section>
 
@@ -222,6 +279,21 @@ const App: React.FC = () => {
               <div className="toggle-knob" />
             </div>
           </div>
+
+          <div className="toggle-wrapper">
+            <div className="toggle-info">
+              <div className="toggle-label">{getMessage('sessionIncognito') || 'Session Incognito Mode'}</div>
+              <div className="toggle-description">
+                {getMessage('sessionIncognitoDesc') || 'While enabled, no browsing history is recorded. This session leaves no trace.'}
+              </div>
+            </div>
+            <div
+              className={`toggle-switch ${settings.sessionIncognito ? 'active' : ''}`}
+              onClick={() => updateSettings({ sessionIncognito: !settings.sessionIncognito })}
+            >
+              <div className="toggle-knob" />
+            </div>
+          </div>
         </section>
 
         {/* Data Management */}
@@ -233,13 +305,51 @@ const App: React.FC = () => {
               <label className="form-label">{getMessage('storageUsed')}</label>
               <div className="storage-bar">
                 <div
-                  className="storage-fill"
-                  style={{ width: `${(storageInfo.used / storageInfo.total) * 100}%` }}
+                  className={`storage-fill ${storageInfo.used / storageInfo.total > 0.8 ? 'storage-fill-danger' : ''}`}
+                  style={{ width: `${Math.min(100, (storageInfo.used / storageInfo.total) * 100)}%` }}
                 />
               </div>
               <div className="storage-info">
                 <span>{formatBytes(storageInfo.used)} {getMessage('used') || 'used'}</span>
                 <span>{formatBytes(storageInfo.total)} {getMessage('total') || 'total'}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="toggle-wrapper">
+            <div className="toggle-info">
+              <div className="toggle-label">{getMessage('autoBackup') || 'Auto Backup'}</div>
+              <div className="toggle-description">
+                {getMessage('autoBackupDesc') || 'Automatically create backups on a schedule'}
+              </div>
+            </div>
+            <div
+              className={`toggle-switch ${settings.autoBackup ? 'active' : ''}`}
+              onClick={() => updateSettings({ autoBackup: !settings.autoBackup })}
+            >
+              <div className="toggle-knob" />
+            </div>
+          </div>
+
+          {settings.autoBackup && (
+            <div className="form-group" style={{ marginTop: '12px' }}>
+              <label className="form-label">{getMessage('backupInterval') || 'Backup interval'}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="number"
+                  className="form-input"
+                  min={1}
+                  max={365}
+                  value={settings.backupInterval}
+                  onChange={(e) => {
+                    const v = Math.max(1, Math.min(365, Number(e.target.value) || 1));
+                    updateSettings({ backupInterval: v });
+                  }}
+                  style={{ maxWidth: '120px' }}
+                />
+                <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                  {getMessage('days') || 'days'}
+                </span>
               </div>
             </div>
           )}
@@ -285,9 +395,72 @@ const App: React.FC = () => {
 };
 
 // Welcome Page Component
-const WelcomePage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
+const WelcomePage: React.FC<{
+  onGetStarted: () => void;
+  language: 'en' | 'zh_CN';
+  onLanguageChange: (lang: 'en' | 'zh_CN') => void;
+}> = ({ onGetStarted, language, onLanguageChange }) => {
+  const features = [
+    {
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+        </svg>
+      ),
+      title: getMessage('smartDelete') || 'Smart Delete',
+      desc: `${getMessage('deleteByDate')}, ${getMessage('deleteByDomain')}, ${getMessage('deleteByKeyword')}`,
+    },
+    {
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 3v18h18" />
+          <path d="M18 17V9M13 17V5M8 17v-3" />
+        </svg>
+      ),
+      title: getMessage('statistics') || 'Statistics',
+      desc: getMessage('statsDesc') || 'Visualize your browsing patterns',
+    },
+    {
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      ),
+      title: getMessage('privacyProtection') || 'Privacy Protection',
+      desc: getMessage('blacklistDesc') || 'Blacklist sensitive websites',
+    },
+    {
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+      ),
+      title: getMessage('calendarView'),
+      desc: getMessage('localStorageDesc') || 'Your data never leaves your device',
+    },
+  ];
+
   return (
     <div className="welcome-container">
+      <div className="welcome-language">
+        <span>{getMessage('language')}:</span>
+        <div className="segmented" role="tablist">
+          <button
+            className={`segmented-item ${language === 'zh_CN' ? 'active' : ''}`}
+            onClick={() => onLanguageChange('zh_CN')}
+          >
+            简体中文
+          </button>
+          <button
+            className={`segmented-item ${language === 'en' ? 'active' : ''}`}
+            onClick={() => onLanguageChange('en')}
+          >
+            English
+          </button>
+        </div>
+      </div>
+
       <div className="welcome-logo">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />
@@ -300,26 +473,13 @@ const WelcomePage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
       </p>
 
       <div className="welcome-features">
-        <div className="welcome-feature">
-          <div className="welcome-feature-icon">🗑️</div>
-          <div className="welcome-feature-title">{getMessage('smartDelete') || 'Smart Delete'}</div>
-          <div className="welcome-feature-desc">{getMessage('deleteByDate')}, {getMessage('deleteByDomain')}, {getMessage('deleteByKeyword')}</div>
-        </div>
-        <div className="welcome-feature">
-          <div className="welcome-feature-icon">📊</div>
-          <div className="welcome-feature-title">{getMessage('statistics') || 'Statistics'}</div>
-          <div className="welcome-feature-desc">{getMessage('statsDesc') || 'Visualize your browsing patterns'}</div>
-        </div>
-        <div className="welcome-feature">
-          <div className="welcome-feature-icon">🛡️</div>
-          <div className="welcome-feature-title">{getMessage('privacyProtection') || 'Privacy Protection'}</div>
-          <div className="welcome-feature-desc">{getMessage('blacklistDesc') || 'Blacklist sensitive websites'}</div>
-        </div>
-        <div className="welcome-feature">
-          <div className="welcome-feature-icon">💾</div>
-          <div className="welcome-feature-title">{getMessage('localStorage') || 'Local Storage'}</div>
-          <div className="welcome-feature-desc">{getMessage('localStorageDesc') || 'Your data never leaves your device'}</div>
-        </div>
+        {features.map((f) => (
+          <div key={f.title} className="welcome-feature">
+            <div className="welcome-feature-icon">{f.icon}</div>
+            <div className="welcome-feature-title">{f.title}</div>
+            <div className="welcome-feature-desc">{f.desc}</div>
+          </div>
+        ))}
       </div>
 
       <div className="alert alert-info" style={{ textAlign: 'left' }}>
@@ -327,6 +487,8 @@ const WelcomePage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
         <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
           <li>{getMessage('permissionHistory') || 'History access - to read and manage your browsing history'}</li>
           <li>{getMessage('permissionStorage') || 'Storage access - to save settings locally'}</li>
+          <li>{getMessage('permissionTabs') || 'Tab access - for real-time protection'}</li>
+          <li>{getMessage('permissionSessions') || 'Session access - to restore closed tabs'}</li>
         </ul>
       </div>
 

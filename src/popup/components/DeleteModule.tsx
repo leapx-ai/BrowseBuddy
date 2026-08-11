@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { getMessage } from '../../utils/i18n';
 import { deleteHistory, previewDelete, type DeleteOptions, type HistoryItem } from '../../utils/history';
+import { getBlacklist } from '../../utils/storage';
+import { filterBlacklistedItems } from '../../utils/blacklist';
 
 type DeleteType = 'date' | 'domain' | 'keyword';
 
@@ -22,7 +24,8 @@ const DeleteModule: React.FC = () => {
     try {
       const options = buildDeleteOptions();
       const items = await previewDelete(options);
-      setPreviewItems(items);
+      const blacklist = await getBlacklist();
+      setPreviewItems(filterBlacklistedItems(items, blacklist));
       setShowConfirm(true);
     } catch (error) {
       setResult({

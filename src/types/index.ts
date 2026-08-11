@@ -47,6 +47,7 @@ export interface Settings {
   showPrivacyReminder: boolean;
   autoBackup: boolean;
   backupInterval: number; // days
+  sessionIncognito: boolean;
 }
 
 // Export types

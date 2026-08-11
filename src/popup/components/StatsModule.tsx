@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { getMessage, formatNumber } from '../../utils/i18n';
-import { calculateStatistics, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
-import type { DomainStats, TimeDistribution, DailyStats } from '../../types';
+import { getMessage, formatNumber, formatDuration } from '../../utils/i18n';
+import { calculateStatistics, fetchVisibleHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
+import { getBlacklist, getDomainDurations } from '../../utils/storage';
+import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
 
 const StatsModule: React.FC = () => {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
+  const [durations, setDurations] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadStats();
@@ -14,8 +17,12 @@ const StatsModule: React.FC = () => {
   const loadStats = async () => {
     setIsLoading(true);
     try {
-      const data = await calculateStatistics();
+      const list = await getBlacklist();
+      setBlacklist(list);
+      const data = await calculateStatistics(list);
       setStats(data);
+      const durationData = await getDomainDurations();
+      setDurations(durationData);
     } catch (error) {
       console.error('Failed to load stats:', error);
     } finally {
@@ -25,16 +32,14 @@ const StatsModule: React.FC = () => {
 
   const handleExportCSV = async () => {
     if (!stats) return;
-    const { fetchHistory } = await import('../../utils/history');
-    const items = await fetchHistory({ maxResults: 10000 });
+    const items = await fetchVisibleHistory({ maxResults: 10000 }, blacklist);
     const csv = exportToCsv(items);
     downloadFile(csv, `browsebuddy-history-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
   };
 
   const handleExportHTML = async () => {
     if (!stats) return;
-    const { fetchHistory } = await import('../../utils/history');
-    const items = await fetchHistory({ maxResults: 10000 });
+    const items = await fetchVisibleHistory({ maxResults: 10000 }, blacklist);
     const html = exportToHtml(items, stats);
     downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
   };
@@ -109,6 +114,49 @@ const StatsModule: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Top Sites by Dwell Time */}
+      {Object.keys(durations).length > 0 && (
+        <div className="card">
+          <h3 className="card-title">{getMessage('topSitesByTime')}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {Object.entries(durations)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 10)
+              .map(([domain, ms], index) => (
+                <div key={domain} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: index < 3 ? 'var(--secondary-color)' : 'var(--bg-tertiary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    {index + 1}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {domain}
+                    </div>
+                    <div className="progress-bar" style={{ marginTop: '4px' }}>
+                      <div
+                        className="progress-fill progress-fill-secondary"
+                        style={{ width: `${(ms / Math.max(...Object.values(durations))) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {formatDuration(Math.round(ms / 1000))}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Time Distribution */}
       <div className="card">

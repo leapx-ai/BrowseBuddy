@@ -342,17 +342,12 @@
                     </tr>
                     <tr>
                         <td><span class="permission-tag">tabs</span></td>
-                        <td>Get current tab information for the "Add current page to blacklist" feature.</td>
+                        <td>Read tab URLs for the "Add current page to blacklist" feature and real-time blacklist protection.</td>
                         <td>✅ Required</td>
                     </tr>
                     <tr>
-                        <td><span class="permission-tag">activeTab</span></td>
-                        <td>Get temporary permission for the currently active tab.</td>
-                        <td>✅ Required</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">&lt;all_urls&gt;</span></td>
-                        <td>Monitor URL changes on all websites for real-time blacklist protection.</td>
+                        <td><span class="permission-tag">sessions</span></td>
+                        <td>Restore recently closed tabs or windows.</td>
                         <td>✅ Required</td>
                     </tr>
                     <tr>
@@ -362,17 +357,6 @@
                     </tr>
                 </tbody>
             </table>
-            
-            <div class="privacy-highlight">
-                <h3>⚠️ About the &lt;all_urls&gt; Permission</h3>
-                <p>This permission is only used to monitor URL changes for automatic blacklist deletion. We <strong>do not</strong>:</p>
-                <ul class="benefits">
-                    <li>Collect or upload any browsing data</li>
-                    <li>Modify webpage content</li>
-                    <li>Send requests to third parties</li>
-                </ul>
-                <p>All URL detection and blacklist matching happens locally. Matched entries are immediately deleted from history without storing any visit information.</p>
-            </div>
         </div>
 
         <div class="card">

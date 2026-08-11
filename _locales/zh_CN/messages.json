@@ -31,6 +31,26 @@
     "message": "搜索历史记录...",
     "description": "Search placeholder"
   },
+  "searchPlaceholderAdvanced": {
+    "message": "搜索历史记录 (支持 site: 或 before:/after: 语法)...",
+    "description": "Advanced search placeholder"
+  },
+  "searchSyntaxHint": {
+    "message": "语法：site:example.com · before:2024-01-01 · after:2024-01-01 · 关键词",
+    "description": "Search syntax hint"
+  },
+  "restoreClosedTabs": {
+    "message": "恢复最近关闭的标签页",
+    "description": "Restore recently closed tabs"
+  },
+  "noClosedTabs": {
+    "message": "没有最近关闭的标签页",
+    "description": "No recently closed tabs"
+  },
+  "closedWindow": {
+    "message": "关闭的窗口",
+    "description": "Closed window"
+  },
   "deleteByDate": {
     "message": "按日期删除",
     "description": "Delete by date title"
@@ -109,6 +129,18 @@
     "message": "隐私模式",
     "description": "Privacy mode"
   },
+  "sessionIncognito": {
+    "message": "会话隐身模式",
+    "description": "Session incognito mode"
+  },
+  "sessionIncognitoDesc": {
+    "message": "开启后本次浏览会话的历史记录将被实时清除，不留下任何痕迹。",
+    "description": "Session incognito mode description"
+  },
+  "close": {
+    "message": "关闭",
+    "description": "Close button"
+  },
   "realtimeProtection": {
     "message": "实时保护",
     "description": "Real-time protection"
@@ -128,6 +160,10 @@
   "topSites": {
     "message": "热门网站",
     "description": "Top sites"
+  },
+  "topSitesByTime": {
+    "message": "停留时间最长的网站",
+    "description": "Top sites by dwell time"
   },
   "timeDistribution": {
     "message": "时段分布",
@@ -184,6 +220,58 @@
   "storageUsed": {
     "message": "存储使用",
     "description": "Storage used"
+  },
+  "backupSuccess": {
+    "message": "备份创建成功",
+    "description": "Backup success message"
+  },
+  "backupFailed": {
+    "message": "备份失败：$1$",
+    "description": "Backup failure message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Error message"
+      }
+    }
+  },
+  "restoreSuccess": {
+    "message": "恢复成功",
+    "description": "Restore success message"
+  },
+  "restoreFailed": {
+    "message": "恢复失败：$1$",
+    "description": "Restore failure message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Error message"
+      }
+    }
+  },
+  "autoBackup": {
+    "message": "自动备份",
+    "description": "Auto backup"
+  },
+  "autoBackupDesc": {
+    "message": "定期自动创建数据备份，存储在本机浏览器中。",
+    "description": "Auto backup description"
+  },
+  "backupInterval": {
+    "message": "备份间隔",
+    "description": "Backup interval"
+  },
+  "days": {
+    "message": "天",
+    "description": "Days unit"
+  },
+  "permissionTabs": {
+    "message": "标签页访问 - 用于实时黑名单保护和添加当前页面到黑名单",
+    "description": "Tabs permission"
+  },
+  "permissionSessions": {
+    "message": "会话访问 - 用于恢复最近关闭的标签页",
+    "description": "Sessions permission"
   },
   "saved": {
     "message": "已保存",
@@ -480,6 +568,34 @@
   "alsoDeleteExistingHistory": {
     "message": "同时删除该域名的已有历史记录",
     "description": "Option to also delete existing history when adding to blacklist"
+  },
+  "confirmAddBlacklist": {
+    "message": "将 $1$ 加入黑名单并删除其全部历史记录，此操作不可撤销。确定继续？",
+    "description": "Confirmation before adding a domain to blacklist with history deletion",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "confirmAddBlacklistNoDelete": {
+    "message": "确定将 $1$ 加入黑名单？",
+    "description": "Confirmation before adding a domain to blacklist without history deletion",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "confirmButton": {
+    "message": "确认",
+    "description": "Confirm button"
+  },
+  "confirm": {
+    "message": "确认",
+    "description": "Confirmation dialog title"
   },
   "domainAddedToBlacklist": {
     "message": "$1$ 已添加到黑名单",

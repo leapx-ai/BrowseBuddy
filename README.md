@@ -9,9 +9,10 @@ A powerful browser extension for managing browsing history with privacy protecti
 
 ### 🔍 History Management
 
-- **Smart Search**: Search by title, URL, or date range
+- **Smart Search**: Search by title, URL, or date range, with `site:`/`before:`/`after:` syntax
 - **Multiple Views**: List view, date-grouped view, domain-grouped view
-- **Quick Navigation**: Calendar view with quick date jumping
+- **Calendar View**: Month heatmap with quick date jumping to that day's history
+- **Restore tabs**: Reopen recently closed tabs or windows
 
 ### 🗑️ Bulk Delete
 
@@ -26,21 +27,22 @@ A powerful browser extension for managing browsing history with privacy protecti
 - Visit frequency trends
 - Top visited sites
 - Time distribution (24-hour heatmap)
+- **Dwell time stats**: Most time spent per site
 - Daily/weekly/monthly statistics
 - Export to CSV and HTML
 
 ### 🛡️ Privacy Protection
 
-- Domain blacklist with wildcard support
+- Domain blacklist (auto-matches all subdomains)
 - Real-time protection (auto-delete blacklisted sites)
-- Privacy mode with visual indicators
+- **Session incognito mode**: scrubs all history while active, with a 🕶️ toolbar indicator
 - All data stored locally
 
 ### ⚙️ Settings & Backup
 
 - Language selection (English/中文)
 - Dark/Light theme
-- Data backup and restore
+- Data backup and restore (with optional scheduled auto-backup)
 - Storage usage monitoring
 
 ## Installation

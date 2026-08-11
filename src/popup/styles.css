@@ -430,6 +430,10 @@ body {
   transition: width 0.3s;
 }
 
+.progress-fill-secondary {
+  background: var(--secondary-color);
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -642,6 +646,47 @@ body {
 .checkbox-label {
   font-size: 14px;
   color: var(--text-primary);
+}
+
+/* Calendar View */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: transform 0.1s;
+}
+
+.calendar-cell:hover {
+  transform: scale(1.1);
+}
+
+.calendar-cell-empty {
+  cursor: default;
+}
+
+.calendar-cell-empty:hover {
+  transform: none;
+}
+
+.calendar-cell-selected {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+.calendar-cell-today {
+  font-weight: bold;
+  box-shadow: inset 0 0 0 1px var(--primary-color);
 }
 
 /* Footer */

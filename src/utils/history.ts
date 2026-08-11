@@ -6,7 +6,9 @@ import type {
   TimeDistribution,
   Statistics,
   CalendarData,
+  BlacklistEntry,
 } from '../types';
+import { filterBlacklistedItems } from './blacklist';
 
 // Re-export types for convenience
 export type { 
@@ -62,6 +64,15 @@ export async function fetchHistory(options: SearchOptions = {}): Promise<History
       resolve(items);
     });
   });
+}
+
+// Fetch history excluding blacklisted domains (for display/export purposes)
+export async function fetchVisibleHistory(
+  options: SearchOptions = {},
+  blacklist: BlacklistEntry[]
+): Promise<HistoryItem[]> {
+  const items = await fetchHistory(options);
+  return filterBlacklistedItems(items, blacklist);
 }
 
 // Delete history entries
@@ -216,8 +227,11 @@ export function groupByHour(items: HistoryItem[]): Map<number, HistoryItem[]> {
 }
 
 // Calculate statistics
-export async function calculateStatistics(): Promise<Statistics> {
-  const items = await fetchHistory({ maxResults: 10000 });
+export async function calculateStatistics(blacklist: BlacklistEntry[] = []): Promise<Statistics> {
+  const items = filterBlacklistedItems(
+    await fetchHistory({ maxResults: 10000 }),
+    blacklist
+  );
   
   if (items.length === 0) {
     return {

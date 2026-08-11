@@ -342,17 +342,12 @@
                     </tr>
                     <tr>
                         <td><span class="permission-tag">tabs</span></td>
-                        <td>获取当前标签页信息，用于"添加当前页面到黑名单"快捷功能。</td>
+                        <td>读取标签页 URL，用于"添加当前页面到黑名单"和黑名单实时保护（访问敏感网站时自动删除历史）。</td>
                         <td>✅ 必需</td>
                     </tr>
                     <tr>
-                        <td><span class="permission-tag">activeTab</span></td>
-                        <td>获取当前活动标签页的临时权限，配合 tabs 权限使用。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">&lt;all_urls&gt;</span></td>
-                        <td>监控所有网站 URL 变更，实现黑名单实时保护功能（访问敏感网站时自动删除历史）。</td>
+                        <td><span class="permission-tag">sessions</span></td>
+                        <td>恢复最近关闭的标签页或窗口。</td>
                         <td>✅ 必需</td>
                     </tr>
                     <tr>
@@ -362,17 +357,6 @@
                     </tr>
                 </tbody>
             </table>
-            
-            <div class="privacy-highlight">
-                <h3>⚠️ 关于 &lt;all_urls&gt; 权限的说明</h3>
-                <p>此权限仅用于实时监控 URL 变更以实现黑名单自动删除功能。我们<strong>不会</strong>：</p>
-                <ul class="benefits">
-                    <li>收集或上传任何浏览数据</li>
-                    <li>修改网页内容</li>
-                    <li>向第三方发送任何请求</li>
-                </ul>
-                <p>所有 URL 检测和黑名单匹配均在本地完成，匹配成功后立即删除对应历史记录，不会存储任何访问信息。</p>
-            </div>
         </div>
 
         <div class="card">

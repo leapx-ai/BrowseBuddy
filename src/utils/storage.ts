@@ -1,8 +1,11 @@
 import type { Settings, BlacklistEntry } from '../types';
 import { fetchHistory, deleteSingleUrl } from './history';
+import { extractMainDomain } from './blacklist';
 
 // Re-export types for convenience
 export type { Settings, BlacklistEntry } from '../types';
+// Backwards-compatible re-exports
+export { extractMainDomain, isUrlBlacklisted, filterBlacklistedItems } from './blacklist';
 
 // Default settings
 export const defaultSettings: Settings = {
@@ -12,6 +15,7 @@ export const defaultSettings: Settings = {
   showPrivacyReminder: true,
   autoBackup: false,
   backupInterval: 7,
+  sessionIncognito: false,
 };
 
 // Storage keys
@@ -20,7 +24,22 @@ const STORAGE_KEYS = {
   BLACKLIST: 'browsebuddy_blacklist',
   STATS_CACHE: 'browsebuddy_stats_cache',
   BACKUP_DATA: 'browsebuddy_backup',
+  DURATIONS: 'browsebuddy_durations',
 };
+
+// Per-domain accumulated dwell time (ms)
+export async function getDomainDurations(): Promise<Record<string, number>> {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.DURATIONS);
+    return result[STORAGE_KEYS.DURATIONS] || {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveDomainDurations(durations: Record<string, number>): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEYS.DURATIONS]: durations });
+}
 
 // Settings management
 export async function getSettings(): Promise<Settings> {
@@ -74,55 +93,6 @@ export async function updateBlacklistEntry(id: string, updates: Partial<Blacklis
   await saveBlacklist(updated);
 }
 
-// Extract main domain from URL or hostname
-// e.g., "www.xchina.co" -> "xchina.co", "sub.www.example.com.cn" -> "example.com.cn"
-export function extractMainDomain(url: string): string {
-  try {
-    const hostname = url.includes('://') ? new URL(url).hostname : url;
-    const parts = hostname.split('.');
-    
-    // Handle special cases like .co.uk, .com.cn, .org.cn, .net.cn, .gov.cn, .ac.uk, etc.
-    const specialTlds = ['co', 'com', 'org', 'net', 'gov', 'ac', 'edu', 'mil'];
-    
-    if (parts.length >= 3) {
-      const lastTwo = parts.slice(-2);
-      const lastThree = parts.slice(-3);
-      
-      // Check if it's a special TLD pattern (e.g., example.co.uk)
-      if (specialTlds.includes(lastTwo[0]) && lastTwo[1].length <= 3) {
-        return parts.slice(-3).join('.');
-      }
-    }
-    
-    // Standard case: last two parts are the main domain
-    if (parts.length >= 2) {
-      return parts.slice(-2).join('.');
-    }
-    
-    return hostname;
-  } catch {
-    return url;
-  }
-}
-
-// Check if URL matches blacklist
-// Now all entries are main domains and match any subdomain of that domain
-export function isUrlBlacklisted(url: string, blacklist: BlacklistEntry[]): boolean {
-  try {
-    const urlObj = new URL(url);
-    const hostname = urlObj.hostname;
-    const mainDomain = extractMainDomain(hostname);
-    
-    return blacklist.some(entry => {
-      if (!entry.enabled) return false;
-      // Entry pattern is the main domain, check if URL's main domain matches
-      return mainDomain === entry.pattern;
-    });
-  } catch {
-    return false;
-  }
-}
-
 // Add URL to blacklist - automatically extracts main domain
 // If deleteExisting is true, also delete existing history entries for this domain
 export async function addUrlToBlacklist(
@@ -163,27 +133,71 @@ export async function addUrlToBlacklist(
 // Delete all history entries matching a domain (including subdomains)
 async function deleteHistoryByDomain(domain: string): Promise<number> {
   try {
-    // Fetch all history
-    const allHistory = await fetchHistory({ maxResults: 10000 });
-    
-    // Filter items matching the domain (including subdomains)
-    const matchingItems = allHistory.filter(item => {
-      try {
-        const itemDomain = extractMainDomain(item.url);
-        return itemDomain === domain;
-      } catch {
-        return false;
-      }
-    });
-    
-    // Get unique URLs to delete (avoid duplicates)
-    const uniqueUrls = new Set(matchingItems.map(item => item.url));
-    
-    // Also add URL variants (http/https, www/non-www) to ensure thorough cleanup
     const urlsToDelete = new Set<string>();
-    uniqueUrls.forEach(url => {
-      urlsToDelete.add(url);
-      
+    const originalUrls = new Set<string>();
+
+    // Iterate backwards through history page by page so we cover all records,
+    // not just the most recent 10000 returned by a single query.
+    // chrome.history.search's endTime is exclusive ("visited before this date"),
+    // so advancing the cursor to `earliest` neither repeats nor skips records.
+    const PAGE_SIZE = 2000;
+    let endTime = Date.now();
+    let reachedEnd = false;
+    let pagesScanned = 0;
+    const MAX_PAGES = 200;
+
+    while (!reachedEnd) {
+      const page = await fetchHistory({
+        maxResults: PAGE_SIZE,
+        dateRange: { start: 0, end: endTime },
+      });
+
+      if (page.length === 0) {
+        break;
+      }
+
+      pagesScanned++;
+      if (pagesScanned >= MAX_PAGES) {
+        reachedEnd = true;
+        break;
+      }
+
+      // Record the earliest visit time in this page as the boundary for the next query
+      let earliest = Number.POSITIVE_INFINITY;
+
+      page.forEach(item => {
+        if (item.lastVisitTime && item.lastVisitTime < earliest) {
+          earliest = item.lastVisitTime;
+        }
+
+        try {
+          const itemDomain = extractMainDomain(item.url);
+          if (itemDomain === domain) {
+            urlsToDelete.add(item.url);
+            originalUrls.add(item.url);
+          }
+        } catch {
+          // Invalid URL, skip
+        }
+      });
+
+      if (page.length < PAGE_SIZE) {
+        reachedEnd = true;
+      } else if (Number.isFinite(earliest)) {
+        endTime = earliest;
+      } else {
+        // No timestamps on any record - cannot advance the cursor safely.
+        reachedEnd = true;
+      }
+
+      // Safety valve to avoid infinite loops
+      if (endTime <= 0) {
+        break;
+      }
+    }
+
+    // Also add URL variants (http/https, www/non-www) to ensure thorough cleanup
+    originalUrls.forEach(url => {
       try {
         const urlObj = new URL(url);
         // Add variant with/without www
@@ -204,17 +218,17 @@ async function deleteHistoryByDomain(domain: string): Promise<number> {
         // Invalid URL, skip variants
       }
     });
-    
+
     // Delete each URL with a small delay to ensure Chrome processes the deletion
     let deletedCount = 0;
     const urlsArray = Array.from(urlsToDelete);
-    
+
     for (let i = 0; i < urlsArray.length; i++) {
       const url = urlsArray[i];
       try {
         await deleteSingleUrl(url);
         // Check if this was an original URL (not a variant)
-        if (uniqueUrls.has(url)) {
+        if (originalUrls.has(url)) {
           deletedCount++;
         }
       } catch {
@@ -248,9 +262,30 @@ export async function createBackup(): Promise<string> {
 
 export async function restoreBackup(backupJson: string): Promise<void> {
   const backup = JSON.parse(backupJson);
-  if (backup.data) {
-    await chrome.storage.local.set(backup.data);
-  }
+  if (!backup.data) return;
+
+  // Never overwrite the current blacklist with an older backup's list.
+  // Otherwise a stale backup would silently remove domains the user has
+  // already blacklisted, re-exposing history that was previously scrubbed.
+  const currentBlacklist = await getBlacklist();
+  const backupBlacklist: BlacklistEntry[] = backup.data[STORAGE_KEYS.BLACKLIST] || [];
+
+  const mergedPatterns = new Set([
+    ...currentBlacklist.map(e => e.pattern),
+    ...backupBlacklist.map(e => e.pattern),
+  ]);
+  const mergedBlacklist: BlacklistEntry[] = Array.from(mergedPatterns)
+    .map(pattern => {
+      return (
+        currentBlacklist.find(e => e.pattern === pattern) ||
+        backupBlacklist.find(e => e.pattern === pattern) ||
+        null
+      );
+    })
+    .filter((e): e is BlacklistEntry => e !== null);
+
+  await chrome.storage.local.set(backup.data);
+  await saveBlacklist(mergedBlacklist);
 }
 
 // Get storage usage

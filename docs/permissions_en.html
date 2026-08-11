@@ -235,41 +235,25 @@ chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now(
                 <span class="required-badge">Required</span>
             </div>
             <h3>Purpose</h3>
-            <p>Get current tab information for the "Add current page to blacklist" shortcut feature.</p>
+            <p>Read tab URLs for the "Add current page to blacklist" shortcut feature and real-time blacklist protection.</p>
             
             <h3>Use Cases</h3>
             <ul>
                 <li>Get URL of currently active tab</li>
                 <li>Extract main domain displayed on "Add Current Page" button</li>
                 <li>Check if current page is already in blacklist</li>
+                <li>Listen for tab URL changes and auto-delete history when matching the blacklist</li>
             </ul>
-        </div>
-        
-        <div class="permission-card">
-            <div class="permission-header">
-                <span class="permission-tag">activeTab</span>
-                <span class="required-badge">Required</span>
-            </div>
-            <h3>Purpose</h3>
-            <p>Get temporary permission for the currently active tab, used in conjunction with tabs permission, without needing to request host permissions for all websites.</p>
-        </div>
-        
-        <div class="permission-card">
-            <div class="permission-header">
-                <span class="permission-tag">&lt;all_urls&gt;</span>
-                <span class="required-badge">Required</span>
-            </div>
-            <h3>Purpose</h3>
-            <p>Monitor URL changes on all websites for real-time blacklist protection.</p>
             
-            <h3>How It Works</h3>
-            <div class="code-block">chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.url) {
-    // Check if URL matches blacklist
-    if (isUrlBlacklisted(tab.url, blacklist)) {
-      // Immediately delete from history
-      chrome.history.deleteUrl({url: tab.url});
-    }
+            <h3>Code Example</h3>
+            <div class="code-block">// Get current active tab
+const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+const currentUrl = tabs[0]?.url;
+
+// Real-time protection: listen for URL changes
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url && isUrlBlacklisted(tab.url, blacklist)) {
+    chrome.history.deleteUrl({url: tab.url});
   }
 });</div>
             
@@ -279,12 +263,17 @@ chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now(
                 <li>Deletes immediately after match, no visit information stored</li>
                 <li>All processing done locally, no network transmission</li>
             </ul>
-            
-            <div class="warning">
-                <strong>Common Misconception:</strong> This permission is often considered high-risk because it allows access to all websites. However, in BrowseBuddy, we only use it to monitor URL changes - we don't inject scripts, read page content, or upload any data.
-            </div>
         </div>
         
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">sessions</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Restore recently closed tabs or windows. Data stays in the local browser; no network transmission involved.</p>
+        </div>
+
         <h2>Optional Permissions</h2>
         
         <div class="permission-card">

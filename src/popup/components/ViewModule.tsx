@@ -1,23 +1,196 @@
-import React, { useState, useEffect } from 'react';
-import { getMessage, formatDateTime } from '../../utils/i18n';
-import { fetchHistory, groupByDate, groupByDomain, type HistoryItem } from '../../utils/history';
+import React, { useState, useEffect, useRef } from 'react';
+import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
+import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type HistoryItem, type SearchOptions } from '../../utils/history';
+import { getBlacklist } from '../../utils/storage';
+import { extractMainDomain } from '../../utils/blacklist';
 
-type ViewMode = 'list' | 'date' | 'domain';
+type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
+
+// Parse a query string into history search options.
+// Supports:  plain keywords, site:example.com, before:2024-01-01, after:2024-01-01
+function parseSearchQuery(query: string): SearchOptions {
+  const options: SearchOptions = { maxResults: 1000 };
+  const keywords: string[] = [];
+
+  const tokens = query.trim().split(/\s+/).filter(Boolean);
+  tokens.forEach(token => {
+    const lower = token.toLowerCase();
+
+    if (lower.startsWith('site:')) {
+      const domain = token.slice(5);
+      if (domain) {
+        options.domains = [extractMainDomain(domain)];
+      }
+    } else if (lower.startsWith('before:')) {
+      const date = token.slice(7);
+      const ts = new Date(date + 'T23:59:59').getTime();
+      if (!isNaN(ts)) {
+        options.dateRange = { ...(options.dateRange || { start: 0 }), end: ts };
+      }
+    } else if (lower.startsWith('after:')) {
+      const date = token.slice(6);
+      const ts = new Date(date + 'T00:00:00').getTime();
+      if (!isNaN(ts)) {
+        options.dateRange = { ...(options.dateRange || { end: Date.now() }), start: ts };
+      }
+    } else {
+      keywords.push(token);
+    }
+  });
+
+  if (keywords.length > 0) {
+    options.keyword = keywords.join(' ');
+  }
+
+  return options;
+}
+
+// Load favicons from Chrome's local favicon cache - no network request,
+// so no domain is ever sent to a third party.
+function faviconUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `chrome://favicon/size/16@1x/${parsed.origin}`;
+  } catch {
+    return '';
+  }
+}
+
+// Recently closed tabs/windows restore panel
+const RestoreSession: React.FC = () => {
+  const [items, setItems] = useState<chrome.sessions.Session[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadClosed = async () => {
+    setIsLoading(true);
+    try {
+      const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: 10 });
+      setItems(sessions);
+    } catch {
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggle = async () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    if (next) {
+      await loadClosed();
+    }
+  };
+
+  const handleRestore = async (sessionId: string) => {
+    try {
+      await chrome.sessions.restore(sessionId);
+      await loadClosed();
+    } catch {
+      // Session may already be restored
+      await loadClosed();
+    }
+  };
+
+  return (
+    <div className="card" style={{ marginBottom: '12px' }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        onClick={handleToggle}
+      >
+        <h3 className="card-title" style={{ marginBottom: 0 }}>
+          {getMessage('restoreClosedTabs')}
+        </h3>
+        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+          {isOpen ? '▾' : '▸'}
+        </span>
+      </div>
+
+      {isOpen && (
+        <div style={{ marginTop: '10px' }}>
+          {isLoading ? (
+            <div className="loading" style={{ padding: '10px' }}>
+              <div className="spinner" />
+            </div>
+          ) : items.length === 0 ? (
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '8px 0' }}>
+              {getMessage('noClosedTabs')}
+            </div>
+          ) : (
+            items.map((session) => {
+              const tab = session.tab;
+              const window_ = session.window;
+              const sessionId = (tab?.sessionId || window_?.sessionId) || '';
+              const title = tab
+                ? tab.title || tab.url || ''
+                : window_
+                  ? `${window_.tabs?.length || 0} ${getMessage('items')}`
+                  : '';
+              const url = tab?.url || '';
+
+              return (
+                <div
+                  key={session.lastModified}
+                  className="history-item"
+                  onClick={() => handleRestore(sessionId)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {url ? (
+                    <img src={faviconUrl(url)} alt="" className="history-favicon"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
+                  )}
+                  <div className="history-content">
+                    <div className="history-title">{title || getMessage('closedWindow')}</div>
+                    {url && <div className="history-url">{url}</div>}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ViewModule: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [activeSearch, setActiveSearch] = useState('');
+  const debounceTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    if (viewMode === 'calendar') return;
 
-  const loadHistory = async () => {
+    if (debounceTimer.current) {
+      window.clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = window.setTimeout(() => {
+      setActiveSearch(searchQuery);
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
+    };
+  }, [searchQuery, viewMode]);
+
+  useEffect(() => {
+    if (viewMode === 'calendar') return;
+    loadHistory(parseSearchQuery(activeSearch));
+  }, [activeSearch, viewMode]);
+
+  const loadHistory = async (options?: SearchOptions) => {
     setIsLoading(true);
     try {
-      const items = await fetchHistory({ maxResults: 500 });
+      const blacklist = await getBlacklist();
+      const items = await fetchVisibleHistory(options || { maxResults: 1000 }, blacklist);
       setHistory(items);
     } catch (error) {
       console.error('Failed to load history:', error);
@@ -26,10 +199,25 @@ const ViewModule: React.FC = () => {
     }
   };
 
-  const filteredHistory = history.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.url.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Load history for a specific day when a calendar cell is clicked
+  const loadDayHistory = async (date: string) => {
+    setIsLoading(true);
+    try {
+      const blacklist = await getBlacklist();
+      const start = new Date(date + 'T00:00:00').getTime();
+      const end = start + 24 * 60 * 60 * 1000 - 1;
+      const items = await fetchVisibleHistory(
+        { maxResults: 1000, dateRange: { start, end } },
+        blacklist
+      );
+      setHistory(items);
+      setSelectedDay(date);
+    } catch (error) {
+      console.error('Failed to load day history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -41,7 +229,26 @@ const ViewModule: React.FC = () => {
       );
     }
 
-    if (filteredHistory.length === 0) {
+    if (viewMode === 'calendar') {
+      return (
+        <CalendarView
+          year={calendarYear}
+          month={calendarMonth}
+          onPrevMonth={() => setCalendarMonth(prev => {
+            if (prev === 0) { setCalendarYear(y => y - 1); return 11; }
+            return prev - 1;
+          })}
+          onNextMonth={() => setCalendarMonth(prev => {
+            if (prev === 11) { setCalendarYear(y => y + 1); return 0; }
+            return prev + 1;
+          })}
+          onSelectDay={(date) => loadDayHistory(date)}
+          selectedDay={selectedDay}
+        />
+      );
+    }
+
+    if (history.length === 0) {
       return (
         <div className="empty-state">
           <div className="empty-icon">📭</div>
@@ -53,26 +260,34 @@ const ViewModule: React.FC = () => {
 
     switch (viewMode) {
       case 'date':
-        return <DateGroupView items={filteredHistory} />;
+        return <DateGroupView items={history} />;
       case 'domain':
-        return <DomainGroupView items={filteredHistory} />;
+        return <DomainGroupView items={history} />;
       default:
-        return <ListView items={filteredHistory} />;
+        return <ListView items={history} />;
     }
   };
 
   return (
     <div>
+      {/* Restore recently closed tabs */}
+      <RestoreSession />
+
       {/* Search */}
       <div className="input-group" style={{ marginBottom: '12px' }}>
         <input
           type="text"
           className="input"
-          placeholder={getMessage('searchPlaceholder')}
+          placeholder={getMessage('searchPlaceholderAdvanced')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+      {searchQuery && (
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '-8px', marginBottom: '8px' }}>
+          {getMessage('searchSyntaxHint')}
+        </div>
+      )}
 
       {/* View Mode Tabs */}
       <div className="delete-tabs">
@@ -94,10 +309,125 @@ const ViewModule: React.FC = () => {
         >
           {getMessage('groupByDomain')}
         </button>
+        <button
+          className={`delete-tab ${viewMode === 'calendar' ? 'active' : ''}`}
+          onClick={() => setViewMode('calendar')}
+        >
+          {getMessage('calendarView')}
+        </button>
       </div>
 
       {/* Content */}
       {renderContent()}
+
+      {/* Day detail below calendar */}
+      {viewMode === 'calendar' && selectedDay && !isLoading && (
+        <div style={{ marginTop: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 className="card-title" style={{ marginBottom: 0 }}>{selectedDay}</h3>
+            <button className="btn btn-sm btn-secondary" onClick={() => setSelectedDay(null)}>
+              {getMessage('close')}
+            </button>
+          </div>
+          {history.length > 0 ? (
+            <ListView items={history} />
+          ) : (
+            <div className="empty-state" style={{ padding: '20px' }}>
+              <div className="empty-icon">📭</div>
+              <div className="empty-title">{getMessage('noHistoryFound')}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Calendar Heatmap View
+const CalendarView: React.FC<{
+  year: number;
+  month: number;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  onSelectDay: (date: string) => void;
+  selectedDay: string | null;
+}> = ({ year, month, onPrevMonth, onNextMonth, onSelectDay, selectedDay }) => {
+  const [data, setData] = useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [maxCount, setMaxCount] = useState(1);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    getCalendarData(year, month).then(entries => {
+      if (cancelled) return;
+      const map: Record<string, number> = {};
+      let max = 1;
+      entries.forEach(e => {
+        map[e.date] = e.count;
+        if (e.count > max) max = e.count;
+      });
+      setData(map);
+      setMaxCount(max);
+      setIsLoading(false);
+    }).catch(() => {
+      if (!cancelled) setIsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [year, month]);
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthLabel = new Date(year, month, 1).toLocaleDateString(getCurrentLocale(), {
+    year: 'numeric',
+    month: 'long',
+  });
+
+  const cells: (string | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading" style={{ padding: '20px' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <button className="btn btn-sm btn-secondary" onClick={onPrevMonth}>‹</button>
+        <span style={{ fontWeight: 'bold' }}>{monthLabel}</span>
+        <button className="btn btn-sm btn-secondary" onClick={onNextMonth}>›</button>
+      </div>
+      <div className="calendar-grid">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;
+          const count = data[date] || 0;
+          const intensity = count > 0 ? 0.25 + 0.75 * (count / maxCount) : 0;
+          const isSelected = date === selectedDay;
+          const isToday = date === today;
+          return (
+            <div
+              key={date}
+              className={`calendar-cell ${isSelected ? 'calendar-cell-selected' : ''} ${isToday ? 'calendar-cell-today' : ''}`}
+              style={{
+                background: count > 0 ? `rgba(74, 158, 89, ${intensity})` : 'var(--bg-tertiary)',
+              }}
+              title={`${date}: ${count} ${getMessage('visits')}`}
+              onClick={() => onSelectDay(date)}
+            >
+              {Number(date.slice(-2))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -157,7 +487,7 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
           <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <img
-                src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`}
+                src={faviconUrl(`https://${domain}`)}
                 alt=""
                 className="history-favicon"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -202,7 +532,7 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
     <div className="history-item" onClick={handleClick}>
       {!faviconError ? (
         <img
-          src={`https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=16`}
+          src={faviconUrl(item.url)}
           alt=""
           className="history-favicon"
           onError={() => setFaviconError(true)}

@@ -107,10 +107,9 @@ git push origin main
 
 1. history - 读取和删除浏览器历史记录（核心功能）
 2. storage - 本地存储设置和黑名单数据
-3. tabs - 获取当前标签页信息（添加当前页面到黑名单）
-4. activeTab - 获取当前活动标签页权限
-5. <all_urls> - 监控所有 URL 变更以实现黑名单实时保护
-6. contextMenus - 添加右键菜单项（可选）
+3. tabs - 读取标签页 URL（添加当前页面到黑名单、实时黑名单保护）
+4. sessions - 恢复最近关闭的标签页或窗口
+5. contextMenus - 添加右键菜单项（可选）
 
 所有数据均在本地处理，不会上传至任何服务器。
 详细说明：https://yourusername.github.io/browsebuddy/permissions.html
