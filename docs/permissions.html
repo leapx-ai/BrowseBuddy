@@ -201,6 +201,27 @@
         .lang-btn.active { color: #fff; background: rgba(99,102,241,0.35); }
         .lang-pill { display: inline-flex; gap: 4px; margin-left: 8px;
             background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); border-radius: 9px; padding: 3px; }
+    
+        /* === Typography refinements === */
+        body { line-height: 1.75; font-size: 15px; }
+        .hero { padding: 20px 0 40px; }
+        .hero .title { font-size: 2em; letter-spacing: -0.02em; }
+        .hero .tagline { font-size: 1.15em; }
+        .card { padding: 32px; margin: 20px 0; }
+        h2 { font-size: 1.4em; margin-bottom: 16px; }
+        h3 { font-size: 1.08em; margin: 20px 0 10px; }
+        .card p { font-size: 0.95em; }
+        .feature { padding: 22px; }
+        .feature h4 { font-size: 1em; }
+        .feature p { font-size: 0.88em; }
+        .doc-card { padding: 24px; }
+        footer { padding: 28px 20px 0; font-size: 0.9em; }
+        .permission-card { padding: 22px; }
+        @media (max-width: 640px) {
+            body { font-size: 14px; }
+            .card { padding: 22px; }
+            .hero .title { font-size: 1.6em; }
+        }
     </style>
 </head>
 <body>
@@ -210,8 +231,9 @@
                 <img src="icon.png" alt="BrowseBuddy">
                 <span>BrowseBuddy</span>
             </a>
-            <div class="nav-links">
+                        <div class="nav-links">
                 <a href="index.html">首页</a>
+                <a href="permissions.html">权限</a>
                 <a href="privacy.html">隐私政策</a>
                 <a href="terms.html">使用条款</a>
                 <span class="lang-pill">
@@ -436,15 +458,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 <td>webNavigation</td>
                 <td>tabs 权限已满足导航监控需求</td>
             </tr>
-        </table><footer>
-            <p>© 2026 BrowseBuddy. 保留所有权利。</p>
-            <p>如有疑问，请通过 GitHub Issues 联系我们。</p>
-        </footer>
+        </table>
     </div>
-        <footer>
-            <p>© 2026 BrowseBuddy. 保留所有权利。</p>
-            <p>如有疑问，请通过 GitHub Issues 联系我们。</p>
-        </footer>
+        
         </div>
         <div lang="en" hidden>
         <header class="hero">
@@ -656,17 +672,29 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 <td>webNavigation</td>
                 <td>tabs permission already satisfies navigation monitoring needs</td>
             </tr>
-        </table><footer>
-            <p>© 2026 BrowseBuddy. All rights reserved.</p>
-            <p>Questions? Contact us via GitHub Issues.</p>
-        </footer>
+        </table>
     </div>
-        <footer>
-            <p>© 2026 BrowseBuddy. All rights reserved.</p>
-            <p>Questions? Contact us via GitHub Issues.</p>
-        </footer>
+        
         </div>
     </div>
+    <footer>
+            <div lang="zh">
+                <p>© 2026 BrowseBuddy. 保留所有权利。 · 本页面托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+                <div class="footer-links">
+                    <a href="privacy.html">隐私政策</a>
+                    <a href="terms.html">使用条款</a>
+                    <a href="permissions.html">权限详解</a>
+                </div>
+            </div>
+            <div lang="en" hidden>
+                <p>© 2026 BrowseBuddy. All rights reserved. · Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Use</a>
+                    <a href="permissions.html">Permissions Detail</a>
+                </div>
+            </div>
+        </footer>
     <script>
 (function () {
   var KEY = 'browsebuddy_lang';

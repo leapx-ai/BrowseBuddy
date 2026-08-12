@@ -154,6 +154,27 @@
             .hero h1 { font-size: 2.2em; }
             .card { padding: 26px; }
         }
+    
+        /* === Typography refinements === */
+        body { line-height: 1.75; font-size: 15px; }
+        .hero { padding: 20px 0 40px; }
+        .hero .title { font-size: 2em; letter-spacing: -0.02em; }
+        .hero .tagline { font-size: 1.15em; }
+        .card { padding: 32px; margin: 20px 0; }
+        h2 { font-size: 1.4em; margin-bottom: 16px; }
+        h3 { font-size: 1.08em; margin: 20px 0 10px; }
+        .card p { font-size: 0.95em; }
+        .feature { padding: 22px; }
+        .feature h4 { font-size: 1em; }
+        .feature p { font-size: 0.88em; }
+        .doc-card { padding: 24px; }
+        footer { padding: 28px 20px 0; font-size: 0.9em; }
+        .permission-card { padding: 22px; }
+        @media (max-width: 640px) {
+            body { font-size: 14px; }
+            .card { padding: 22px; }
+            .hero .title { font-size: 1.6em; }
+        }
     </style>
 </head>
 <body>
@@ -163,11 +184,11 @@
                 <img src="icon.png" alt="BrowseBuddy">
                 <span>BrowseBuddy</span>
             </a>
-            <div class="nav-links">
-                <a href="#features" data-nav="features">功能</a>
-                <a href="privacy.html" data-nav="privacy">隐私政策</a>
-                <a href="permissions.html" data-nav="permissions">权限</a>
-                <a href="terms.html" data-nav="terms">使用条款</a>
+                        <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="permissions.html">权限</a>
+                <a href="privacy.html">隐私政策</a>
+                <a href="terms.html">使用条款</a>
                 <span class="lang-pill">
                     <button data-lang-switch="zh" class="lang-btn">中文</button>
                     <button data-lang-switch="en" class="lang-btn">English</button>
@@ -273,14 +294,7 @@
                 <p style="margin-top: 15px; color: var(--text-muted); font-size: 0.9em;">您也可以从 GitHub 下载源码自行安装</p>
             </div>
 
-            <footer>
-                <p>© 2026 BrowseBuddy. 保留所有权利。 · 本页面托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
-                <div class="footer-links">
-                    <a href="privacy.html">隐私政策</a>
-                    <a href="terms.html">使用条款</a>
-                    <a href="permissions.html">权限详解</a>
-                </div>
-            </footer>
+            
         </div>
 
         <div lang="en" hidden>
@@ -381,16 +395,27 @@
                 <p style="margin-top: 15px; color: var(--text-muted); font-size: 0.9em;">You can also install from GitHub source</p>
             </div>
 
-            <footer>
+            
+        </div>
+    </div>
+    <footer>
+            <div lang="zh">
+                <p>© 2026 BrowseBuddy. 保留所有权利。 · 本页面托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+                <div class="footer-links">
+                    <a href="privacy.html">隐私政策</a>
+                    <a href="terms.html">使用条款</a>
+                    <a href="permissions.html">权限详解</a>
+                </div>
+            </div>
+            <div lang="en" hidden>
                 <p>© 2026 BrowseBuddy. All rights reserved. · Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
                 <div class="footer-links">
                     <a href="privacy.html">Privacy Policy</a>
                     <a href="terms.html">Terms of Use</a>
                     <a href="permissions.html">Permissions Detail</a>
                 </div>
-            </footer>
-        </div>
-    </div>
+            </div>
+        </footer>
 
     <script>
     (function () {
