@@ -220,7 +220,9 @@
         <h3>2.1 Storage Locations</h3>
         <ul>
             <li><strong>Extension Settings:</strong> Stored in browser local storage using chrome.storage.local</li>
-            <li><strong>Blacklist Data:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Blacklist & Favorites:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Dwell Time Stats:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Backup Data:</strong> Stored in browser local storage using chrome.storage.local</li>
             <li><strong>History Records:</strong> Only reads built-in browser history, no additional storage</li>
             <li><strong>Exported Files:</strong> Saved only to user-selected locations when actively exported</li>
         </ul>
@@ -247,6 +249,7 @@
             <li><strong>storage:</strong> Save extension settings, blacklist, favorites and dwell time (local storage)</li>
             <li><strong>tabs:</strong> Read tab URLs (add current page to blacklist, real-time blacklist protection)</li>
             <li><strong>sessions:</strong> Restore recently closed tabs or windows</li>
+            <li><strong>alarms:</strong> Scheduled tasks (auto-backup, auto-cleanup, dwell time snapshots)</li>
             <li><strong>contextMenus:</strong> Add right-click menu items to quickly blacklist websites</li>
         </ul>
         </div>

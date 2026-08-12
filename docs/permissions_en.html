@@ -279,8 +279,18 @@ chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now(
                     <td>chrome.storage.local</td>
                 </tr>
                 <tr>
-                    <td>Stats Cache</td>
-                    <td>History statistics cache (rebuildable)</td>
+                    <td>Favorited Domains</td>
+                    <td>Protected domains excluded from deletion</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Dwell Time</td>
+                    <td>Accumulated time per site (for statistics)</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Backup Data</td>
+                    <td>Auto/manual backup snapshots</td>
                     <td>chrome.storage.local</td>
                 </tr>
             </table>
@@ -333,6 +343,22 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             </div>
             <h3>Purpose</h3>
             <p>Restore recently closed tabs or windows. Data stays in the local browser; no network transmission involved.</p>
+        </div>
+
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">alarms</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Run scheduled background tasks, including auto-backup, auto-cleanup of expired history, and periodic dwell-time snapshots.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Automatically create data backups at user-configured intervals</li>
+                <li>Daily auto-cleanup of history older than the retention period</li>
+                <li>Per-minute snapshots of active tab dwell time to survive service worker restarts</li>
+            </ul>
         </div>
 
         

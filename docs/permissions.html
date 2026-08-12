@@ -280,8 +280,18 @@ chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now(
                     <td>chrome.storage.local</td>
                 </tr>
                 <tr>
-                    <td>缓存统计</td>
-                    <td>历史记录统计缓存（可重建）</td>
+                    <td>收藏域名</td>
+                    <td>受保护、不参与删除的域名</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>停留时长</td>
+                    <td>各网站累计停留时间（统计用）</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>备份数据</td>
+                    <td>自动/手动备份快照</td>
                     <td>chrome.storage.local</td>
                 </tr>
             </table>
@@ -334,6 +344,22 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             </div>
             <h3>用途说明</h3>
             <p>恢复最近关闭的标签页或窗口。数据仅保存在本地浏览器，不涉及任何网络传输。</p>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">alarms</span>
+                <span class="required-badge">必需</span>
+            </div>
+            <h3>用途说明</h3>
+            <p>定时执行后台任务，包括自动备份、自动清理过期历史、以及停留时长的定期快照。</p>
+            
+            <h3>使用场景</h3>
+            <ul>
+                <li>按用户设置的间隔自动创建数据备份</li>
+                <li>每日自动清理超过保留期的历史记录</li>
+                <li>每分钟快照当前标签页停留时长，防止服务进程重启丢失数据</li>
+            </ul>
         </div>
         
         

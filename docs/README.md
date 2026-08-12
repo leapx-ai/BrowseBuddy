@@ -109,7 +109,8 @@ git push origin main
 2. storage - 本地存储设置和黑名单数据
 3. tabs - 读取标签页 URL（添加当前页面到黑名单、实时黑名单保护）
 4. sessions - 恢复最近关闭的标签页或窗口
-5. contextMenus - 添加右键菜单项（可选）
+5. alarms - 定时任务（自动备份、自动清理、停留时长快照）
+6. contextMenus - 添加右键菜单项（可选）
 
 所有数据均在本地处理，不会上传至任何服务器。
 详细说明：https://leapx-ai.github.io/browsebuddy/permissions.html
