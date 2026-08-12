@@ -27,9 +27,9 @@ A powerful browser extension for managing browsing history with privacy protecti
 
 - Visit frequency trends
 - Top visited sites
-- Time distribution (24-hour heatmap)
 - **Dwell time stats**: Most time spent per site
-- Daily/weekly/monthly statistics
+- Time distribution (24-hour heatmap) with hover tooltips
+- Daily trend with time range switching (all / 7d / 30d / 90d)
 - Export to CSV and HTML
 
 ### 🛡️ Privacy Protection
@@ -55,7 +55,7 @@ A powerful browser extension for managing browsing history with privacy protecti
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/yourusername/browsebuddy.git
+git clone https://github.com/leapx-ai/BrowseBuddy.git
 cd browsebuddy
 ```
 
@@ -65,13 +65,19 @@ cd browsebuddy
 npm install
 ```
 
-3. Build the extension:
+3. Run tests:
+
+```bash
+npm test
+```
+
+4. Build the extension:
 
 ```bash
 npm run build
 ```
 
-4. Load the extension in your browser:
+5. Load the extension in your browser:
    - **Chrome/Edge**: Go to `chrome://extensions/`, enable Developer mode, click "Load unpacked", select the `dist` folder
    - **Firefox**: Go to `about:debugging`, click "This Firefox", click "Load Temporary Add-on", select any file in the `dist` folder
 
@@ -112,8 +118,9 @@ npm run watch
 ## Technology Stack
 
 - TypeScript
-- React
+- Preact (via preact/compat)
 - Webpack
+- Vitest
 - Chrome Extension Manifest V3
 
 ## Project Structure
@@ -126,6 +133,7 @@ browsebuddy/
 │   ├── options/         # Options page
 │   ├── types/           # TypeScript types
 │   └── utils/           # Utility functions
+├── test/                # Vitest unit tests
 ├── public/              # Static assets
 ├── _locales/            # i18n files
 └── dist/                # Build output
@@ -141,7 +149,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Icons powered by [Feather Icons](https://feathericons.com/)
-- Built with [React](https://reactjs.org/)
-
-# BrowseBuddy
+- Built with [Preact](https://preactjs.com/)
