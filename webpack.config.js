@@ -42,6 +42,10 @@ module.exports = (env, argv) => {
       extensions: ['.tsx', '.ts', '.js'],
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        // Use Preact's React compatibility layer so existing imports keep working
+        'react': 'preact/compat',
+        'react-dom': 'preact/compat',
+        'react/jsx-runtime': 'preact/jsx-runtime',
       },
     },
     plugins: [

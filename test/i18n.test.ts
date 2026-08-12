@@ -43,8 +43,16 @@ describe('getMessage', () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => {
       const locale = url.includes('zh_CN') ? 'zh_CN' : 'en';
       const messages = locale === 'zh_CN'
-        ? { testKey: { message: '中文 $1$' }, plainKey: { message: '纯文本' } }
-        : { testKey: { message: 'Hello $1$' }, plainKey: { message: 'Plain' } };
+        ? {
+            testKey: { message: '中文 $1$' },
+            plainKey: { message: '纯文本' },
+            namedKey: { message: '删除 $count$ 条', placeholders: { count: { content: '$1' } } },
+          }
+        : {
+            testKey: { message: 'Hello $1$' },
+            plainKey: { message: 'Plain' },
+            namedKey: { message: 'Delete $count$ records', placeholders: { count: { content: '$1' } } },
+          };
       return Promise.resolve({ ok: true, json: () => Promise.resolve(messages) } as Response);
     }));
   });
@@ -71,6 +79,16 @@ describe('getMessage', () => {
   it('keeps placeholder when no substitution given', async () => {
     await initI18n();
     expect(getMessage('testKey')).toBe('Hello $1$');
+  });
+
+  it('resolves named placeholders ($count$)', async () => {
+    await initI18n();
+    expect(getMessage('namedKey', '5')).toBe('Delete 5 records');
+  });
+
+  it('keeps named placeholder when no substitution given', async () => {
+    await initI18n();
+    expect(getMessage('namedKey')).toBe('Delete $count$ records');
   });
 
   it('uses zh_CN pack when language is Chinese', async () => {

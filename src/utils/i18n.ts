@@ -2,8 +2,13 @@
 
 import { getSettings } from './storage';
 
-// Message cache for fallback
-const messagesCache: Record<string, Record<string, string>> = {
+// Message cache for fallback. Stores the message text plus the placeholders
+// definition so named placeholders ($count$) can be resolved like chrome.i18n.
+interface CachedMessage {
+  message: string;
+  placeholders?: Record<string, { content: string }>;
+}
+const messagesCache: Record<string, Record<string, CachedMessage>> = {
   en: {},
   zh_CN: {},
 };
@@ -11,17 +16,21 @@ const messagesCache: Record<string, Record<string, string>> = {
 let currentLanguage: string | null = null;
 
 // Load all messages from the extension's _locales
-async function loadMessages(locale: string): Promise<Record<string, string>> {
+async function loadMessages(locale: string): Promise<Record<string, CachedMessage>> {
   try {
     // Try to fetch the messages.json directly
     const response = await fetch(chrome.runtime.getURL(`_locales/${locale}/messages.json`));
     if (response.ok) {
       const messages = await response.json();
-      // Flatten the messages to just the message strings
-      const flattened: Record<string, string> = {};
+      // Flatten to { message, placeholders } keeping the placeholders definition
+      const flattened: Record<string, CachedMessage> = {};
       for (const [key, value] of Object.entries(messages)) {
         if (typeof value === 'object' && value !== null && 'message' in value) {
-          flattened[key] = (value as { message: string }).message;
+          const m = value as { message: string; placeholders?: Record<string, { content: string }> };
+          flattened[key] = {
+            message: m.message,
+            placeholders: m.placeholders,
+          };
         }
       }
       return flattened;
@@ -64,24 +73,40 @@ export function setUserLanguage(lang: string): void {
   }
 }
 
-// Get message with user language preference support
+// Get message with user language preference support.
+// Supports both numeric ($1$, $2$) and named ($count$) placeholders.
+// Named placeholders are resolved through the message's placeholders map,
+// whose content is "$N" referencing the substitution index.
 export function getMessage(messageName: string, substitutions?: string | string[]): string {
   const lang = currentLanguage || 'zh_CN';
-  
+  const subs = substitutions === undefined ? [] : Array.isArray(substitutions) ? substitutions : [substitutions];
+
   // First try from cache
   const cached = messagesCache[lang]?.[messageName];
   if (cached) {
-    if (substitutions) {
-      const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
-      // Replace $n$ placeholders with substitutions
-      return cached.replace(/\$(\d+)\$/g, (match, index) => {
-        const idx = parseInt(index, 10) - 1;
+    let text = cached.message;
+
+    // Resolve named placeholders first ($name$ -> placeholder content "$N" -> subs[N-1])
+    if (cached.placeholders) {
+      text = text.replace(/\$([A-Za-z_][A-Za-z0-9_]*)\$/g, (match, name) => {
+        const ph = cached.placeholders?.[name];
+        if (!ph) return match;
+        const idxMatch = /^\$(\d+)$/.exec(ph.content);
+        if (!idxMatch) return ph.content;
+        const idx = parseInt(idxMatch[1], 10) - 1;
         return subs[idx] !== undefined ? subs[idx] : match;
       });
     }
-    return cached;
+
+    // Resolve numeric placeholders ($1$, $2$)
+    text = text.replace(/\$(\d+)\$/g, (match, index) => {
+      const idx = parseInt(index, 10) - 1;
+      return subs[idx] !== undefined ? subs[idx] : match;
+    });
+
+    return text;
   }
-  
+
   // Fallback to chrome.i18n
   if (typeof chrome !== 'undefined' && chrome.i18n) {
     const message = chrome.i18n.getMessage(messageName, substitutions);
