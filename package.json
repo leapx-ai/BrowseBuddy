@@ -10,7 +10,9 @@
     "lint": "eslint src --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package": "npm run build && npm run zip",
+    "zip": "node scripts/zip-dist.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
