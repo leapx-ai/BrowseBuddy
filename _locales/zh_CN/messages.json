@@ -96,10 +96,20 @@
     "description": "Confirm delete title"
   },
   "recordsWillBeDeleted": {
-    "message": "将删除 $count$ 条记录。此操作不可撤销。",
+    "message": "将删除约 $count$ 条记录。此操作不可撤销。",
     "description": "Delete confirmation message",
     "placeholders": {
       "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "deleteSuccess": {
+    "message": "已删除 $1$ 条记录",
+    "description": "Delete success message",
+    "placeholders": {
+      "1": {
         "content": "$1",
         "example": "10"
       }
@@ -230,6 +240,10 @@
   "topSitesByTime": {
     "message": "停留时间最长的网站",
     "description": "Top sites by dwell time"
+  },
+  "lifetimeAccumulated": {
+    "message": "（历史累计）",
+    "description": "Note that dwell time is accumulated over all history"
   },
   "timeDistribution": {
     "message": "时段分布",
@@ -510,6 +524,28 @@
   "range_90": {
     "message": "近90天",
     "description": "Last 90 days range"
+  },
+  "hourLabel": {
+    "message": "$1$ 时段",
+    "description": "Hour label",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "14:00"
+      }
+    }
+  },
+  "visitsInHour": {
+    "message": "次访问",
+    "description": "Visits in this hour"
+  },
+  "timeDistributionDesc": {
+    "message": "24小时分布：一天中每个小时的访问次数，帮助了解活跃时段",
+    "description": "Time distribution description"
+  },
+  "dailyTrendDesc": {
+    "message": "每日访问趋势（最近30天）",
+    "description": "Daily trend description"
   },
   "allFilteredByBlacklist": {
     "message": "历史记录已被黑名单过滤，或当前时间范围内没有数据。",

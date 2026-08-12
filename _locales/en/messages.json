@@ -96,10 +96,20 @@
     "description": "Confirm delete title"
   },
   "recordsWillBeDeleted": {
-    "message": "$count$ records will be deleted. This action cannot be undone.",
+    "message": "Approximately $count$ records will be deleted. This action cannot be undone.",
     "description": "Delete confirmation message",
     "placeholders": {
       "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "deleteSuccess": {
+    "message": "$1$ records deleted",
+    "description": "Delete success message",
+    "placeholders": {
+      "1": {
         "content": "$1",
         "example": "10"
       }
@@ -230,6 +240,10 @@
   "topSitesByTime": {
     "message": "Most Time Spent",
     "description": "Top sites by dwell time"
+  },
+  "lifetimeAccumulated": {
+    "message": " (lifetime accumulated)",
+    "description": "Note that dwell time is accumulated over all history"
   },
   "timeDistribution": {
     "message": "Time Distribution",
@@ -510,6 +524,28 @@
   "range_90": {
     "message": "90d",
     "description": "Last 90 days range"
+  },
+  "hourLabel": {
+    "message": "$1$ hour",
+    "description": "Hour label",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "14:00"
+      }
+    }
+  },
+  "visitsInHour": {
+    "message": "visits",
+    "description": "Visits in this hour"
+  },
+  "timeDistributionDesc": {
+    "message": "24-hour distribution: visits per hour to reveal your most active times",
+    "description": "Time distribution description"
+  },
+  "dailyTrendDesc": {
+    "message": "Daily visit trend (last 30 days)",
+    "description": "Daily trend description"
   },
   "allFilteredByBlacklist": {
     "message": "History is filtered by blacklist, or there is no data in the selected time range.",

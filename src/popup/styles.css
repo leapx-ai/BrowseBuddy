@@ -466,6 +466,44 @@ body {
   background: var(--secondary-color);
 }
 
+/* Chart tooltip */
+.chart-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  pointer-events: none;
+  text-align: center;
+}
+
+.chart-tooltip .tooltip-value {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 13px;
+}
+
+.chart-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  cursor: pointer;
+  transition: background 0.15s, filter 0.15s;
+}
+
+.chart-bar:hover {
+  filter: brightness(1.25);
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;

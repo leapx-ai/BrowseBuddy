@@ -3,47 +3,9 @@ import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
 import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type HistoryItem, type SearchOptions } from '../../utils/history';
 import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
 import { extractMainDomain } from '../../utils/blacklist';
+import { parseSearchQuery } from '../../utils/search';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
-
-// Parse a query string into history search options.
-// Supports:  plain keywords, site:example.com, before:2024-01-01, after:2024-01-01
-function parseSearchQuery(query: string): SearchOptions {
-  const options: SearchOptions = { maxResults: 1000 };
-  const keywords: string[] = [];
-
-  const tokens = query.trim().split(/\s+/).filter(Boolean);
-  tokens.forEach(token => {
-    const lower = token.toLowerCase();
-
-    if (lower.startsWith('site:')) {
-      const domain = token.slice(5);
-      if (domain) {
-        options.domains = [extractMainDomain(domain)];
-      }
-    } else if (lower.startsWith('before:')) {
-      const date = token.slice(7);
-      const ts = new Date(date + 'T23:59:59').getTime();
-      if (!isNaN(ts)) {
-        options.dateRange = { ...(options.dateRange || { start: 0 }), end: ts };
-      }
-    } else if (lower.startsWith('after:')) {
-      const date = token.slice(6);
-      const ts = new Date(date + 'T00:00:00').getTime();
-      if (!isNaN(ts)) {
-        options.dateRange = { ...(options.dateRange || { end: Date.now() }), start: ts };
-      }
-    } else {
-      keywords.push(token);
-    }
-  });
-
-  if (keywords.length > 0) {
-    options.keyword = keywords.join(' ');
-  }
-
-  return options;
-}
 
 // Render a deterministic colored letter avatar for a domain.
 // Fully local - no network request, no CSP issues, no domain leaks.
@@ -205,7 +167,6 @@ const ViewModule: React.FC = () => {
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [dayLoading, setDayLoading] = useState(false);
   const [activeSearch, setActiveSearch] = useState('');
   const [transitionType, setTransitionType] = useState('');
   const debounceTimer = useRef<number | null>(null);
@@ -248,10 +209,9 @@ const ViewModule: React.FC = () => {
   };
 
   // Load history for a specific day when a calendar cell is clicked.
-  // Uses a dedicated loading state so the calendar itself stays visible.
+  // No loading indicator - the list updates in place when data arrives.
   const loadDayHistory = async (date: string) => {
     setSelectedDay(date);
-    setDayLoading(true);
     try {
       const blacklist = await getBlacklist();
       const start = new Date(date + 'T00:00:00').getTime();
@@ -263,8 +223,6 @@ const ViewModule: React.FC = () => {
       setHistory(items);
     } catch (error) {
       console.error('Failed to load day history:', error);
-    } finally {
-      setDayLoading(false);
     }
   };
 
@@ -399,11 +357,7 @@ const ViewModule: React.FC = () => {
             </button>
           </div>
           <div className="day-history-list">
-            {dayLoading ? (
-              <div className="loading">
-                <div className="spinner" />
-              </div>
-            ) : history.length > 0 ? (
+            {history.length > 0 ? (
               <ListView items={history} />
             ) : (
               <div className="empty-state">

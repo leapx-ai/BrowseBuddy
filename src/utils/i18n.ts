@@ -133,28 +133,46 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat(getCurrentBCP47Locale()).format(num);
 }
 
-// Format duration in seconds to human readable
+// Format duration in seconds to human readable.
+// Uses zh units when the current language is Chinese, otherwise en.
 export function formatDuration(seconds: number): string {
+  const isZh = (currentLanguage || 'zh_CN').startsWith('zh');
   if (seconds < 60) {
-    return `${seconds}s`;
+    return isZh ? `${seconds}秒` : `${seconds}s`;
   }
   if (seconds < 3600) {
-    return `${Math.floor(seconds / 60)}m`;
+    return isZh ? `${Math.floor(seconds / 60)}分钟` : `${Math.floor(seconds / 60)}m`;
   }
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${mins}m`;
+  if (mins === 0) {
+    return isZh ? `${hours}小时` : `${hours}h`;
+  }
+  return isZh ? `${hours}小时${mins}分` : `${hours}h ${mins}m`;
 }
 
 // Theme management
+let mediaListener: (() => void) | null = null;
+
 export function applyTheme(theme: 'dark' | 'light' | 'system'): void {
   let effectiveTheme = theme;
-  
   if (theme === 'system') {
     effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  
   document.documentElement.setAttribute('data-theme', effectiveTheme);
+
+  // When in "system" mode, follow OS theme changes live.
+  if (theme === 'system') {
+    if (!mediaListener) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => applyTheme('system');
+      mq.addEventListener?.('change', handler);
+      mediaListener = handler;
+    }
+  } else if (mediaListener) {
+    window.matchMedia('(prefers-color-scheme: dark)').removeEventListener?.('change', mediaListener);
+    mediaListener = null;
+  }
 }
 
 // Initialize theme on page load

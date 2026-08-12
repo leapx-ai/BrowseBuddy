@@ -35,7 +35,8 @@ export function extractMainDomain(url: string): string {
     // Standard case: last two parts are the main domain
     return parts.slice(-2).join('.');
   } catch {
-    return url;
+    // Invalid URL/hostname - return empty so callers can detect failure
+    return '';
   }
 }
 

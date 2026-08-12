@@ -4,6 +4,7 @@ import type {
   SearchOptions, 
   DomainStats,
   TimeDistribution,
+  DailyStats,
   Statistics,
   CalendarData,
   BlacklistEntry,
@@ -17,6 +18,7 @@ export type {
   SearchOptions, 
   DomainStats,
   TimeDistribution,
+  DailyStats,
   Statistics,
   CalendarData,
 } from '../types';
@@ -97,6 +99,77 @@ export async function fetchVisibleHistory(
   return filterBlacklistedItems(items, blacklist);
 }
 
+// Fetch the full history within a range by walking backwards page by page.
+// chrome.history.search caps each query at `maxResults` (defaulting to the
+// most recent N records), so a single query would silently drop older entries
+// and skew statistics (e.g. older days showing zero visits).
+export async function fetchAllHistory(
+  options: SearchOptions = {}
+): Promise<HistoryItem[]> {
+  const { keyword, dateRange, maxResults = 10000 } = options;
+  const PAGE_SIZE = 2000;
+
+  const all: HistoryItem[] = [];
+  const seen = new Set<string>();
+  // Walk backwards from the range end (or now) so pagination is deterministic.
+  // chrome.history.search's endTime is exclusive ("visited before this date"),
+  // so advancing to the earliest visit time neither repeats nor skips records.
+  let endTime = dateRange?.end ?? Date.now();
+  let reachedStart = false;
+  let pages = 0;
+  const MAX_PAGES = 50;
+
+  while (!reachedStart && pages < MAX_PAGES) {
+    const page = await fetchHistory({
+      keyword,
+      maxResults: Math.min(PAGE_SIZE, maxResults - all.length),
+      dateRange: { start: dateRange?.start ?? 0, end: endTime },
+    });
+
+    if (page.length === 0) break;
+
+    // De-duplicate (same URL + timestamp can appear on page boundaries)
+    let added = 0;
+    for (const item of page) {
+      const key = `${item.url}:${item.lastVisitTime}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      all.push(item);
+      added++;
+
+      // Stop exactly at the requested limit
+      if (all.length >= maxResults) {
+        reachedStart = true;
+        break;
+      }
+    }
+
+    if (added === 0) {
+      reachedStart = true;
+      break;
+    }
+
+    if (reachedStart) break;
+
+    // Advance cursor to the earliest visit time in this page.
+    let earliest = Infinity;
+    for (const item of page) {
+      if (item.lastVisitTime && item.lastVisitTime < earliest) {
+        earliest = item.lastVisitTime;
+      }
+    }
+
+    if (!Number.isFinite(earliest)) {
+      reachedStart = true;
+    } else {
+      endTime = earliest;
+    }
+    pages++;
+  }
+
+  return all;
+}
+
 // Remove items whose main domain is favorited (protected from deletion).
 async function filterFavoritedItems(items: HistoryItem[]): Promise<HistoryItem[]> {
   if (items.length === 0) return items;
@@ -109,13 +182,23 @@ async function filterFavoritedItems(items: HistoryItem[]): Promise<HistoryItem[]
   });
 }
 
-// Delete history entries (favorited domains are protected)
+// Remove items whose domain is blacklisted or favorited.
+// Both protections use the same main-domain semantics as the blacklist.
+async function filterDeleteItems(
+  items: HistoryItem[],
+  blacklist: BlacklistEntry[]
+): Promise<HistoryItem[]> {
+  if (items.length === 0) return items;
+  const visible = filterBlacklistedItems(items, blacklist);
+  return filterFavoritedItems(visible);
+}
+
+// Delete history entries (blacklisted & favorited domains are protected)
 export async function deleteHistory(options: DeleteOptions): Promise<number> {
   const items = await fetchHistoryForDelete(options);
-  const protectedItems = await filterFavoritedItems(items);
   let deletedCount = 0;
 
-  for (const item of protectedItems) {
+  for (const item of items) {
     try {
       await new Promise<void>((resolve, reject) => {
         chrome.history.deleteUrl({ url: item.url }, () => {
@@ -135,15 +218,14 @@ export async function deleteHistory(options: DeleteOptions): Promise<number> {
   return deletedCount;
 }
 
-// Preview items to be deleted (favorited domains are protected)
+// Preview items to be deleted (blacklisted & favorited domains are protected)
 export async function previewDelete(options: DeleteOptions): Promise<HistoryItem[]> {
-  const items = await fetchHistoryForDelete(options);
-  return filterFavoritedItems(items);
+  return fetchHistoryForDelete(options);
 }
 
 async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryItem[]> {
   const searchOptions: SearchOptions = {
-    maxResults: 10000,
+    maxResults: 20000,
   };
 
   if (options.dateRange) {
@@ -158,7 +240,9 @@ async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryIte
     searchOptions.domains = [options.domain];
   }
 
-  let items = await fetchHistory(searchOptions);
+  // Use paginated fetch so deletion is not truncated to the most recent 10k
+  // records - otherwise old history matching the criteria would be skipped.
+  let items = await fetchAllHistory(searchOptions);
 
   // Apply regex filter if specified
   if (options.regex) {
@@ -166,7 +250,11 @@ async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryIte
     items = items.filter(item => regex.test(item.url));
   }
 
-  return items;
+  // Apply protections (blacklist + favorites) so preview and actual
+  // deletion always use the exact same item set.
+  const { getBlacklist } = await import('./storage');
+  const blacklist = await getBlacklist();
+  return filterDeleteItems(items, blacklist);
 }
 
 // Delete single URL
@@ -195,18 +283,14 @@ export async function deleteHistoryInRange(startTime: number, endTime: number): 
   });
 }
 
-// Get all history domains
+// Get all history domains (aggregated by main domain, matching stats/favorites)
 export async function getAllDomains(): Promise<string[]> {
-  const items = await fetchHistory({ maxResults: 10000 });
+  const items = await fetchAllHistory({ maxResults: 20000 });
   const domains = new Set<string>();
   
   items.forEach(item => {
-    try {
-      const url = new URL(item.url);
-      domains.add(url.hostname);
-    } catch {
-      // Invalid URL, skip
-    }
+    const domain = extractMainDomain(item.url);
+    if (domain) domains.add(domain);
   });
 
   return Array.from(domains).sort();
@@ -268,7 +352,9 @@ export async function calculateStatistics(
   dateRange?: { start: number; end: number }
 ): Promise<Statistics> {
   const items = filterBlacklistedItems(
-    await fetchHistory({ maxResults: 10000, dateRange }),
+    // Use paginated fetch so the "all time" range is not truncated by
+    // chrome.history.search's per-query limit, which would zero out older days.
+    await fetchAllHistory({ maxResults: 20000, dateRange }),
     blacklist
   );
   
@@ -283,12 +369,14 @@ export async function calculateStatistics(
     };
   }
 
-  // Domain stats
+  // Domain stats - aggregate by main (registrable) domain so that
+  // "www.example.com" and "example.com" count as the same site, matching the
+  // granularity used by dwell-time stats.
   const domainMap = new Map<string, DomainStats>();
   items.forEach(item => {
     try {
-      const url = new URL(item.url);
-      const domain = url.hostname;
+      const domain = extractMainDomain(item.url);
+      if (!domain) return;
       const existing = domainMap.get(domain);
       if (existing) {
         existing.count++;
@@ -323,16 +411,34 @@ export async function calculateStatistics(
     count,
   }));
 
-  // Daily stats
-  const dateMap = new Map<string, number>();
+  // Daily stats - build a continuous timeline from the earliest to the
+  // latest date, zero-filling days with no visits so the chart always shows
+  // the full range rather than only dates that happen to have records.
+  const dateCounts = new Map<string, number>();
   items.forEach(item => {
     const date = new Date(item.visitTime).toISOString().split('T')[0];
-    dateMap.set(date, (dateMap.get(date) || 0) + 1);
+    dateCounts.set(date, (dateCounts.get(date) || 0) + 1);
   });
 
-  const dailyStats = Array.from(dateMap.entries())
-    .map(([date, count]) => ({ date, count }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const dailyStats: DailyStats[] = [];
+  if (items.length > 0) {
+    // Build the timeline in UTC so date keys match the `toISOString` keys
+    // used when aggregating dateCounts, regardless of local timezone.
+    const earliestTs = Math.min(...items.map(i => i.visitTime));
+    const latestTs = Math.max(...items.map(i => i.visitTime));
+
+    const startKey = new Date(earliestTs).toISOString().split('T')[0];
+    const endKey = new Date(latestTs).toISOString().split('T')[0];
+
+    const cursor = new Date(`${startKey}T00:00:00Z`);
+    const end = new Date(`${endKey}T00:00:00Z`);
+
+    while (cursor.getTime() <= end.getTime()) {
+      const key = cursor.toISOString().split('T')[0];
+      dailyStats.push({ date: key, count: dateCounts.get(key) || 0 });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  }
 
   // Date range
   const visitTimes = items.map(item => item.visitTime);
@@ -354,12 +460,12 @@ export async function getCalendarData(year: number, month: number): Promise<Cale
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
   
-  const items = await fetchHistory({
+  const items = await fetchAllHistory({
     dateRange: {
       start: startDate.getTime(),
       end: endDate.getTime(),
     },
-    maxResults: 10000,
+    maxResults: 20000,
   });
 
   // Count by date
@@ -461,7 +567,7 @@ export function exportToHtml(
   <div class="stats">
     <p><strong>Total Records:</strong> ${stats.totalRecords}</p>
     <p><strong>Total Domains:</strong> ${stats.totalDomains}</p>
-    <p><strong>Period:</strong> ${new Date(stats.dateRange.earliest).toLocaleDateString()} - ${new Date(stats.dateRange.latest).toLocaleDateString()}</p>
+    <p><strong>Period:</strong> ${stats.dateRange.earliest ? new Date(stats.dateRange.earliest).toLocaleDateString() : 'N/A'} - ${stats.dateRange.latest ? new Date(stats.dateRange.latest).toLocaleDateString() : 'N/A'}</p>
   </div>
   <h2>Top Sites</h2>
   ${topSitesHtml || '<p>No data</p>'}

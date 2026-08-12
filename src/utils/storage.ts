@@ -316,8 +316,16 @@ export async function restoreBackup(backupJson: string): Promise<void> {
     })
     .filter((e): e is BlacklistEntry => e !== null);
 
+  // Same protection for favorites - merging rather than overwriting so a
+  // stale backup can't drop domains the user favorited (and thus unprotected
+  // them from deletion).
+  const currentFavorites = await getFavorites();
+  const backupFavorites: string[] = backup.data[STORAGE_KEYS.FAVORITES] || [];
+  const mergedFavorites = Array.from(new Set([...currentFavorites, ...backupFavorites]));
+
   await chrome.storage.local.set(backup.data);
   await saveBlacklist(mergedBlacklist);
+  await saveFavorites(mergedFavorites);
 }
 
 // Delete history older than the retention cutoff, protecting favorited domains.

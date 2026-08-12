@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { getMessage } from '../../utils/i18n';
 import { deleteHistory, previewDelete, type DeleteOptions, type HistoryItem } from '../../utils/history';
-import { getBlacklist } from '../../utils/storage';
-import { filterBlacklistedItems } from '../../utils/blacklist';
+import { extractMainDomain } from '../../utils/blacklist';
 
 type DeleteType = 'date' | 'domain' | 'keyword';
 
@@ -24,8 +23,7 @@ const DeleteModule: React.FC = () => {
     try {
       const options = buildDeleteOptions();
       const items = await previewDelete(options);
-      const blacklist = await getBlacklist();
-      setPreviewItems(filterBlacklistedItems(items, blacklist));
+      setPreviewItems(items);
       setShowConfirm(true);
     } catch (error) {
       setResult({
@@ -44,7 +42,7 @@ const DeleteModule: React.FC = () => {
       const deletedCount = await deleteHistory(options);
       setResult({
         success: true,
-        message: `Successfully deleted ${deletedCount} records`,
+        message: getMessage('deleteSuccess', deletedCount.toString()),
       });
       setShowConfirm(false);
       setPreviewItems([]);
@@ -72,7 +70,9 @@ const DeleteModule: React.FC = () => {
         break;
       case 'domain':
         if (domain) {
-          options.domain = domain;
+          // Normalize to the main domain so "a.example.com", "https://x.example.com"
+          // and "example.com" all target the same registrable domain.
+          options.domain = extractMainDomain(domain);
         }
         break;
       case 'keyword':
