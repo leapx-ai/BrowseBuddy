@@ -6,16 +6,15 @@
 
 ```
 docs/
-├── index.html          # 中文主页（产品介绍、权限说明、隐私政策摘要）
-├── index_en.html       # 英文主页
-├── privacy.html        # 中文隐私政策详细页面
-├── privacy_en.html     # 英文隐私政策详细页面（可选）
-├── permissions.html    # 中文权限详解页面
-├── permissions_en.html # 英文权限详解页面（可选）
-├── terms.html          # 中文使用条款页面
-├── terms_en.html       # 英文使用条款页面（可选）
+├── index.html          # 主页（中英双语，?lang=zh|en 切换）
+├── privacy.html        # 隐私政策（中英双语）
+├── permissions.html    # 权限详解（中英双语）
+├── terms.html          # 使用条款（中英双语）
+├── icon.png            # 站点图标
 └── README.md           # 本文件
 ```
+
+> 每个页面内嵌 `[lang="zh"]` 和 `[lang="en"]` 两个内容块，共享同一套 CSS。语言切换按钮（导航右上角）通过 JS 切换显示，支持 URL 参数 `?lang=`、localStorage 记忆和浏览器语言自动识别。
 
 ## 部署到 GitHub Pages
 
@@ -70,13 +69,11 @@ git push origin main
 | `leapx-ai` | GitHub 用户名 | 所有页面中的 GitHub 链接 |
 | `liuzhaooo@outlook.com` | 联系邮箱 | privacy.html, terms.html |
 | `liuzhaooo@outlook.com` | 支持邮箱 | terms.html |
-| `Coming Soon to Chrome Web Store` | Chrome 商店状态 | index.html, index_en.html |
+| `Coming Soon to Chrome Web Store` | Chrome 商店状态 | index.html（中英文块内各一处）|
 
 ### 更新版本号
 
-发布新版本时，需要更新以下位置：
-- `index.html` 和 `index_en.html` 中的版本号
-- `docs/README.md` 中的更新日期
+发布新版本时，需要更新 `index.html` 中 `lang="zh"` 和 `lang="en"` 两个块内的版本号，以及 `docs/README.md` 中的更新日期。
 
 ### 添加 Chrome Web Store 链接
 
@@ -118,11 +115,14 @@ git push origin main
 
 ## 多语言支持
 
-当前提供中文和英文版本：
-- 中文用户将访问 `index.html`
-- 英文用户将访问 `index_en.html`
+每个页面内嵌中文（`lang="zh"`）和英文（`lang="en"`）两个内容块，通过以下方式切换：
 
-页面右上角提供语言切换链接。
+- **URL 参数**：`index.html?lang=en` 强制指定语言
+- **导航按钮**：页面右上角"中文 / English"按钮
+- **浏览器语言**：首次访问自动检测浏览器语言
+- **记忆**：选择后存入 localStorage，后续访问保持
+
+维护时只需同步修改同一文件内 `lang="zh"` 和 `lang="en"` 两个块，避免中英两套文件漏同步。
 
 ## 技术细节
 
@@ -139,7 +139,7 @@ git push origin main
 - [ ] GitHub Pages 已启用并能正常访问
 - [ ] 隐私政策页面内容完整准确
 - [ ] 权限说明页面详细清晰
-- [ ] 中英文版本内容一致
+- [ ] 每个页面的中英文内容块同步一致
 - [ ] 所有链接可正常点击
 - [ ] 页面在移动设备上显示正常
 

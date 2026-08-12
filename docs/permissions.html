@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>权限详解 - BrowseBuddy</title>
+    <title>BrowseBuddy</title>
     <style>
+        
         :root {
             --primary: #6366f1;
             --primary-light: #818cf8;
@@ -191,6 +192,15 @@
         .card h3 { color: #eaeaf2; margin: 20px 0 10px; font-size: 1.1em; }
         .card h3:first-child { margin-top: 0; }
 
+    
+        .lang-btn {
+            background: none; border: none; color: #a0a0b5; cursor: pointer;
+            font-size: 0.9em; padding: 7px 12px; border-radius: 9px; transition: all 0.2s;
+        }
+        .lang-btn:hover { color: #eaeaf2; background: rgba(255,255,255,0.08); }
+        .lang-btn.active { color: #fff; background: rgba(99,102,241,0.35); }
+        .lang-pill { display: inline-flex; gap: 4px; margin-left: 8px;
+            background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); border-radius: 9px; padding: 3px; }
     </style>
 </head>
 <body>
@@ -204,10 +214,13 @@
                 <a href="index.html">首页</a>
                 <a href="privacy.html">隐私政策</a>
                 <a href="terms.html">使用条款</a>
-                <span class="lang-pill"><a href="permissions_en.html">English</a></span>
+                <span class="lang-pill">
+                    <button data-lang-switch="zh" class="lang-btn">中文</button>
+                    <button data-lang-switch="en" class="lang-btn">English</button>
+                </span>
             </div>
         </nav>
-
+        <div lang="zh">
         <header class="hero">
             <h1 class="title">权限详解</h1>
             <p class="subtitle">详细说明 BrowseBuddy 每个权限的用途、使用方式和必要性</p>
@@ -423,15 +436,263 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 <td>webNavigation</td>
                 <td>tabs 权限已满足导航监控需求</td>
             </tr>
-        </table>
-        
-        
-        </div>
-
-        <footer>
+        </table><footer>
             <p>© 2026 BrowseBuddy. 保留所有权利。</p>
             <p>如有疑问，请通过 GitHub Issues 联系我们。</p>
         </footer>
     </div>
+        <footer>
+            <p>© 2026 BrowseBuddy. 保留所有权利。</p>
+            <p>如有疑问，请通过 GitHub Issues 联系我们。</p>
+        </footer>
+        </div>
+        <div lang="en" hidden>
+        <header class="hero">
+            <h1 class="title">Permissions</h1>
+            <p class="subtitle">Detailed explanation of each permission BrowseBuddy uses, its purpose, and necessity</p>
+        </header>
+
+        <div class="card">
+            <div class="highlight">
+                <strong>Principle of Least Privilege:</strong> We only request the minimum permissions necessary for functionality. Each permission has a specific single purpose and is not used for other purposes.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Required Permissions</h2>
+        <p>The following permissions are essential for BrowseBuddy's core functionality:</p>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">history</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Read, search, and delete browser history. This is required for BrowseBuddy's core functionality.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Display history list for user viewing and management</li>
+                <li>Search history by date, domain, or keyword</li>
+                <li>Delete specific history entries selected by user</li>
+                <li>Automatically delete sensitive website history after blacklist match</li>
+            </ul>
+            
+            <h3>Code Example</h3>
+            <div class="code-block">// Read history records
+chrome.history.search({text: '', maxResults: 100})
+
+// Delete specific URL
+chrome.history.deleteUrl({url: 'https://example.com'})
+
+// Delete date range
+chrome.history.deleteRange({startTime: Date.now() - 86400000, endTime: Date.now()})</div>
+            
+            <div class="warning">
+                <strong>Note:</strong> This permission allows access to complete browsing history. We only use this data to display to you and do not upload or share it.
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">storage</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Store extension configuration, blacklist data, and user preferences locally.</p>
+            
+            <h3>Stored Data</h3>
+            <table>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Purpose</th>
+                    <th>Storage Location</th>
+                </tr>
+                <tr>
+                    <td>User Settings</td>
+                    <td>Language, theme preferences</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Blacklist</td>
+                    <td>User-added privacy protection domains</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Favorited Domains</td>
+                    <td>Protected domains excluded from deletion</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Dwell Time</td>
+                    <td>Accumulated time per site (for statistics)</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+                <tr>
+                    <td>Backup Data</td>
+                    <td>Auto/manual backup snapshots</td>
+                    <td>chrome.storage.local</td>
+                </tr>
+            </table>
+            
+            <div class="highlight">
+                <strong>Data Isolation:</strong> Using chrome.storage.local ensures data is saved locally only and not automatically synced to Google accounts.
+            </div>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">tabs</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Read tab URLs for the "Add current page to blacklist" shortcut feature and real-time blacklist protection.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Get URL of currently active tab</li>
+                <li>Extract main domain displayed on "Add Current Page" button</li>
+                <li>Check if current page is already in blacklist</li>
+                <li>Listen for tab URL changes and auto-delete history when matching the blacklist</li>
+            </ul>
+            
+            <h3>Code Example</h3>
+            <div class="code-block">// Get current active tab
+const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+const currentUrl = tabs[0]?.url;
+
+// Real-time protection: listen for URL changes
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url && isUrlBlacklisted(tab.url, blacklist)) {
+    chrome.history.deleteUrl({url: tab.url});
+  }
+});</div>
+            
+            <h3>Security Guarantees</h3>
+            <ul>
+                <li>Only reads URL, not page content</li>
+                <li>Deletes immediately after match, no visit information stored</li>
+                <li>All processing done locally, no network transmission</li>
+            </ul>
+        </div>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">sessions</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Restore recently closed tabs or windows. Data stays in the local browser; no network transmission involved.</p>
+        </div>
+
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">alarms</span>
+                <span class="required-badge">Required</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Run scheduled background tasks, including auto-backup, auto-cleanup of expired history, and periodic dwell-time snapshots.</p>
+            
+            <h3>Use Cases</h3>
+            <ul>
+                <li>Automatically create data backups at user-configured intervals</li>
+                <li>Daily auto-cleanup of history older than the retention period</li>
+                <li>Per-minute snapshots of active tab dwell time to survive service worker restarts</li>
+            </ul>
+        </div>
+
+        
+        </div>
+
+        <div class="card">
+            <h2>Optional Permissions</h2>
+        
+        <div class="permission-card">
+            <div class="permission-header">
+                <span class="permission-tag">contextMenus</span>
+                <span class="optional-badge">Optional</span>
+            </div>
+            <h3>Purpose</h3>
+            <p>Add "Add to BrowseBuddy Blacklist" option to browser context menu for more convenient addition.</p>
+            
+            <div class="highlight">
+                <strong>Note:</strong> This permission is optional. Even without granting it, you can still manually add domains through the extension popup.
+            </div>
+        </div>
+        
+        
+        </div>
+
+        <div class="card">
+            <h2>Permissions We Will Never Request</h2>
+        <p>To clarify boundaries, here are permissions BrowseBuddy <strong>will never</strong> request:</p>
+        
+        <table>
+            <tr>
+                <th>Permission</th>
+                <th>Reason</th>
+            </tr>
+            <tr>
+                <td>cookies</td>
+                <td>No need to access or modify cookies</td>
+            </tr>
+            <tr>
+                <td>bookmarks</td>
+                <td>Does not manage bookmarks</td>
+            </tr>
+            <tr>
+                <td>downloads</td>
+                <td>Only user-initiated exports (not automatic downloads)</td>
+            </tr>
+            <tr>
+                <td>notifications</td>
+                <td>Does not use system notifications</td>
+            </tr>
+            <tr>
+                <td>webRequest</td>
+                <td>No need to intercept network requests</td>
+            </tr>
+            <tr>
+                <td>webNavigation</td>
+                <td>tabs permission already satisfies navigation monitoring needs</td>
+            </tr>
+        </table><footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>Questions? Contact us via GitHub Issues.</p>
+        </footer>
+    </div>
+        <footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>Questions? Contact us via GitHub Issues.</p>
+        </footer>
+        </div>
+    </div>
+    <script>
+(function () {
+  var KEY = 'browsebuddy_lang';
+  function getLang() {
+    var p = new URLSearchParams(window.location.search).get('lang');
+    if (p === 'zh' || p === 'en') return p;
+    try { var s = localStorage.getItem(KEY); if (s === 'zh' || s === 'en') return s; } catch (e) {}
+    return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  }
+  function apply(lang) {
+    document.querySelectorAll('[lang="zh"], [lang="en"]').forEach(function (el) {
+      el.hidden = el.getAttribute('lang') !== lang;
+    });
+    document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-lang-switch') === lang);
+    });
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    apply(getLang());
+    document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+      el.addEventListener('click', function () { apply(el.getAttribute('data-lang-switch')); });
+    });
+  });
+})();
+</script>
 </body>
 </html>

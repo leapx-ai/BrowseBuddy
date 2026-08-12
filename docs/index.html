@@ -31,27 +31,30 @@
         }
         .container { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
         
-        /* Nav */
         .nav {
             display: flex; align-items: center; justify-content: space-between;
             padding: 20px 0; margin-bottom: 40px;
         }
         .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.15em; }
         .nav-brand img { width: 36px; height: 36px; border-radius: 10px; }
-        .nav-links { display: flex; align-items: center; gap: 8px; }
+        .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .nav-links a {
             color: var(--text-muted); text-decoration: none; font-size: 0.9em;
             padding: 8px 14px; border-radius: 10px; transition: all 0.2s;
         }
         .nav-links a:hover, .nav-links a.active { color: var(--text); background: rgba(255,255,255,0.08); }
-        .lang-pill { margin-left: 8px; }
-        .lang-pill a {
-            background: rgba(99,102,241,0.2); color: var(--primary-light);
-            border: 1px solid rgba(99,102,241,0.3);
+        .lang-pill {
+            display: inline-flex; gap: 2px; margin-left: 8px;
+            background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 10px; padding: 3px;
         }
-        .lang-pill a:hover { background: rgba(99,102,241,0.35); color: #fff; }
+        .lang-btn {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            font-size: 0.88em; padding: 6px 12px; border-radius: 8px; transition: all 0.2s;
+        }
+        .lang-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+        .lang-btn.active { color: #fff; background: rgba(99,102,241,0.4); }
         
-        /* Hero */
         .hero { text-align: center; padding: 30px 0 50px; }
         .hero .logo {
             width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 24px;
@@ -64,7 +67,6 @@
         }
         .hero .tagline { font-size: 1.3em; color: var(--text-muted); }
         
-        /* Card */
         .card {
             background: var(--card); border: 1px solid var(--card-border);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -83,7 +85,6 @@
         .card p, .card li { color: var(--text-muted); }
         .card strong { color: var(--text); }
         
-        /* Features */
         .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 24px; }
         .feature {
             background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
@@ -100,32 +101,34 @@
         .feature h4 { color: var(--text); margin-bottom: 8px; font-size: 1.05em; }
         .feature p { color: var(--text-muted); font-size: 0.9em; }
         
-        /* Permission table */
-        .permission-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        .permission-table th, .permission-table td { padding: 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .permission-table th { font-weight: 600; color: var(--primary-light); background: rgba(255,255,255,0.03); }
-        .permission-table tr:hover td { background: rgba(255,255,255,0.02); }
-        .permission-tag {
-            display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 500;
-            font-family: 'SF Mono', Consolas, monospace;
-        }
-        
-        /* Privacy highlight */
         .privacy-highlight {
             background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
             border: 1px solid rgba(99,102,241,0.25); padding: 22px; border-radius: 12px; margin: 20px 0;
         }
         .privacy-highlight h3 { margin-top: 0; color: var(--primary-light); }
         
-        /* Benefits list */
         ul.benefits { list-style: none; padding: 0; }
         ul.benefits li { padding: 8px 0 8px 30px; position: relative; }
         ul.benefits li::before {
             content: "✓"; position: absolute; left: 0; color: var(--primary-light); font-weight: bold;
         }
         
-        /* CTA */
+        .doc-card {
+            display: flex; flex-direction: column; gap: 14px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+            border-radius: 14px; padding: 28px;
+        }
+        .doc-card h3 { margin: 0; color: var(--text); font-size: 1.2em; }
+        .doc-card p { margin: 0; }
+        .doc-link {
+            display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+            color: var(--primary-light); text-decoration: none; font-weight: 600; font-size: 0.95em;
+            padding: 10px 20px; border-radius: 24px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+            border: 1px solid rgba(99,102,241,0.35); transition: all 0.2s;
+        }
+        .doc-link:hover { background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(139,92,246,0.35)); transform: translateY(-1px); }
+        
         .cta { text-align: center; padding: 50px 40px; }
         .btn {
             display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -137,7 +140,6 @@
         .btn-disabled { background: rgba(255,255,255,0.12); cursor: not-allowed; box-shadow: none; }
         .btn-disabled:hover { transform: none; }
         
-        /* Footer */
         footer { text-align: center; color: var(--text-muted); padding: 40px 20px 0; }
         footer a { color: var(--primary-light); text-decoration: none; }
         footer a:hover { text-decoration: underline; }
@@ -151,8 +153,6 @@
             .nav { flex-wrap: wrap; gap: 12px; }
             .hero h1 { font-size: 2.2em; }
             .card { padding: 26px; }
-            .permission-table { font-size: 0.85em; }
-            .permission-table th, .permission-table td { padding: 10px; }
         }
     </style>
 </head>
@@ -164,190 +164,260 @@
                 <span>BrowseBuddy</span>
             </a>
             <div class="nav-links">
-                <a href="#features">功能</a>
-                <a href="#permissions">权限</a>
-                <a href="privacy.html">隐私政策</a>
-                <a href="terms.html">使用条款</a>
-                <span class="lang-pill"><a href="index_en.html">English</a></span>
+                <a href="#features" data-nav="features">功能</a>
+                <a href="privacy.html" data-nav="privacy">隐私政策</a>
+                <a href="permissions.html" data-nav="permissions">权限</a>
+                <a href="terms.html" data-nav="terms">使用条款</a>
+                <span class="lang-pill">
+                    <button data-lang-switch="zh" class="lang-btn">中文</button>
+                    <button data-lang-switch="en" class="lang-btn">English</button>
+                </span>
             </div>
         </nav>
 
-        <header class="hero">
-            <img src="icon.png" alt="BrowseBuddy" class="logo">
-            <h1>BrowseBuddy</h1>
-            <p class="tagline">您的个人浏览器历史记录管理器</p>
-        </header>
+        <div lang="zh">
+            <header class="hero">
+                <img src="icon.png" alt="BrowseBuddy" class="logo">
+                <h1>BrowseBuddy</h1>
+                <p class="tagline">您的个人浏览器历史记录管理器</p>
+            </header>
 
-        <div class="card">
-            <h2>📋 产品介绍</h2>
-            <p>BrowseBuddy 是一款专注于浏览器历史记录管理的增强型插件，提供专业级的历史记录管理功能，同时高度重视用户隐私保护。所有数据均在本地处理，<strong>绝不会上传至任何云端服务器</strong>。</p>
-            
-            <div class="privacy-highlight">
-                <h3>🔐 核心隐私承诺</h3>
-                <ul class="benefits">
-                    <li>所有数据仅存储在您的设备本地</li>
-                    <li>不会上传任何数据到云端服务器</li>
-                    <li>不会与第三方共享您的浏览历史</li>
-                    <li>代码开源透明，可审查</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card" id="features">
-            <h2>✨ 主要功能</h2>
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </div>
-                    <h4>智能删除</h4>
-                    <p>按日期、域名、关键词批量删除历史记录，支持预览确认</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
-                    </div>
-                    <h4>统计分析</h4>
-                    <p>可视化展示浏览习惯，包括热门网站、停留时长、访问时段分布等</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <h4>隐私保护</h4>
-                    <p>智能黑名单自动删除敏感网站的历史记录，支持收藏保护与自动清理</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    </div>
-                    <h4>日历视图</h4>
-                    <p>按日历查看每日访问量，快速跳转到特定日期</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 8v4l3 2"/></svg>
-                    </div>
-                    <h4>会话隐身</h4>
-                    <p>开启后本次浏览会话不留下任何历史痕迹</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg>
-                    </div>
-                    <h4>恢复标签页</h4>
-                    <p>一键恢复最近关闭的标签页或窗口</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                    </div>
-                    <h4>数据导出</h4>
-                    <p>支持导出 CSV 和 HTML 报告，便于备份和分析</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    </div>
-                    <h4>多语言</h4>
-                    <p>支持中文和英文界面，可自由切换</p>
+            <div class="card">
+                <h2>📋 产品介绍</h2>
+                <p>BrowseBuddy 是一款专注于浏览器历史记录管理的增强型插件，提供专业级的历史记录管理功能，同时高度重视用户隐私保护。所有数据均在本地处理，<strong>绝不会上传至任何云端服务器</strong>。</p>
+                <div class="privacy-highlight">
+                    <h3>🔐 核心隐私承诺</h3>
+                    <ul class="benefits">
+                        <li>所有数据仅存储在您的设备本地</li>
+                        <li>不会上传任何数据到云端服务器</li>
+                        <li>不会与第三方共享您的浏览历史</li>
+                        <li>代码开源透明，可审查</li>
+                    </ul>
                 </div>
             </div>
-        </div>
 
-        <div class="card" id="permissions">
-            <h2>🔑 权限说明</h2>
-            <p>为了提供上述功能，BrowseBuddy 需要以下权限。我们遵循<strong>最小权限原则</strong>，仅请求功能所必需的权限：</p>
-            
-            <table class="permission-table">
-                <thead>
-                    <tr>
-                        <th>权限</th>
-                        <th>用途说明</th>
-                        <th>是否必需</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="permission-tag">history</span></td>
-                        <td>读取、管理和删除浏览器历史记录。这是插件的核心功能所需。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">storage</span></td>
-                        <td>本地存储插件设置、黑名单数据和用户偏好。所有数据均保存在本地。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">tabs</span></td>
-                        <td>读取标签页 URL，用于"添加当前页面到黑名单"和黑名单实时保护（访问敏感网站时自动删除历史）。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">sessions</span></td>
-                        <td>恢复最近关闭的标签页或窗口。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">alarms</span></td>
-                        <td>定时任务：自动备份、自动清理、停留时长快照。</td>
-                        <td>✅ 必需</td>
-                    </tr>
-                    <tr>
-                        <td><span class="permission-tag">contextMenus</span></td>
-                        <td>添加右键菜单项，允许用户快速将当前网站加入黑名单。</td>
-                        <td>可选</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="card" id="privacy">
-            <h2>📜 隐私政策</h2>
-            <h3>数据收集</h3>
-            <p>BrowseBuddy <strong>不收集任何个人数据</strong>。所有功能均在本地运行，包括但不限于：</p>
-            <ul class="benefits">
-                <li>历史记录分析</li>
-                <li>黑名单匹配</li>
-                <li>统计数据生成</li>
-                <li>用户设置存储</li>
-            </ul>
-            
-            <h3>数据存储</h3>
-            <p>所有数据均使用浏览器提供的本地存储 API（chrome.storage.local）保存，存储位置：</p>
-            <ul class="benefits">
-                <li>插件设置：存储在浏览器本地存储空间</li>
-                <li>黑名单数据：存储在浏览器本地存储空间</li>
-                <li>导出文件：由用户选择保存位置</li>
-            </ul>
-            
-            <h3>数据共享</h3>
-            <p>我们<strong>不会</strong>与任何第三方共享您的数据，因为我们根本无从获取您的数据。</p>
-        </div>
-
-        <div class="card tech-info">
-            <h2>💻 技术信息</h2>
-            <p><strong>开源地址：</strong><a href="https://github.com/leapx-ai/BrowseBuddy" target="_blank">GitHub</a></p>
-            <p><strong>当前版本：</strong>1.0.0</p>
-            <p><strong>支持浏览器：</strong>Chrome, Edge, Firefox</p>
-            <p><strong>技术栈：</strong>Preact, TypeScript, Webpack</p>
-        </div>
-
-        <div class="card cta">
-            <h2>🚀 开始使用</h2>
-            <p style="margin-bottom: 25px;">安装 BrowseBuddy，掌控您的浏览历史</p>
-            <a href="#" class="btn btn-disabled">即将上架 Chrome 应用商店</a>
-            <p style="margin-top: 15px; color: #666; font-size: 0.9em;">您也可以从 GitHub 下载源码自行安装</p>
-        </div>
-
-        <footer>
-            <p>© 2026 BrowseBuddy. 保留所有权利。 · 本页面托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
-            <div class="footer-links">
-                <a href="privacy.html">隐私政策</a>
-                <a href="terms.html">使用条款</a>
-                <a href="permissions.html">权限详解</a>
+            <div class="card" id="features">
+                <h2>✨ 主要功能</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+                        <h4>智能删除</h4>
+                        <p>按日期、域名、关键词批量删除历史记录，支持预览确认</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div>
+                        <h4>统计分析</h4>
+                        <p>可视化展示浏览习惯，包括热门网站、停留时长、访问时段分布等</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <h4>隐私保护</h4>
+                        <p>智能黑名单自动删除敏感网站的历史记录，支持收藏保护与自动清理</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                        <h4>日历视图</h4>
+                        <p>按日历查看每日访问量，快速跳转到特定日期</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 8v4l3 2"/></svg></div>
+                        <h4>会话隐身</h4>
+                        <p>开启后本次浏览会话不留下任何历史痕迹</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg></div>
+                        <h4>恢复标签页</h4>
+                        <p>一键恢复最近关闭的标签页或窗口</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+                        <h4>数据导出</h4>
+                        <p>支持导出 CSV 和 HTML 报告，便于备份和分析</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                        <h4>多语言</h4>
+                        <p>支持中文和英文界面，可自由切换</p>
+                    </div>
+                </div>
             </div>
-        </footer>
+
+            <div class="card">
+                <h2>🔑 权限与隐私</h2>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:16px;">
+                    <div class="doc-card">
+                        <h3>🔑 权限说明</h3>
+                        <p>BrowseBuddy 遵循最小权限原则，仅请求功能必需的最少权限（history、storage、tabs 等），每项都有明确的单一用途。</p>
+                        <a class="doc-link" href="permissions.html">查看权限详解 →</a>
+                    </div>
+                    <div class="doc-card">
+                        <h3>📜 隐私政策</h3>
+                        <p>BrowseBuddy 不收集任何个人数据，所有数据仅保存在您的设备本地，绝不上传或共享。</p>
+                        <a class="doc-link" href="privacy.html">阅读完整隐私政策 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card tech-info">
+                <h2>💻 技术信息</h2>
+                <p><strong>开源地址：</strong><a href="https://github.com/leapx-ai/BrowseBuddy" target="_blank">GitHub</a></p>
+                <p><strong>当前版本：</strong>1.0.0</p>
+                <p><strong>支持浏览器：</strong>Chrome, Edge, Firefox</p>
+                <p><strong>技术栈：</strong>Preact, TypeScript, Webpack</p>
+            </div>
+
+            <div class="card cta">
+                <h2>🚀 开始使用</h2>
+                <p style="margin-bottom: 25px;">安装 BrowseBuddy，掌控您的浏览历史</p>
+                <a href="#" class="btn btn-disabled">即将上架 Chrome 应用商店</a>
+                <p style="margin-top: 15px; color: var(--text-muted); font-size: 0.9em;">您也可以从 GitHub 下载源码自行安装</p>
+            </div>
+
+            <footer>
+                <p>© 2026 BrowseBuddy. 保留所有权利。 · 本页面托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+                <div class="footer-links">
+                    <a href="privacy.html">隐私政策</a>
+                    <a href="terms.html">使用条款</a>
+                    <a href="permissions.html">权限详解</a>
+                </div>
+            </footer>
+        </div>
+
+        <div lang="en" hidden>
+            <header class="hero">
+                <img src="icon.png" alt="BrowseBuddy" class="logo">
+                <h1>BrowseBuddy</h1>
+                <p class="tagline">Your Personal Browser History Manager</p>
+            </header>
+
+            <div class="card">
+                <h2>📋 Introduction</h2>
+                <p>BrowseBuddy is an enhanced browser extension for history management that provides professional-grade features while prioritizing user privacy. All data is processed locally and <strong>never uploaded to any cloud server</strong>.</p>
+                <div class="privacy-highlight">
+                    <h3>🔐 Core Privacy Promise</h3>
+                    <ul class="benefits">
+                        <li>All data is stored only on your device</li>
+                        <li>No data is uploaded to cloud servers</li>
+                        <li>No browsing history is shared with third parties</li>
+                        <li>Open source code for transparency</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" id="features">
+                <h2>✨ Key Features</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+                        <h4>Smart Delete</h4>
+                        <p>Bulk delete history by date, domain, or keyword with preview confirmation</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div>
+                        <h4>Statistics</h4>
+                        <p>Visualize browsing habits including top sites, dwell time and time distribution</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <h4>Privacy Protection</h4>
+                        <p>Smart blacklist removes history from sensitive sites, with favorites and auto-cleanup</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                        <h4>Calendar View</h4>
+                        <p>View daily visit counts on a calendar and jump to specific dates</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 8v4l3 2"/></svg></div>
+                        <h4>Session Incognito</h4>
+                        <p>Leaves no history trace while enabled</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg></div>
+                        <h4>Restore Tabs</h4>
+                        <p>Reopen recently closed tabs or windows with one click</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+                        <h4>Data Export</h4>
+                        <p>Export to CSV and HTML reports for backup and analysis</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                        <h4>Multi-language</h4>
+                        <p>Support for Chinese and English interfaces with easy switching</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔑 Permissions & Privacy</h2>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:16px;">
+                    <div class="doc-card">
+                        <h3>🔑 Permissions</h3>
+                        <p>BrowseBuddy follows the principle of least privilege, requesting only the minimum permissions necessary (history, storage, tabs, etc.), each with a single clear purpose.</p>
+                        <a class="doc-link" href="permissions.html">View Permissions Detail →</a>
+                    </div>
+                    <div class="doc-card">
+                        <h3>📜 Privacy Policy</h3>
+                        <p>BrowseBuddy does not collect any personal data. All data stays on your device and is never uploaded or shared.</p>
+                        <a class="doc-link" href="privacy.html">Read Full Privacy Policy →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card tech-info">
+                <h2>💻 Technical Information</h2>
+                <p><strong>Open Source:</strong> <a href="https://github.com/leapx-ai/BrowseBuddy" target="_blank">GitHub</a></p>
+                <p><strong>Current Version:</strong> 1.0.0</p>
+                <p><strong>Supported Browsers:</strong> Chrome, Edge, Firefox</p>
+                <p><strong>Tech Stack:</strong> Preact, TypeScript, Webpack</p>
+            </div>
+
+            <div class="card cta">
+                <h2>🚀 Get Started</h2>
+                <p style="margin-bottom: 25px;">Install BrowseBuddy and take control of your browsing history</p>
+                <a href="#" class="btn btn-disabled">Coming Soon to Chrome Web Store</a>
+                <p style="margin-top: 15px; color: var(--text-muted); font-size: 0.9em;">You can also install from GitHub source</p>
+            </div>
+
+            <footer>
+                <p>© 2026 BrowseBuddy. All rights reserved. · Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Use</a>
+                    <a href="permissions.html">Permissions Detail</a>
+                </div>
+            </footer>
+        </div>
     </div>
+
+    <script>
+    (function () {
+      var KEY = 'browsebuddy_lang';
+      function getLang() {
+        var p = new URLSearchParams(window.location.search).get('lang');
+        if (p === 'zh' || p === 'en') return p;
+        try { var s = localStorage.getItem(KEY); if (s === 'zh' || s === 'en') return s; } catch (e) {}
+        return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+      }
+      function apply(lang) {
+        document.querySelectorAll('[lang="zh"], [lang="en"]').forEach(function (el) {
+          el.hidden = el.getAttribute('lang') !== lang;
+        });
+        document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+          el.classList.toggle('active', el.getAttribute('data-lang-switch') === lang);
+        });
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        apply(getLang());
+        document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+          el.addEventListener('click', function () { apply(el.getAttribute('data-lang-switch')); });
+        });
+      });
+    })();
+    </script>
 </body>
 </html>

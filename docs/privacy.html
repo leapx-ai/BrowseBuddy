@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隐私政策 - BrowseBuddy</title>
+    <title>BrowseBuddy</title>
     <style>
+        
         :root {
             --primary: #6366f1;
             --primary-light: #818cf8;
@@ -172,6 +173,15 @@
         }
         .highlight strong { color: #eaeaf2; }
 
+    
+        .lang-btn {
+            background: none; border: none; color: #a0a0b5; cursor: pointer;
+            font-size: 0.9em; padding: 7px 12px; border-radius: 9px; transition: all 0.2s;
+        }
+        .lang-btn:hover { color: #eaeaf2; background: rgba(255,255,255,0.08); }
+        .lang-btn.active { color: #fff; background: rgba(99,102,241,0.35); }
+        .lang-pill { display: inline-flex; gap: 4px; margin-left: 8px;
+            background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); border-radius: 9px; padding: 3px; }
     </style>
 </head>
 <body>
@@ -185,10 +195,13 @@
                 <a href="index.html">首页</a>
                 <a href="permissions.html">权限详解</a>
                 <a href="terms.html">使用条款</a>
-                <span class="lang-pill"><a href="privacy_en.html">English</a></span>
+                <span class="lang-pill">
+                    <button data-lang-switch="zh" class="lang-btn">中文</button>
+                    <button data-lang-switch="en" class="lang-btn">English</button>
+                </span>
             </div>
         </nav>
-
+        <div lang="zh">
         <header class="hero">
             <h1 class="title">隐私政策</h1>
             <p class="effective-date">生效日期：2026年2月11日</p>
@@ -271,12 +284,136 @@
             <li>随时卸载扩展，所有相关数据将被自动清除</li>
         </ul>
         <h2>8. 隐私政策更新</h2>
-        <p>我们可能不时更新本隐私政策。任何重大变更将通过扩展更新说明或网站公告通知用户。</p>
-        </div>
-        <footer>
+        <p>我们可能不时更新本隐私政策。任何重大变更将通过扩展更新说明或网站公告通知用户。</p><footer>
             <p>© 2026 BrowseBuddy. 保留所有权利。</p>
             <p>本页面托管于 GitHub Pages，公开可访问。</p>
         </footer>
     </div>
+        <footer>
+            <p>© 2026 BrowseBuddy. 保留所有权利。</p>
+            <p>本页面托管于 GitHub Pages，公开可访问。</p>
+        </footer>
+        </div>
+        <div lang="en" hidden>
+        <header class="hero">
+            <h1 class="title">Privacy Policy</h1>
+            <p class="effective-date">Effective Date: February 11, 2026</p>
+        </header>
+
+        <div class="card">
+            <div class="highlight">
+            <strong>Core Commitment:</strong> BrowseBuddy is a <strong>purely local</strong> browser extension. We <strong>do not collect, store, or transmit</strong> any of your personal data or browsing information.
+        </div>
+        </div>
+
+        <div class="card">
+        <h1>🔒 Privacy Policy</h1>
+        <p class="effective-date">Effective Date: February 11, 2026</p>
+        <h2>1. Information We Collect</h2>
+        <p><strong>We do not collect any information.</strong></p>
+        <p>All features of BrowseBuddy run locally in your browser, including but not limited to:</p>
+        <ul>
+            <li>History record reading and analysis</li>
+            <li>Blacklist matching and automatic deletion</li>
+            <li>Statistics generation</li>
+            <li>User settings storage</li>
+        </ul>
+        </div>
+
+        <div class="card">
+        <h2>2. Data Storage</h2>
+        <p>All data is stored locally on your device using browser-provided storage APIs:</p>
+        
+        <h3>2.1 Storage Locations</h3>
+        <ul>
+            <li><strong>Extension Settings:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Blacklist & Favorites:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Dwell Time Stats:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>Backup Data:</strong> Stored in browser local storage using chrome.storage.local</li>
+            <li><strong>History Records:</strong> Only reads built-in browser history, no additional storage</li>
+            <li><strong>Exported Files:</strong> Saved only to user-selected locations when actively exported</li>
+        </ul>
+        
+        <h3>2.2 Storage Limitations</h3>
+        <p>Browser local storage is typically limited to 5-10MB, which is sufficient to store thousands of blacklist entries and settings, but cannot store large history copies (this is intentional design to ensure data remains in the browser).</p>
+        <h2>3. Data Usage</h2>
+        <p>Your data is used solely for:</p>
+        <ul>
+            <li>Displaying your history list and statistics</li>
+            <li>Automatically deleting specific history entries based on blacklist</li>
+            <li>Saving your extension preferences</li>
+        </ul>
+        </div>
+
+        <div class="card">
+        <h2>4. Data Sharing</h2>
+        <p><strong>We do not share your data with any third parties.</strong></p>
+        <p>The reason is simple: we have no access to your data — all processing is done locally with no server-side components or data transmission.</p>
+        <h2>5. Permission Usage</h2>
+        <p>Each permission requested by BrowseBuddy has a specific purpose:</p>
+        <ul>
+            <li><strong>history:</strong> Read and delete browser history (core functionality)</li>
+            <li><strong>storage:</strong> Save extension settings, blacklist, favorites and dwell time (local storage)</li>
+            <li><strong>tabs:</strong> Read tab URLs (add current page to blacklist, real-time blacklist protection)</li>
+            <li><strong>sessions:</strong> Restore recently closed tabs or windows</li>
+            <li><strong>alarms:</strong> Scheduled tasks (auto-backup, auto-cleanup, dwell time snapshots)</li>
+            <li><strong>contextMenus:</strong> Add right-click menu items to quickly blacklist websites</li>
+        </ul>
+        </div>
+
+        <div class="card">
+        <h2>6. Security Measures</h2>
+        <ul>
+            <li>All code runs in browser sandbox environment</li>
+            <li>No network requests (except extension store update checks)</li>
+            <li>No scripts injected into web pages</li>
+            <li>Open source code available for security audit</li>
+        </ul>
+        <h2>7. Your Rights</h2>
+        <p>You have full control over your data:</p>
+        <ul>
+            <li>Export blacklist data at any time</li>
+            <li>Clear all extension data via browser extension management</li>
+            <li>Uninstall the extension at any time — all related data will be automatically cleared</li>
+        </ul>
+        <h2>8. Privacy Policy Updates</h2>
+        <p>We may update this privacy policy from time to time. Any significant changes will be notified through extension update notes or website announcements.</p><footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>This page is hosted on GitHub Pages and is publicly accessible.</p>
+        </footer>
+    </div>
+        <footer>
+            <p>© 2026 BrowseBuddy. All rights reserved.</p>
+            <p>This page is hosted on GitHub Pages and is publicly accessible.</p>
+        </footer>
+        </div>
+    </div>
+    <script>
+(function () {
+  var KEY = 'browsebuddy_lang';
+  function getLang() {
+    var p = new URLSearchParams(window.location.search).get('lang');
+    if (p === 'zh' || p === 'en') return p;
+    try { var s = localStorage.getItem(KEY); if (s === 'zh' || s === 'en') return s; } catch (e) {}
+    return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  }
+  function apply(lang) {
+    document.querySelectorAll('[lang="zh"], [lang="en"]').forEach(function (el) {
+      el.hidden = el.getAttribute('lang') !== lang;
+    });
+    document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-lang-switch') === lang);
+    });
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    apply(getLang());
+    document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
+      el.addEventListener('click', function () { apply(el.getAttribute('data-lang-switch')); });
+    });
+  });
+})();
+</script>
 </body>
 </html>
