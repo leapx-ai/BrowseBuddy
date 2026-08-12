@@ -14,42 +14,49 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.8;
-            color: #333;
-            background: #f5f7fa;
-            padding: 40px 20px;
+            color: #eaeaf2;
+            background:
+                radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,0.22), transparent 60%),
+                radial-gradient(800px 400px at 90% 0%, rgba(139,92,246,0.18), transparent 55%),
+                #0f0f1a;
+            min-height: 100vh;
+            padding: 24px 20px 60px;
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 50px;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
         }
         
         h1 {
-            color: #667eea;
+            color: #818cf8;
             margin-bottom: 10px;
             font-size: 2.2em;
         }
         
         .effective-date {
-            color: #666;
+            color: #a0a0b5;
             font-size: 0.95em;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
         h2 {
-            color: #667eea;
+            color: #818cf8;
             margin: 30px 0 15px;
             font-size: 1.4em;
         }
         
         h3 {
-            color: #555;
+            color: #c4c4d8;
             margin: 20px 0 10px;
             font-size: 1.15em;
         }
@@ -81,7 +88,7 @@
         }
         
         .nav a {
-            color: #667eea;
+            color: #818cf8;
             text-decoration: none;
             margin: 0 15px;
         }
@@ -94,8 +101,8 @@
             text-align: center;
             margin-top: 50px;
             padding-top: 30px;
-            border-top: 1px solid #eee;
-            color: #666;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #a0a0b5;
         }
         
         @media (max-width: 600px) {
@@ -107,14 +114,41 @@
                 font-size: 1.8em;
             }
         }
+    
+        .nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 0 30px; margin-bottom: 10px;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #eaeaf2; font-weight: 700; font-size: 1.1em; }
+        .nav-brand img { width: 32px; height: 32px; border-radius: 9px; }
+        .nav-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .nav-links a {
+            color: #a0a0b5; text-decoration: none; font-size: 0.9em;
+            padding: 7px 12px; border-radius: 9px; transition: all 0.2s;
+        }
+        .nav-links a:hover { color: #eaeaf2; background: rgba(255,255,255,0.08); }
+        .lang-pill a {
+            background: rgba(99,102,241,0.2); color: #818cf8;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+        .lang-pill a:hover { background: rgba(99,102,241,0.35); color: #fff; }
+    
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nav">
-            <a href="index.html">← 返回首页</a>
-            <a href="terms_en.html">English Version</a>
-        </div>
+<div class="container">
+        <nav class="nav">
+            <a class="nav-brand" href="index.html">
+                <img src="icon.png" alt="BrowseBuddy">
+                <span>BrowseBuddy</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="permissions.html">权限详解</a>
+                <a href="privacy.html">隐私政策</a>
+                <span class="lang-pill"><a href="terms_en.html">English</a></span>
+            </div>
+        </nav>
         
         <h1>📋 使用条款</h1>
         <p class="effective-date">生效日期：2026年2月11日</p>
