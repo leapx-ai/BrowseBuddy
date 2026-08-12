@@ -427,13 +427,17 @@
         return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
       }
       function apply(lang) {
+        // Set the root lang FIRST so documentElement never matches the
+        // [lang="..."] selector (which would hide the whole page).
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
         document.querySelectorAll('[lang="zh"], [lang="en"]').forEach(function (el) {
+          // Never hide the <html> element itself
+          if (el === document.documentElement) return;
           el.hidden = el.getAttribute('lang') !== lang;
         });
         document.querySelectorAll('[data-lang-switch]').forEach(function (el) {
           el.classList.toggle('active', el.getAttribute('data-lang-switch') === lang);
         });
-        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
         try { localStorage.setItem(KEY, lang); } catch (e) {}
       }
       document.addEventListener('DOMContentLoaded', function () {
