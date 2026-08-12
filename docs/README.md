@@ -30,8 +30,8 @@ docs/
 
 2. **访问网站**
    - 部署完成后，你的网站将可通过以下地址访问：
-   - `https://yourusername.github.io/browsebuddy/`
-   - 例如：`https://johndoe.github.io/browsebuddy/`
+   - `https://leapx-ai.github.io/browsebuddy/`
+   - 例如：`https://leapx-ai.github.io/BrowseBuddy/`
 
 ### 更新网站内容
 
@@ -55,7 +55,7 @@ git push origin main
 
 2. 在你的域名 DNS 设置中添加 CNAME 记录：
    - 主机记录：www 或 browsebuddy
-   - 记录值：yourusername.github.io
+   - 记录值：leapx-ai.github.io
 
 3. 在 GitHub Pages 设置中配置自定义域名
 
@@ -67,7 +67,7 @@ git push origin main
 
 | 占位符 | 说明 | 位置 |
 |--------|------|------|
-| `yourusername` | 你的 GitHub 用户名 | 所有页面中的 GitHub 链接 |
+| `leapx-ai` | GitHub 用户名 | 所有页面中的 GitHub 链接 |
 | `liuzhaooo@outlook.com` | 联系邮箱 | privacy.html, terms.html |
 | `liuzhaooo@outlook.com` | 支持邮箱 | terms.html |
 | `Coming Soon to Chrome Web Store` | Chrome 商店状态 | index.html, index_en.html |
@@ -95,8 +95,8 @@ git push origin main
 
 在 Chrome Web Store 开发者后台填写以下信息：
 
-- **隐私政策 URL**: `https://yourusername.github.io/browsebuddy/privacy.html`
-- **网站 URL**: `https://yourusername.github.io/browsebuddy/`
+- **隐私政策 URL**: `https://leapx-ai.github.io/browsebuddy/privacy.html`
+- **网站 URL**: `https://leapx-ai.github.io/browsebuddy/`
 
 ### 权限声明（必填）
 
@@ -112,7 +112,7 @@ git push origin main
 5. contextMenus - 添加右键菜单项（可选）
 
 所有数据均在本地处理，不会上传至任何服务器。
-详细说明：https://yourusername.github.io/browsebuddy/permissions.html
+详细说明：https://leapx-ai.github.io/browsebuddy/permissions.html
 ```
 
 ## 多语言支持

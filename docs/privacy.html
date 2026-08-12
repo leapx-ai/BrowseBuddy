@@ -5,158 +5,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>隐私政策 - BrowseBuddy</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --secondary: #8b5cf6;
+            --bg: #0f0f1a;
+            --card: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text: #eaeaf2;
+            --text-muted: #a0a0b5;
+            --radius: 16px;
         }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.8;
-            color: #eaeaf2;
+            line-height: 1.7;
+            color: var(--text);
             background:
-                radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,0.22), transparent 60%),
-                radial-gradient(800px 400px at 90% 0%, rgba(139,92,246,0.18), transparent 55%),
-                #0f0f1a;
+                radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,0.25), transparent 60%),
+                radial-gradient(800px 400px at 90% 0%, rgba(139,92,246,0.2), transparent 55%),
+                radial-gradient(600px 300px at 50% 110%, rgba(129,140,248,0.12), transparent 60%),
+                var(--bg);
             min-height: 100vh;
-            padding: 24px 20px 60px;
         }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
         
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 50px;
-            border-radius: 16px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
-        }
-        
-        h1 {
-            color: #818cf8;
-            margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-        
-        .effective-date {
-            color: #a0a0b5;
-            font-size: 0.95em;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        h2 {
-            color: #818cf8;
-            margin: 30px 0 15px;
-            font-size: 1.4em;
-        }
-        
-        h3 {
-            color: #c4c4d8;
-            margin: 20px 0 10px;
-            font-size: 1.15em;
-        }
-        
-        p {
-            margin-bottom: 15px;
-        }
-        
-        ul {
-            margin-left: 20px;
-            margin-bottom: 15px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-        }
-        
-        .highlight {
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .nav {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .nav a {
-            color: #818cf8;
-            text-decoration: none;
-            margin: 0 15px;
-        }
-        
-        .nav a:hover {
-            text-decoration: underline;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            color: #a0a0b5;
-        }
-        
-        @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 1.8em;
-            }
-        }
-    
+        /* Nav */
         .nav {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 0 30px; margin-bottom: 10px;
+            padding: 20px 0; margin-bottom: 40px;
         }
-        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #eaeaf2; font-weight: 700; font-size: 1.1em; }
-        .nav-brand img { width: 32px; height: 32px; border-radius: 9px; }
-        .nav-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.15em; }
+        .nav-brand img { width: 36px; height: 36px; border-radius: 10px; }
+        .nav-links { display: flex; align-items: center; gap: 8px; }
         .nav-links a {
-            color: #a0a0b5; text-decoration: none; font-size: 0.9em;
-            padding: 7px 12px; border-radius: 9px; transition: all 0.2s;
+            color: var(--text-muted); text-decoration: none; font-size: 0.9em;
+            padding: 8px 14px; border-radius: 10px; transition: all 0.2s;
         }
-        .nav-links a:hover { color: #eaeaf2; background: rgba(255,255,255,0.08); }
+        .nav-links a:hover, .nav-links a.active { color: var(--text); background: rgba(255,255,255,0.08); }
+        .lang-pill { margin-left: 8px; }
         .lang-pill a {
-            background: rgba(99,102,241,0.2); color: #818cf8;
+            background: rgba(99,102,241,0.2); color: var(--primary-light);
             border: 1px solid rgba(99,102,241,0.3);
         }
         .lang-pill a:hover { background: rgba(99,102,241,0.35); color: #fff; }
+        
+        /* Hero */
+        .hero { text-align: center; padding: 30px 0 50px; }
+        .hero .logo {
+            width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 24px;
+            box-shadow: 0 20px 60px rgba(99,102,241,0.4);
+        }
+        .hero h1 {
+            font-size: 3.2em; font-weight: 800; margin-bottom: 14px;
+            background: linear-gradient(135deg, #fff 20%, #a5b4fc 60%, #c4b5fd);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero .tagline { font-size: 1.3em; color: var(--text-muted); }
+        
+        /* Card */
+        .card {
+            background: var(--card); border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--radius); padding: 40px; margin: 24px 0;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+        }
+        h2 {
+            font-size: 1.6em; font-weight: 700; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; color: var(--text);
+        }
+        h2::after {
+            content: ""; flex: 1; height: 1px; margin-left: 6px;
+            background: linear-gradient(90deg, rgba(99,102,241,0.4), transparent);
+        }
+        h3 { color: var(--text); margin: 25px 0 15px; font-size: 1.2em; }
+        .card p, .card li { color: var(--text-muted); }
+        .card strong { color: var(--text); }
+        
+        /* Features */
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 24px; }
+        .feature {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+            border-radius: 14px; padding: 24px; transition: transform 0.25s, border-color 0.25s, background 0.25s;
+        }
+        .feature:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.08); }
+        .feature-icon {
+            width: 52px; height: 52px; border-radius: 14px; margin-bottom: 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25));
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary-light);
+        }
+        .feature h4 { color: var(--text); margin-bottom: 8px; font-size: 1.05em; }
+        .feature p { color: var(--text-muted); font-size: 0.9em; }
+        
+        /* Permission table */
+        .permission-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .permission-table th, .permission-table td { padding: 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .permission-table th { font-weight: 600; color: var(--primary-light); background: rgba(255,255,255,0.03); }
+        .permission-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .permission-tag {
+            display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 500;
+            font-family: 'SF Mono', Consolas, monospace;
+        }
+        
+        /* Privacy highlight */
+        .privacy-highlight {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+            border: 1px solid rgba(99,102,241,0.25); padding: 22px; border-radius: 12px; margin: 20px 0;
+        }
+        .privacy-highlight h3 { margin-top: 0; color: var(--primary-light); }
+        
+        /* Benefits list */
+        ul.benefits { list-style: none; padding: 0; }
+        ul.benefits li { padding: 8px 0 8px 30px; position: relative; }
+        ul.benefits li::before {
+            content: "✓"; position: absolute; left: 0; color: var(--primary-light); font-weight: bold;
+        }
+        
+        /* CTA */
+        .cta { text-align: center; padding: 50px 40px; }
+        .btn {
+            display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 15px 40px; border-radius: 30px; text-decoration: none;
+            font-weight: 600; font-size: 1.05em; transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(99,102,241,0.55); }
+        .btn-disabled { background: rgba(255,255,255,0.12); cursor: not-allowed; box-shadow: none; }
+        .btn-disabled:hover { transform: none; }
+        
+        /* Footer */
+        footer { text-align: center; color: var(--text-muted); padding: 40px 20px 0; }
+        footer a { color: var(--primary-light); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        footer .footer-links { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        footer .footer-links a { font-size: 0.9em; }
+        
+        .tech-info p { margin-bottom: 8px; }
+        .tech-info a { color: var(--primary-light); }
+        
+        @media (max-width: 640px) {
+            .nav { flex-wrap: wrap; gap: 12px; }
+            .hero h1 { font-size: 2.2em; }
+            .card { padding: 26px; }
+            .permission-table { font-size: 0.85em; }
+            .permission-table th, .permission-table td { padding: 10px; }
+        }
     
+
+        /* Inner page specific styles */
+        .subtitle { color: #a0a0b5; font-size: 1.1em; }
+        .hero { padding: 10px 0 10px; }
+        .hero .title { font-size: 2.4em; font-weight: 800; background: linear-gradient(135deg, #fff 20%, #a5b4fc 60%, #c4b5fd); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .card h3 { color: #eaeaf2; margin: 20px 0 10px; font-size: 1.1em; }
+        .card h3:first-child { margin-top: 0; }
+        .card p, .card li { color: #a0a0b5; }
+        .card strong { color: #eaeaf2; }
+        .card a { color: #818cf8; }
+        .effective-date { color: #a0a0b5; font-size: 0.95em; margin-bottom: 16px; }
+        .highlight {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+            border: 1px solid rgba(99,102,241,0.25); padding: 18px; border-radius: 12px; margin: 0;
+        }
+        .highlight strong { color: #eaeaf2; }
+
     </style>
 </head>
 <body>
-<div class="container">
+    <div class="container">
         <nav class="nav">
             <a class="nav-brand" href="index.html">
                 <img src="icon.png" alt="BrowseBuddy">
                 <span>BrowseBuddy</span>
             </a>
             <div class="nav-links">
-                <a href="index.html">Home</a>
+                <a href="index.html">首页</a>
                 <a href="permissions.html">权限详解</a>
                 <a href="terms.html">使用条款</a>
                 <span class="lang-pill"><a href="privacy_en.html">English</a></span>
             </div>
         </nav>
-        
-        <h1>🔒 隐私政策</h1>
-        <p class="effective-date">生效日期：2026年2月11日</p>
-        
-        <div class="highlight">
+
+        <header class="hero">
+            <h1 class="title">隐私政策</h1>
+            <p class="effective-date">生效日期：2026年2月11日</p>
+        </header>
+
+        <div class="card">
+            <div class="highlight">
             <strong>核心承诺：</strong>BrowseBuddy 是一款<strong>完全本地运行</strong>的浏览器扩展。我们<strong>不收集、不存储、不传输</strong>任何您的个人数据或浏览信息。
         </div>
-        
+        </div>
+
+        <div class="card">
+        <h1>🔒 隐私政策</h1>
+        <p class="effective-date">生效日期：2026年2月11日</p>
         <h2>1. 我们收集的信息</h2>
         <p><strong>我们不收集任何信息。</strong></p>
         <p>BrowseBuddy 的所有功能都在您的浏览器本地运行，包括：</p>
@@ -166,7 +212,9 @@
             <li>统计数据生成</li>
             <li>用户设置保存</li>
         </ul>
-        
+        </div>
+
+        <div class="card">
         <h2>2. 数据存储</h2>
         <p>所有数据都使用浏览器提供的本地存储 API 保存在您的设备上：</p>
         
@@ -180,7 +228,6 @@
         
         <h3>2.2 存储限制</h3>
         <p>浏览器本地存储通常限制在 5-10MB，这足以存储数千条黑名单记录和插件设置，但无法存储大量历史记录副本（这是有意设计，确保数据始终留在浏览器中）。</p>
-        
         <h2>3. 数据使用</h2>
         <p>您的数据仅用于以下用途：</p>
         <ul>
@@ -188,11 +235,12 @@
             <li>根据黑名单自动删除特定历史条目</li>
             <li>保存您的插件偏好设置</li>
         </ul>
-        
+        </div>
+
+        <div class="card">
         <h2>4. 数据共享</h2>
         <p><strong>我们不会与任何第三方共享您的数据。</strong></p>
         <p>原因是我们根本无从获取您的数据——所有处理都在本地完成，没有服务器端组件，没有数据传输。</p>
-        
         <h2>5. 权限使用说明</h2>
         <p>BrowseBuddy 请求的每个权限都有明确用途：</p>
         <ul>
@@ -202,7 +250,9 @@
             <li><strong>sessions：</strong>恢复最近关闭的标签页或窗口</li>
             <li><strong>contextMenus：</strong>添加右键菜单项，快速将网站加入黑名单</li>
         </ul>
-        
+        </div>
+
+        <div class="card">
         <h2>6. 安全措施</h2>
         <ul>
             <li>所有代码在浏览器沙箱环境中运行</li>
@@ -210,7 +260,6 @@
             <li>不注入任何脚本到网页</li>
             <li>开源代码可供安全审查</li>
         </ul>
-        
         <h2>7. 您的权利</h2>
         <p>您完全掌控自己的数据：</p>
         <ul>
@@ -218,17 +267,9 @@
             <li>随时清除所有插件数据（通过浏览器扩展管理）</li>
             <li>随时卸载扩展，所有相关数据将被自动清除</li>
         </ul>
-        
         <h2>8. 隐私政策更新</h2>
         <p>我们可能不时更新本隐私政策。任何重大变更将通过扩展更新说明或网站公告通知用户。</p>
-        
-        <h2>9. 联系我们</h2>
-        <p>如果您对本隐私政策有任何疑问，请通过以下方式联系我们：</p>
-        <ul>
-            <li>GitHub Issues: <a href="https://github.com/yourusername/browsebuddy/issues" target="_blank">https://github.com/yourusername/browsebuddy/issues</a></li>
-            <li>电子邮件：liuzhaooo@outlook.com</li>
-        </ul>
-        
+        </div>
         <footer>
             <p>© 2026 BrowseBuddy. 保留所有权利。</p>
             <p>本页面托管于 GitHub Pages，公开可访问。</p>
