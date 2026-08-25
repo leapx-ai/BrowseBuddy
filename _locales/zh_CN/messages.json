@@ -673,6 +673,14 @@
     "message": "条记录",
     "description": "Items count"
   },
+  "dateToday": {
+    "message": "今天",
+    "description": "Day header for records from the current local day"
+  },
+  "dateYesterday": {
+    "message": "昨天",
+    "description": "Day header for records from the previous local day"
+  },
   "resultSummary": {
     "message": "$count$ 条记录 · $domains$ 个域名",
     "description": "One-line summary of the current result set",

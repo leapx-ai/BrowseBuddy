@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
-import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type HistoryItem, type SearchOptions } from '../../utils/history';
+import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, toLocalDateKey, type HistoryItem, type SearchOptions } from '../../utils/history';
 import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
 import { extractMainDomain } from '../../utils/blacklist';
 import { parseSearchQuery } from '../../utils/search';
@@ -48,6 +48,25 @@ function buildFilterChips(query: string, transitionType: string): string[] {
     chips.push(getMessage(VISIT_TYPE_LABELS[transitionType] || 'allVisitTypes'));
   }
   return chips;
+}
+
+// Header label for a day group. "Today"/"Yesterday" are what the user actually
+// thinks in; older days get a weekday, which is the other thing people navigate
+// history by. The year is only spelled out when it is not the current one.
+function dayLabel(ts: number): string {
+  const key = toLocalDateKey(ts);
+  const now = new Date();
+  if (key === toLocalDateKey(now.getTime())) return getMessage('dateToday');
+
+  const yesterday = new Date(now);
+  // setDate rather than subtracting 24h, so a DST change does not shift the day.
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (key === toLocalDateKey(yesterday.getTime())) return getMessage('dateYesterday');
+
+  const date = new Date(ts);
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', weekday: 'short' };
+  if (date.getFullYear() !== now.getFullYear()) options.year = 'numeric';
+  return date.toLocaleDateString(getCurrentLocale().replace('_', '-'), options);
 }
 
 // One shared favorites read for the whole list. Each row used to call
@@ -504,7 +523,9 @@ const ViewModule: React.FC = () => {
           </div>
           <div className="day-history-list">
             {history.length > 0 ? (
-              <ListView items={history} />
+              /* The day is already stated in the heading above, so per-day
+                 headers inside would repeat it on every row group. */
+              <ListView items={history} showDateHeaders={false} />
             ) : (
               <div className="empty-state">
                 <div className="empty-icon">📭</div>
@@ -569,8 +590,7 @@ const CalendarView: React.FC<{
 
   // Local calendar date - toISOString() would resolve to the UTC day and mark
   // the wrong cell as "today" for any non-UTC timezone.
-  const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const today = toLocalDateKey(Date.now());
 
   const heatColor = (count: number) =>
     count > 0
@@ -637,13 +657,64 @@ const CalendarView: React.FC<{
 };
 
 // List View Component
-const ListView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
+//
+// Two things happen here that a plain map() did not do:
+//  - consecutive rows from the same local day get one sticky header, so the date
+//    is stated once instead of on every row, and each row keeps only HH:MM;
+//  - rows are appended in pages. A 1000-record result set used to build 1000 rows
+//    up front, which is the slowest moment of opening the popup and most of it is
+//    never scrolled to.
+const LIST_PAGE_SIZE = 60;
+
+const ListView: React.FC<{ items: HistoryItem[]; showDateHeaders?: boolean }> = ({
+  items,
+  showDateHeaders = true,
+}) => {
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // A new result set starts from the top again.
+  useEffect(() => {
+    setVisibleCount(LIST_PAGE_SIZE);
+  }, [items]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || visibleCount >= items.length) return;
+    // rootMargin so the next page is in place before the sentinel is reached.
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          setVisibleCount(c => Math.min(c + LIST_PAGE_SIZE, items.length));
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [visibleCount, items.length]);
+
+  let lastDateKey = '';
+
   return (
-    <div className="history-list">
-      {items.map((item, index) => (
-        <HistoryListItem key={`${item.url}-${index}`} item={item} />
-      ))}
-    </div>
+    <>
+      <div className="history-list">
+        {items.slice(0, visibleCount).map((item, index) => {
+          const dateKey = toLocalDateKey(item.visitTime);
+          const needsHeader = showDateHeaders && dateKey !== lastDateKey;
+          lastDateKey = dateKey;
+          return (
+            <React.Fragment key={`${item.url}-${index}`}>
+              {needsHeader && <div className="list-date-header">{dayLabel(item.visitTime)}</div>}
+              <HistoryListItem item={item} showDate={!showDateHeaders} />
+            </React.Fragment>
+          );
+        })}
+      </div>
+      {visibleCount < items.length && (
+        <div ref={sentinelRef} style={{ height: '1px' }} aria-hidden="true" />
+      )}
+    </>
   );
 };
 

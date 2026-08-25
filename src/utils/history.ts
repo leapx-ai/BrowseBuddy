@@ -25,7 +25,10 @@ export type {
 
 // "YYYY-MM-DD" in the user's own timezone. toISOString() resolves to the UTC
 // day, which puts an evening visit in UTC+8 on the previous date.
-function toLocalDateKey(ts: number): string {
+//
+// Exported so the UI derives day keys from this one rule instead of writing its
+// own - the earlier bugs here all came from two sites disagreeing.
+export function toLocalDateKey(ts: number): string {
   const d = new Date(ts);
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');

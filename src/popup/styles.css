@@ -511,11 +511,41 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  overflow: hidden;
 }
 
 .history-list > * + * {
   border-top: 1px solid var(--border-color);
+}
+
+/*
+ * The container used to clip with overflow:hidden, but an overflow:hidden
+ * ancestor becomes the containing block for position:sticky and the date headers
+ * would never pin. Rounding the end rows instead keeps the corners clean.
+ */
+.history-list > :first-child {
+  border-top-left-radius: var(--radius-sm);
+  border-top-right-radius: var(--radius-sm);
+}
+
+.history-list > :last-child {
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+/*
+ * Day anchor in the flat list. It replaces the full date that every row used to
+ * repeat, so one ~20px header covers a whole day and each row keeps only HH:MM.
+ * Opaque, because rows scroll underneath it.
+ */
+.list-date-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 3px 10px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* Rendered as <a href> so the row is reachable by Tab, opens on Enter, and
