@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback, useMemo } from 'react';
 import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
 import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, toLocalDateKey, type HistoryItem, type SearchOptions } from '../../utils/history';
 import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
@@ -694,6 +694,18 @@ const ListView: React.FC<{ items: HistoryItem[]; showDateHeaders?: boolean }> = 
     return () => observer.disconnect();
   }, [visibleCount, items.length]);
 
+  // Counted over the whole result set, not over the rendered slice - otherwise
+  // the number under a day anchor would grow while paging in more rows.
+  const dayCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    if (!showDateHeaders) return counts;
+    for (const item of items) {
+      const key = toLocalDateKey(item.visitTime);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return counts;
+  }, [items, showDateHeaders]);
+
   let lastDateKey = '';
 
   return (
@@ -705,7 +717,14 @@ const ListView: React.FC<{ items: HistoryItem[]; showDateHeaders?: boolean }> = 
           lastDateKey = dateKey;
           return (
             <React.Fragment key={`${item.url}-${index}`}>
-              {needsHeader && <div className="list-date-header">{dayLabel(item.visitTime)}</div>}
+              {needsHeader && (
+                <div className="list-date-header">
+                  <span>{dayLabel(item.visitTime)}</span>
+                  <span className="list-date-count">
+                    {dayCounts.get(dateKey)} {getMessage('items')}
+                  </span>
+                </div>
+              )}
               <HistoryListItem item={item} showDate={!showDateHeaders} />
             </React.Fragment>
           );
