@@ -192,7 +192,7 @@ const PrivacyModule: React.FC = () => {
   return (
     <div>
       {/* Info Card */}
-      <div className="alert alert-info" style={{ marginBottom: '12px' }}>
+      <div className="alert alert-info">
         <strong>{getMessage('realtimeProtection')}</strong>
         <p style={{ marginTop: '4px', marginBottom: 0 }}>
           {getMessage('blacklistDescription')}
@@ -201,7 +201,7 @@ const PrivacyModule: React.FC = () => {
 
       {/* Action Result Message */}
       {lastAction && (
-        <div className={`alert ${lastAction.type === 'add' ? 'alert-success' : 'alert-info'}`} style={{ marginBottom: '12px' }}>
+        <div className={`alert ${lastAction.type === 'add' ? 'alert-success' : 'alert-info'}`}>
           {lastAction.message}
         </div>
       )}
@@ -252,7 +252,7 @@ const PrivacyModule: React.FC = () => {
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="card" style={{ marginBottom: '12px' }}>
+        <div className="card">
           <div className="input-group">
             <label className="input-label">{getMessage('enterUrlOrDomain')}</label>
             <input
@@ -315,7 +315,7 @@ const PrivacyModule: React.FC = () => {
 
       {/* Blacklist */}
       <div>
-        <h3 className="card-title" style={{ marginBottom: '12px' }}>
+        <h3 className="card-title">
           {getMessage('blacklist')} ({blacklist.length})
         </h3>
         

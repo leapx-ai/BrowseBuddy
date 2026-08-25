@@ -100,7 +100,7 @@ const RestoreSession: React.FC = () => {
   };
 
   return (
-    <div className="card" style={{ marginBottom: '12px' }}>
+    <div className="card">
       <div
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
         onClick={handleToggle}
@@ -293,7 +293,7 @@ const ViewModule: React.FC = () => {
       <RestoreSession />
 
       {/* Search */}
-      <div className="input-group" style={{ marginBottom: '12px' }}>
+      <div className="input-group">
         <input
           type="text"
           className="input"
@@ -310,7 +310,7 @@ const ViewModule: React.FC = () => {
 
       {/* Transition type filter */}
       {viewMode !== 'calendar' && (
-        <div className="input-group" style={{ marginBottom: '12px' }}>
+        <div className="input-group">
           <select
             className="input"
             value={transitionType}
@@ -521,7 +521,7 @@ const DateGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
   return (
     <div>
       {sortedDates.map((date) => (
-        <div key={date} className="card" style={{ marginBottom: '12px' }}>
+        <div key={date} className="card">
           <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>{date}</span>
             <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
@@ -553,7 +553,7 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
   return (
     <div>
       {sortedDomains.map(([domain, domainItems]: [string, HistoryItem[]]) => (
-        <div key={domain} className="card" style={{ marginBottom: '12px' }}>
+        <div key={domain} className="card">
           <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <DomainIcon url={`https://${domain}`} />
