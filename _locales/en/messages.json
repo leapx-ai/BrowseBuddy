@@ -721,6 +721,16 @@
     "message": "Will add main domain:",
     "description": "Label showing extracted main domain"
   },
+  "deleteTargetDomain": {
+    "message": "Will delete records for $domain$ and all its subdomains",
+    "description": "Echo of the normalized domain that deletion will target",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
   "includesAllSubdomains": {
     "message": "(includes all subdomains)",
     "description": "Note that all subdomains are included"

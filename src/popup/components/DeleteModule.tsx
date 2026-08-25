@@ -17,6 +17,15 @@ function toDateInputValue(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+// Mirror of the above on the way out. `new Date("2026-08-25")` is parsed as UTC
+// midnight per spec, so in UTC+8 a range built that way starts at 08:00 local
+// and spills into the next day - deleting a day the user never selected while
+// leaving part of the selected one behind.
+function startOfLocalDay(value: string): number {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
 const DeleteModule: React.FC = () => {
   const [deleteType, setDeleteType] = useState<DeleteType>('date');
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +60,8 @@ const DeleteModule: React.FC = () => {
     setIsLoading(true);
     try {
       const options = buildDeleteOptions();
-      const deletedCount = await deleteHistory(options);
+      // Delete exactly what the preview showed, not a fresh query.
+      const deletedCount = await deleteHistory(previewItems, options.dateRange);
       setResult({
         success: true,
         message: getMessage('deleteSuccess', deletedCount.toString()),
@@ -68,6 +78,11 @@ const DeleteModule: React.FC = () => {
     }
   };
 
+  // Derived, not state - the Preview guard has to test the value that actually
+  // reaches the delete query. `extractMainDomain` returns '' for unparseable
+  // input, and an empty domain means "no domain filter", i.e. the whole history.
+  const normalizedDomain = domain.trim() ? extractMainDomain(domain) : '';
+
   const buildDeleteOptions = (): DeleteOptions => {
     const options: DeleteOptions = {};
 
@@ -75,16 +90,17 @@ const DeleteModule: React.FC = () => {
       case 'date':
         if (startDate && endDate) {
           options.dateRange = {
-            start: new Date(startDate).getTime(),
-            end: new Date(endDate).getTime() + 24 * 60 * 60 * 1000 - 1,
+            start: startOfLocalDay(startDate),
+            end: startOfLocalDay(endDate) + 24 * 60 * 60 * 1000 - 1,
           };
         }
         break;
       case 'domain':
-        if (domain) {
-          // Normalize to the main domain so "a.example.com", "https://x.example.com"
-          // and "example.com" all target the same registrable domain.
-          options.domain = extractMainDomain(domain);
+        if (normalizedDomain) {
+          // Normalized to the main domain so "a.example.com",
+          // "https://x.example.com" and "example.com" all target the same
+          // registrable domain.
+          options.domain = normalizedDomain;
         }
         break;
       case 'keyword':
@@ -187,6 +203,13 @@ const DeleteModule: React.FC = () => {
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
             />
+            {/* Echo what will actually be targeted - the raw input is normalized
+                to a registrable domain, and unparseable input yields nothing. */}
+            {normalizedDomain && (
+              <p className="card-hint" style={{ marginTop: '4px', marginBottom: 0 }}>
+                {getMessage('deleteTargetDomain', normalizedDomain)}
+              </p>
+            )}
           </div>
         )}
 
@@ -208,7 +231,7 @@ const DeleteModule: React.FC = () => {
           onClick={handlePreview}
           disabled={isLoading || 
             (deleteType === 'date' && (!startDate || !endDate)) ||
-            (deleteType === 'domain' && !domain) ||
+            (deleteType === 'domain' && !normalizedDomain) ||
             (deleteType === 'keyword' && !keyword)
           }
         >

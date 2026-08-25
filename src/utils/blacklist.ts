@@ -40,6 +40,22 @@ export function extractMainDomain(url: string): string {
   }
 }
 
+// Hostnames may carry a trailing root label ("example.com."), which is a
+// different string but the same host. Normalize before any comparison.
+function normalizeHost(host: string): string {
+  return host.toLowerCase().replace(/\.+$/, '');
+}
+
+// True when `hostname` is exactly `domain` or a subdomain of it.
+// Substring matching would make "test.com" match "latest.com" - harmless in a
+// search box, but on the delete path it silently destroys unrelated history.
+export function hostMatchesDomain(hostname: string, domain: string): boolean {
+  const host = normalizeHost(hostname);
+  const target = normalizeHost(domain);
+  if (!host || !target) return false;
+  return host === target || host.endsWith(`.${target}`);
+}
+
 // Check if URL matches blacklist
 // Now all entries are main domains and match any subdomain of that domain
 export function isUrlBlacklisted(url: string, blacklist: BlacklistEntry[]): boolean {

@@ -9,7 +9,7 @@ import type {
   CalendarData,
   BlacklistEntry,
 } from '../types';
-import { filterBlacklistedItems, extractMainDomain } from './blacklist';
+import { filterBlacklistedItems, extractMainDomain, hostMatchesDomain } from './blacklist';
 
 // Re-export types for convenience
 export type { 
@@ -24,9 +24,12 @@ export type {
 } from '../types';
 
 // Fetch history from browser
-export async function fetchHistory(options: SearchOptions = {}): Promise<HistoryItem[]> {
-  const { keyword, dateRange, domains, maxResults = 10000, transitionType } = options;
-  
+// Raw chrome.history.search wrapper. Deliberately unfiltered: paginating
+// callers must advance their cursor over the *unfiltered* result set, otherwise
+// a page whose every record is filtered out looks like "end of history".
+function searchHistoryRaw(options: SearchOptions = {}): Promise<HistoryItem[]> {
+  const { keyword, dateRange, maxResults = 10000 } = options;
+
   return new Promise((resolve, reject) => {
     const query: chrome.history.HistoryQuery = {
       text: keyword || '',
@@ -35,13 +38,13 @@ export async function fetchHistory(options: SearchOptions = {}): Promise<History
       endTime: dateRange?.end,
     };
 
-    chrome.history.search(query, async (results) => {
+    chrome.history.search(query, (results) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
         return;
       }
 
-      let items: HistoryItem[] = results.map(item => ({
+      resolve(results.map(item => ({
         id: `${item.visitCount}-${item.lastVisitTime}`,
         url: item.url || '',
         title: item.title || '',
@@ -49,45 +52,57 @@ export async function fetchHistory(options: SearchOptions = {}): Promise<History
         visitCount: item.visitCount || 0,
         typedCount: item.typedCount,
         lastVisitTime: item.lastVisitTime,
-      }));
-
-      // Filter by domains if specified
-      if (domains && domains.length > 0) {
-        items = items.filter(item => {
-          try {
-            const url = new URL(item.url);
-            return domains.some(domain => url.hostname.includes(domain));
-          } catch {
-            return false;
-          }
-        });
-      }
-
-      // Filter by transition type if specified.
-      // Requires a getVisits() round-trip per record, so only runs when requested.
-      if (transitionType) {
-        const enriched = await Promise.all(
-          items.map(async (item) => {
-            try {
-              const visits = await chrome.history.getVisits({ url: item.url });
-              // Pick the most recent visit's transition
-              const sorted = [...visits].sort((a, b) => (b.visitTime || 0) - (a.visitTime || 0));
-              return { ...item, transition: sorted[0]?.transition };
-            } catch {
-              return { ...item, transition: undefined };
-            }
-          })
-        );
-
-        items = enriched.filter(item => {
-          if (!item.transition) return false;
-          return item.transition === transitionType;
-        });
-      }
-
-      resolve(items);
+      })));
     });
   });
+}
+
+// Post-search filters that chrome.history.search cannot express itself.
+async function applySearchFilters(
+  items: HistoryItem[],
+  options: Pick<SearchOptions, 'domains' | 'transitionType'>
+): Promise<HistoryItem[]> {
+  const { domains, transitionType } = options;
+  let result = items;
+
+  // Exact-or-subdomain, never substring: "test.com" must not match
+  // "latest.com", otherwise a scoped delete silently becomes a wider one.
+  if (domains && domains.length > 0) {
+    result = result.filter(item => {
+      try {
+        const url = new URL(item.url);
+        return domains.some(domain => hostMatchesDomain(url.hostname, domain));
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  // Requires a getVisits() round-trip per record, so only runs when requested.
+  if (transitionType) {
+    const enriched = await Promise.all(
+      result.map(async (item) => {
+        try {
+          const visits = await chrome.history.getVisits({ url: item.url });
+          // Pick the most recent visit's transition
+          const sorted = [...visits].sort((a, b) => (b.visitTime || 0) - (a.visitTime || 0));
+          return { ...item, transition: sorted[0]?.transition };
+        } catch {
+          return { ...item, transition: undefined };
+        }
+      })
+    );
+
+    result = enriched.filter(item => item.transition === transitionType);
+  }
+
+  return result;
+}
+
+// Fetch history from browser
+export async function fetchHistory(options: SearchOptions = {}): Promise<HistoryItem[]> {
+  const raw = await searchHistoryRaw(options);
+  return applySearchFilters(raw, options);
 }
 
 // Fetch history excluding blacklisted domains (for display/export purposes)
@@ -106,64 +121,67 @@ export async function fetchVisibleHistory(
 export async function fetchAllHistory(
   options: SearchOptions = {}
 ): Promise<HistoryItem[]> {
-  const { keyword, dateRange, maxResults = 10000 } = options;
+  // Every filter must be forwarded to each page. Dropping `domains` here used
+  // to turn a domain-scoped delete into a delete of the entire history.
+  const { keyword, dateRange, domains, transitionType, maxResults = 10000 } = options;
   const PAGE_SIZE = 2000;
 
   const all: HistoryItem[] = [];
   const seen = new Set<string>();
+  // Cursor progress is tracked on the *unfiltered* results. If it were tracked
+  // on the filtered ones, a page where nothing matches `domains` would look
+  // identical to "no history left" and pagination would stop early.
+  const seenRaw = new Set<string>();
   // Walk backwards from the range end (or now) so pagination is deterministic.
   // chrome.history.search's endTime is exclusive ("visited before this date"),
   // so advancing to the earliest visit time neither repeats nor skips records.
   let endTime = dateRange?.end ?? Date.now();
-  let reachedStart = false;
   let pages = 0;
   const MAX_PAGES = 50;
 
-  while (!reachedStart && pages < MAX_PAGES) {
-    const page = await fetchHistory({
+  while (all.length < maxResults && pages < MAX_PAGES) {
+    const raw = await searchHistoryRaw({
       keyword,
-      maxResults: Math.min(PAGE_SIZE, maxResults - all.length),
+      maxResults: PAGE_SIZE,
       dateRange: { start: dateRange?.start ?? 0, end: endTime },
     });
 
-    if (page.length === 0) break;
+    if (raw.length === 0) break;
 
-    // De-duplicate (same URL + timestamp can appear on page boundaries)
-    let added = 0;
-    for (const item of page) {
-      const key = `${item.url}:${item.lastVisitTime}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      all.push(item);
-      added++;
-
-      // Stop exactly at the requested limit
-      if (all.length >= maxResults) {
-        reachedStart = true;
-        break;
-      }
-    }
-
-    if (added === 0) {
-      reachedStart = true;
-      break;
-    }
-
-    if (reachedStart) break;
-
-    // Advance cursor to the earliest visit time in this page.
+    // Advance cursor to the earliest visit time in this page, and detect a
+    // cursor that is no longer moving (nothing new came back).
+    let newRaw = 0;
     let earliest = Infinity;
-    for (const item of page) {
+    for (const item of raw) {
+      const key = `${item.url}:${item.lastVisitTime}`;
+      if (!seenRaw.has(key)) {
+        seenRaw.add(key);
+        newRaw++;
+      }
       if (item.lastVisitTime && item.lastVisitTime < earliest) {
         earliest = item.lastVisitTime;
       }
     }
 
-    if (!Number.isFinite(earliest)) {
-      reachedStart = true;
-    } else {
-      endTime = earliest;
+    if (newRaw === 0) break;
+
+    const page = await applySearchFilters(raw, { domains, transitionType });
+
+    // De-duplicate (same URL + timestamp can appear on page boundaries)
+    for (const item of page) {
+      const key = `${item.url}:${item.lastVisitTime}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      all.push(item);
+      // Stop exactly at the requested limit
+      if (all.length >= maxResults) break;
     }
+
+    // Fewer records than a full page means the range is exhausted.
+    if (raw.length < PAGE_SIZE) break;
+    if (!Number.isFinite(earliest)) break;
+
+    endTime = earliest;
     pages++;
   }
 
@@ -193,29 +211,80 @@ async function filterDeleteItems(
   return filterFavoritedItems(visible);
 }
 
-// Delete history entries (blacklisted & favorited domains are protected)
-export async function deleteHistory(options: DeleteOptions): Promise<number> {
-  const items = await fetchHistoryForDelete(options);
+// Delete the exact items that were previewed.
+// The previewed array is passed in rather than re-derived from the options:
+// re-running the query here would also catch anything recorded while the user
+// was reading the confirmation dialog, i.e. records they never saw.
+// `dateRange` scopes the deletion to the window the user selected.
+export async function deleteHistory(
+  items: HistoryItem[],
+  dateRange?: { start: number; end: number }
+): Promise<number> {
   let deletedCount = 0;
 
-  for (const item of items) {
+  for (let i = 0; i < items.length; i++) {
     try {
-      await new Promise<void>((resolve, reject) => {
-        chrome.history.deleteUrl({ url: item.url }, () => {
+      if (dateRange) {
+        await deleteVisitsInRange(items[i].url, dateRange);
+      } else {
+        await deleteSingleUrl(items[i].url);
+      }
+      deletedCount++;
+    } catch {
+      // Continue with next item
+    }
+    // Yield periodically so a large deletion does not starve the event loop.
+    if ((i + 1) % 20 === 0) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  return deletedCount;
+}
+
+// chrome.history offers no "delete these visits of this URL": deleteUrl erases
+// every visit ever recorded for it, and deleteRange ignores the URL. Scope by
+// time instead - read the URL's visits, keep the ones inside the requested
+// window, and remove each with a narrow deleteRange.
+//
+// Caveat: a 2ms window can also catch a different URL visited in the same
+// millisecond. That visit lies inside the range the user asked to clear, so the
+// blast radius stays within the requested window - unlike deleteUrl, which
+// reaches outside it by design.
+async function deleteVisitsInRange(
+  url: string,
+  dateRange: { start: number; end: number }
+): Promise<void> {
+  const visits = await chrome.history.getVisits({ url });
+  const inRange = visits
+    .map(v => v.visitTime)
+    .filter(
+      (t): t is number =>
+        typeof t === 'number' && t >= dateRange.start && t <= dateRange.end
+    );
+
+  if (inRange.length === 0) return;
+
+  // Every visit falls inside the window, so one call removes the URL outright.
+  if (inRange.length === visits.length) {
+    await deleteSingleUrl(url);
+    return;
+  }
+
+  for (const visitTime of inRange) {
+    await new Promise<void>((resolve, reject) => {
+      chrome.history.deleteRange(
+        { startTime: visitTime - 1, endTime: visitTime + 1 },
+        () => {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve();
           }
-        });
-      });
-      deletedCount++;
-    } catch {
-      // Continue with next item
-    }
+        }
+      );
+    });
   }
-
-  return deletedCount;
 }
 
 // Preview items to be deleted (blacklisted & favorited domains are protected)
@@ -224,6 +293,13 @@ export async function previewDelete(options: DeleteOptions): Promise<HistoryItem
 }
 
 async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryItem[]> {
+  // Defence in depth: an options object with no criteria means "everything".
+  // The UI guards against producing one, but this path deletes history, so it
+  // refuses rather than trusting the caller.
+  if (!options.dateRange && !options.domain && !options.keyword && !options.regex) {
+    throw new Error('Refusing to target the entire history: no delete criteria given');
+  }
+
   const searchOptions: SearchOptions = {
     maxResults: 20000,
   };

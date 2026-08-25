@@ -721,6 +721,16 @@
     "message": "将添加主域名:",
     "description": "Label showing extracted main domain"
   },
+  "deleteTargetDomain": {
+    "message": "将删除 $domain$ 及其所有子域名的记录",
+    "description": "Echo of the normalized domain that deletion will target",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
   "includesAllSubdomains": {
     "message": "（包含所有子域名）",
     "description": "Note that all subdomains are included"
