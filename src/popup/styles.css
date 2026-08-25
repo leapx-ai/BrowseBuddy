@@ -48,6 +48,12 @@
   --space-6: 24px;
 
   /*
+   * Padding of the scrolling content pane. Sticky headers inside it must cancel
+   * this value, so it is a token rather than a literal in two places.
+   */
+  --content-padding: var(--space-3);
+
+  /*
    * Type scale. --text-xs is the intended floor; a few rules still use 11px
    * and 10px and are pending migration (they need per-screen layout checks
    * in a 400px popup).
@@ -206,7 +212,7 @@ body {
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-3);
+  padding: var(--content-padding);
   min-height: 0;
 }
 
@@ -536,10 +542,15 @@ body {
  * Day anchor in the flat list. It replaces the full date that every row used to
  * repeat, so one ~20px header covers a whole day and each row keeps only HH:MM.
  * Opaque, because rows scroll underneath it.
+ *
+ * The sticky offset is measured from the scrollport, which is .main-content's
+ * padding box - so top:0 pinned the header one --content-padding below the
+ * visible edge and left a strip of scrolling rows above it. Cancelling the
+ * padding pins it flush against the top edge.
  */
 .list-date-header {
   position: sticky;
-  top: 0;
+  top: calc(-1 * var(--content-padding));
   z-index: 1;
   padding: 3px 10px;
   background: var(--bg-tertiary);
