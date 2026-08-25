@@ -8,6 +8,7 @@ import {
   removeFavorite,
   addUrlToBlacklist,
   saveBlacklist,
+  updateBlacklistEntry,
   getSettings,
   saveSettings,
   defaultSettings,
@@ -289,6 +290,57 @@ describe('addUrlToBlacklist', () => {
   it('returns null entry for invalid url', async () => {
     const { entry } = await addUrlToBlacklist('not a url');
     expect(entry).toBeNull();
+  });
+});
+
+describe('concurrent list mutations', () => {
+  beforeEach(async () => {
+    vi.restoreAllMocks();
+    await resetStorage();
+  });
+
+  it('keeps both favorites when two adds are in flight', async () => {
+    // Unserialized, both calls read the same empty list and the second set()
+    // overwrote the first, so one of the two domains vanished.
+    await Promise.all([addFavorite('one.com'), addFavorite('two.com')]);
+
+    expect((await getFavorites()).sort()).toEqual(['one.com', 'two.com']);
+  });
+
+  it('keeps both entries when two blacklist adds are in flight', async () => {
+    await Promise.all([
+      addUrlToBlacklist('https://a.com'),
+      addUrlToBlacklist('https://b.com'),
+    ]);
+
+    const patterns = (await getBlacklist()).map(e => e.pattern).sort();
+    expect(patterns).toEqual(['a.com', 'b.com']);
+  });
+
+  it('adds the same domain only once when confirm is double-clicked', async () => {
+    const [first, second] = await Promise.all([
+      addUrlToBlacklist('https://example.com'),
+      addUrlToBlacklist('https://example.com'),
+    ]);
+
+    const blacklist = await getBlacklist();
+    expect(blacklist.map(e => e.pattern)).toEqual(['example.com']);
+    // Exactly one call reports having created the entry.
+    expect([first.entry, second.entry].filter(Boolean)).toHaveLength(1);
+  });
+
+  it('keeps both toggles when two rows are switched at once', async () => {
+    await saveBlacklist([
+      { id: 'a', pattern: 'a.com', type: 'exact', enabled: true, createdAt: 1 },
+      { id: 'b', pattern: 'b.com', type: 'exact', enabled: true, createdAt: 2 },
+    ]);
+
+    await Promise.all([
+      updateBlacklistEntry('a', { enabled: false }),
+      updateBlacklistEntry('b', { enabled: false }),
+    ]);
+
+    expect((await getBlacklist()).map(e => e.enabled)).toEqual([false, false]);
   });
 });
 

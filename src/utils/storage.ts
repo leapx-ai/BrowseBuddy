@@ -28,6 +28,29 @@ const STORAGE_KEYS = {
   FAVORITES: 'browsebuddy_favorites',
 };
 
+// Serializes read-modify-write sequences against chrome.storage.local.
+//
+// Every list mutation here is get() -> modify -> set(). Two of them running at
+// once both read the same starting list, and the second set() overwrites the
+// first - so toggling one blacklist row while another add is in flight silently
+// discarded one of the two changes. Awaiting the previous task keeps each
+// sequence indivisible.
+//
+// Scope: this is a per-context queue. The popup, the options page and the
+// service worker each have their own module instance, so it removes the races
+// within one context but not a popup write landing on top of a background
+// write. chrome.storage exposes no transaction or compare-and-swap to close
+// that, and in practice the background worker only writes durations while the UI
+// writes lists, so the remaining overlap is narrow.
+let storageQueue: Promise<unknown> = Promise.resolve();
+
+function withStorageLock<T>(task: () => Promise<T>): Promise<T> {
+  // Run regardless of whether the previous task settled or rejected.
+  const run = storageQueue.then(task, task);
+  storageQueue = run.catch(() => undefined);
+  return run;
+}
+
 // Favorited (protected) main domains - never auto-cleaned, never counted for deletion
 //
 // Read errors propagate on purpose. Returning [] on failure meant "nothing is
@@ -46,16 +69,20 @@ export async function saveFavorites(domains: string[]): Promise<void> {
 export async function addFavorite(domain: string): Promise<void> {
   const mainDomain = extractMainDomain(domain);
   if (!mainDomain) return;
-  const favorites = await getFavorites();
-  if (!favorites.includes(mainDomain)) {
-    await saveFavorites([...favorites, mainDomain]);
-  }
+  return withStorageLock(async () => {
+    const favorites = await getFavorites();
+    if (!favorites.includes(mainDomain)) {
+      await saveFavorites([...favorites, mainDomain]);
+    }
+  });
 }
 
 export async function removeFavorite(domain: string): Promise<void> {
   const mainDomain = extractMainDomain(domain);
-  const favorites = await getFavorites();
-  await saveFavorites(favorites.filter(d => d !== mainDomain));
+  return withStorageLock(async () => {
+    const favorites = await getFavorites();
+    await saveFavorites(favorites.filter(d => d !== mainDomain));
+  });
 }
 
 // Per-domain accumulated dwell time (ms)
@@ -125,27 +152,33 @@ export async function saveBlacklist(blacklist: BlacklistEntry[]): Promise<void> 
 }
 
 export async function addToBlacklist(entry: Omit<BlacklistEntry, 'id' | 'createdAt'>): Promise<BlacklistEntry> {
-  const blacklist = await getBlacklist();
-  const newEntry: BlacklistEntry = {
-    ...entry,
-    id: generateId(),
-    createdAt: Date.now(),
-  };
-  await saveBlacklist([...blacklist, newEntry]);
-  return newEntry;
+  return withStorageLock(async () => {
+    const blacklist = await getBlacklist();
+    const newEntry: BlacklistEntry = {
+      ...entry,
+      id: generateId(),
+      createdAt: Date.now(),
+    };
+    await saveBlacklist([...blacklist, newEntry]);
+    return newEntry;
+  });
 }
 
 export async function removeFromBlacklist(id: string): Promise<void> {
-  const blacklist = await getBlacklist();
-  await saveBlacklist(blacklist.filter(entry => entry.id !== id));
+  return withStorageLock(async () => {
+    const blacklist = await getBlacklist();
+    await saveBlacklist(blacklist.filter(entry => entry.id !== id));
+  });
 }
 
 export async function updateBlacklistEntry(id: string, updates: Partial<BlacklistEntry>): Promise<void> {
-  const blacklist = await getBlacklist();
-  const updated = blacklist.map(entry => 
-    entry.id === id ? { ...entry, ...updates } : entry
-  );
-  await saveBlacklist(updated);
+  return withStorageLock(async () => {
+    const blacklist = await getBlacklist();
+    const updated = blacklist.map(entry =>
+      entry.id === id ? { ...entry, ...updates } : entry
+    );
+    await saveBlacklist(updated);
+  });
 }
 
 // Add URL to blacklist - automatically extracts main domain
@@ -160,26 +193,35 @@ export async function addUrlToBlacklist(
     return { entry: null, deletedCount: 0 };
   }
   
-  // Check if already exists
-  const blacklist = await getBlacklist();
-  const exists = blacklist.some(entry => entry.pattern === mainDomain);
-  
-  if (exists) {
+  // Check-and-insert has to be one critical section. Split apart, two calls
+  // (a double-click on Confirm, or the popup and the context menu at once) both
+  // saw "not present" and both appended, leaving duplicate entries for the same
+  // domain in the list.
+  const entry = await withStorageLock(async () => {
+    const blacklist = await getBlacklist();
+    if (blacklist.some(e => e.pattern === mainDomain)) return null;
+
+    // Add to the blacklist FIRST. deleteHistoryByDomain can run for tens of
+    // seconds on a heavily visited domain (it sleeps 50ms every 10 deletions),
+    // and if the service worker is torn down during that window the protective
+    // write never lands - the user sees no error and the domain is not
+    // blacklisted. The cheap, protective write has to be the one that survives.
+    const newEntry: BlacklistEntry = {
+      pattern: mainDomain,
+      type: 'exact', // We store main domain as exact match
+      enabled: true,
+      id: generateId(),
+      createdAt: Date.now(),
+    };
+    await saveBlacklist([...blacklist, newEntry]);
+    return newEntry;
+  });
+
+  if (!entry) {
     return { entry: null, deletedCount: 0 }; // Already in blacklist
   }
-  
-  let deletedCount = 0;
 
-  // Add to the blacklist FIRST. deleteHistoryByDomain can run for tens of
-  // seconds on a heavily visited domain (it sleeps 50ms every 10 deletions), and
-  // if the service worker is torn down during that window the protective write
-  // never lands - the user sees no error and the domain is not blacklisted.
-  // The cheap, protective write has to be the one that survives.
-  const entry = await addToBlacklist({
-    pattern: mainDomain,
-    type: 'exact', // We store main domain as exact match
-    enabled: true,
-  });
+  let deletedCount = 0;
 
   // Dwell time is stored separately from history, and nothing else purges it.
   // Leaving it behind meant a blacklisted domain kept showing up under
@@ -196,10 +238,12 @@ export async function addUrlToBlacklist(
 
 // Drop a single domain's accumulated dwell time.
 async function removeDomainDuration(domain: string): Promise<void> {
-  const durations = await getDomainDurations();
-  if (!(domain in durations)) return;
-  delete durations[domain];
-  await saveDomainDurations(durations);
+  return withStorageLock(async () => {
+    const durations = await getDomainDurations();
+    if (!(domain in durations)) return;
+    delete durations[domain];
+    await saveDomainDurations(durations);
+  });
 }
 
 // Delete all history entries matching a domain (including subdomains)
@@ -389,7 +433,13 @@ function isBlacklistEntry(value: unknown): value is BlacklistEntry {
 // Absent keys are left as they are rather than reset, and settings are merged
 // field by field - a backup missing a field no longer silently reverts it to
 // the default.
-export async function restoreBackup(backupJson: string): Promise<void> {
+export function restoreBackup(backupJson: string): Promise<void> {
+  // Merging reads the current lists, so it has to be indivisible too - a toggle
+  // landing between the read and the write would be lost.
+  return withStorageLock(() => restoreBackupLocked(backupJson));
+}
+
+async function restoreBackupLocked(backupJson: string): Promise<void> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(backupJson);

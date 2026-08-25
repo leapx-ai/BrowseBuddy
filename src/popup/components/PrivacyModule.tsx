@@ -31,6 +31,10 @@ const PrivacyModule: React.FC = () => {
   const [pendingAdd, setPendingAdd] = useState<string | null>(null);
   const [pendingDomain, setPendingDomain] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
+  // The add can take tens of seconds when "also delete history" is checked, and
+  // the dialog stayed live the whole time - a second click started a second
+  // blacklist insert and a second deletion sweep over the same domain.
+  const [isAdding, setIsAdding] = useState(false);
   const showSlowLoading = useSlowLoading(isLoading);
 
   useEffect(() => {
@@ -115,12 +119,15 @@ const PrivacyModule: React.FC = () => {
   };
 
   const cancelConfirm = () => {
+    // Closing mid-flight would leave the sweep running with no indication.
+    if (isAdding) return;
     setPendingAdd(null);
     setIsConfirming(false);
   };
 
   const executeAdd = async () => {
-    if (!pendingAdd) return;
+    if (!pendingAdd || isAdding) return;
+    setIsAdding(true);
     try {
       const { entry, deletedCount } = await addUrlToBlacklist(pendingAdd, deleteExisting);
       setPendingAdd(null);
@@ -145,6 +152,8 @@ const PrivacyModule: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to add to blacklist:', error);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -286,6 +295,7 @@ const PrivacyModule: React.FC = () => {
           confirmLabel={getMessage('confirmButton')}
           onCancel={cancelConfirm}
           onConfirm={executeAdd}
+          isBusy={isAdding}
         >
           <div className="modal-content">
             {getMessage(

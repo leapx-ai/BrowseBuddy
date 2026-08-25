@@ -83,10 +83,23 @@ getSettings().then(settings => {
   clearRetiredAlarms();
 });
 
+// Create a periodic alarm only if it does not already exist.
+//
+// chrome.alarms.create() with an existing name replaces the alarm and restarts
+// its period from zero. These helpers run on every service worker wake, and MV3
+// wakes the worker constantly (any tab update, any visit), so the daily
+// auto-cleanup alarm had its 24-hour countdown reset long before it could ever
+// fire. Checking first lets an existing schedule keep running.
+async function ensureAlarm(name: string, periodInMinutes: number) {
+  if (!chrome.alarms) return;
+  const existing = await chrome.alarms.get(name);
+  if (existing) return;
+  chrome.alarms.create(name, { periodInMinutes });
+}
+
 // Run a per-minute snapshot alarm so dwell time is never lost to SW restarts.
 function ensureDwellSnapshotAlarm() {
-  if (!chrome.alarms) return;
-  chrome.alarms.create("dwell-snapshot", { periodInMinutes: 1 });
+  ensureAlarm("dwell-snapshot", 1);
 }
 
 // The auto-backup feature is gone (it only ever wrote a copy of storage into
@@ -102,7 +115,7 @@ function syncAutoCleanupAlarm(enabled: boolean) {
   if (!chrome.alarms) return;
 
   if (enabled) {
-    chrome.alarms.create("auto-cleanup", { periodInMinutes: 24 * 60 });
+    ensureAlarm("auto-cleanup", 24 * 60);
   } else {
     chrome.alarms.clear("auto-cleanup");
   }

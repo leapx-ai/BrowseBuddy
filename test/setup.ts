@@ -59,6 +59,7 @@ const chromeMock = {
   alarms: {
     create: () => {},
     clear: () => Promise.resolve(true),
+    get: (): Promise<chrome.alarms.Alarm | undefined> => Promise.resolve(undefined),
     onAlarm: { addListener: () => {} },
   },
   action: {
