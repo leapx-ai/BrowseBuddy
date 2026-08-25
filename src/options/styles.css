@@ -8,10 +8,15 @@
   --success-color: #22c55e;
   --warning-color: #f59e0b;
   
-  /* Dark theme (default) */
+  /*
+   * Dark theme (default). Same hue-240 lightness ramp as the popup; only the
+   * lightness differs between surfaces. The options page starts one step darker
+   * than the popup because it fills a full browser tab, and its --bg-tertiary
+   * sits below --bg-card so inset controls stay recessed inside a card.
+   */
   --bg-primary: #0f0f1a;
   --bg-secondary: #1a1a2e;
-  --bg-tertiary: #16213e;
+  --bg-tertiary: #22223a;
   --bg-card: #252547;
   
   --text-primary: #eaeaea;
@@ -19,8 +24,13 @@
   /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1). */
   --text-muted: #9a9aab;
   
-  --border-color: #2d2d4a;
-  --hover-bg: #2a2a4a;
+  /* Above every surface it is drawn on, but kept dark enough that --text-muted
+     still clears 4.5:1 on a hovered row. */
+  --border-color: #3c3c62;
+  --hover-bg: #2a2a45;
+  /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
+     above it. Only --text-primary is ever drawn on this one. */
+  --bg-tertiary-hover: #3a3a60;
   
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -44,6 +54,7 @@
   
   --border-color: #dee2e6;
   --hover-bg: #e9ecef;
+  --bg-tertiary-hover: #e2e6ea;
   
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -283,7 +294,7 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--hover-bg);
+  background: var(--bg-tertiary-hover);
 }
 
 .btn-danger {

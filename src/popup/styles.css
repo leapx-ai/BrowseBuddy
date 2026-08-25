@@ -8,24 +8,57 @@
   --success-color: #22c55e;
   --warning-color: #f59e0b;
   
-  /* Dark theme (default) */
+  /*
+   * Dark theme (default). All four surfaces share hue 240 (the primary colour's
+   * hue) and differ only in lightness, so stacking reads as depth rather than as
+   * a colour change. --bg-tertiary used to be #0f3460 - a 72%-saturated blue,
+   * which made .btn-secondary compete with .btn-primary for attention.
+   */
   --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-tertiary: #0f3460;
+  --bg-secondary: #202037;
   --bg-card: #252547;
+  --bg-tertiary: #2f2f50;
   
   --text-primary: #eaeaea;
   --text-secondary: #a0a0b0;
   /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1). */
   --text-muted: #9a9aab;
   
-  --border-color: #2d2d4a;
-  --hover-bg: #2a2a4a;
+  /* Above every surface it is drawn on, but kept dark enough that --text-muted
+     still clears 4.5:1 when a row is hovered. */
+  --border-color: #3c3c62;
+  --hover-bg: #2a2a45;
+  /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
+     above it. Only --text-primary is ever drawn on this one. */
+  --bg-tertiary-hover: #3a3a60;
   
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  
+
+  /*
+   * Spacing scale, 4px base. Prefer these over ad-hoc pixel values so the
+   * rhythm stays consistent across components.
+   */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  /*
+   * Type scale. --text-xs is the intended floor; a few rules still use 11px
+   * and 10px and are pending migration (they need per-screen layout checks
+   * in a 400px popup).
+   */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
@@ -44,6 +77,7 @@
   
   --border-color: #dee2e6;
   --hover-bg: #e9ecef;
+  --bg-tertiary-hover: #e2e6ea;
   
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -144,9 +178,9 @@ body {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
-  transition: all 0.2s;
+  transition: color 0.2s, background 0.2s;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -187,7 +221,7 @@ body {
 
 .main-content::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
@@ -260,10 +294,10 @@ body {
   padding: 10px 16px;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -290,7 +324,7 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--hover-bg);
+  background: var(--bg-tertiary-hover);
 }
 
 .btn-danger {
@@ -442,14 +476,14 @@ body {
   /* Tertiary, not secondary - the unfilled track has to stay visible against
      a white card in light mode. */
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: width 0.3s;
 }
 
@@ -553,7 +587,7 @@ body {
 
 .preview-list::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 .preview-item {
@@ -596,7 +630,7 @@ body {
   text-transform: uppercase;
   padding: 2px 6px;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   margin-left: 8px;
 }
 
@@ -706,11 +740,11 @@ body {
   height: 18px;
   flex-shrink: 0;
   border: 2px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .checkbox.checked {
@@ -767,10 +801,10 @@ body {
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   white-space: nowrap;
 }
 
@@ -817,8 +851,8 @@ body {
   border: none;
   padding: 0;
   font-family: inherit;
-  font-size: 12px;
-  border-radius: 6px;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text-primary);
   transition: transform 0.1s;
@@ -860,7 +894,7 @@ body {
 .heatmap-swatch {
   width: 12px;
   height: 12px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 /* Collapsible reference material */
