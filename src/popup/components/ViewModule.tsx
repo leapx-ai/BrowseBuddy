@@ -120,7 +120,7 @@ const DomainIcon: React.FC<{ url: string; size?: number }> = ({ url, size = 16 }
       style={{
         width: size,
         height: size,
-        borderRadius: '4px',
+        borderRadius: 'var(--radius)',
         background: domainColor(url),
         color: '#fff',
         fontSize: Math.round(size * 0.6),
@@ -223,7 +223,7 @@ const RestoreSession: React.FC = () => {
                     {url ? (
                       <DomainIcon url={url} />
                     ) : (
-                      <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
+                      <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius)' }} />
                     )}
                     <div className="history-content">
                       <div className="history-title">{title || getMessage('closedWindow')}</div>
@@ -810,7 +810,7 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
                 background: 'var(--primary-color)',
                 color: 'white',
                 padding: '2px 8px',
-                borderRadius: '12px',
+                borderRadius: '999px',
                 fontSize: '12px'
               }}>
                 {domainItems.length}

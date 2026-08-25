@@ -177,7 +177,7 @@ const App: React.FC = () => {
           <img
             src={chrome.runtime.getURL('icons/icon64.png')}
             alt="BrowseBuddy"
-            style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+            style={{ width: '32px', height: '32px', borderRadius: 'var(--radius)' }}
           />
         </div>
         <div className="options-title">
