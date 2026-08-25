@@ -9,6 +9,8 @@ import {
   addUrlToBlacklist,
   saveBlacklist,
   getSettings,
+  saveSettings,
+  defaultSettings,
 } from '../src/utils/storage';
 import type { BlacklistEntry } from '../src/types';
 
@@ -112,6 +114,135 @@ describe('restoreBackup', () => {
 
   it('does nothing for invalid backup JSON', async () => {
     await expect(restoreBackup('not-json')).rejects.toThrow();
+  });
+
+  it('rejects a file without a data object', async () => {
+    await expect(restoreBackup(JSON.stringify({ version: '1.0.0' }))).rejects.toThrow(
+      /not a browsebuddy backup/i
+    );
+  });
+
+  it('ignores keys the extension does not own', async () => {
+    await restoreBackup(
+      JSON.stringify({
+        data: {
+          browsebuddy_favorites: ['restored.com'],
+          // A hand-edited file could carry anything, including a blob big enough
+          // to exhaust the quota and break every later write.
+          injected_key: 'x'.repeat(100),
+          browsebuddy_stats_cache: { stale: true },
+        },
+      })
+    );
+
+    const stored = await chrome.storage.local.get(null);
+    expect(stored.injected_key).toBeUndefined();
+    expect(stored.browsebuddy_stats_cache).toBeUndefined();
+    expect(await getFavorites()).toContain('restored.com');
+  });
+
+  it('merges settings field by field so absent fields keep their value', async () => {
+    await saveSettings({ ...defaultSettings, theme: 'light', cleanupRetentionDays: 90 });
+
+    await restoreBackup(
+      JSON.stringify({ data: { browsebuddy_settings: { language: 'en' } } })
+    );
+
+    const settings = await getSettings();
+    expect(settings.language).toBe('en');
+    // Overwriting wholesale used to snap these back to the defaults.
+    expect(settings.theme).toBe('light');
+    expect(settings.cleanupRetentionDays).toBe(90);
+  });
+
+  it('drops settings values of the wrong type', async () => {
+    await saveSettings({ ...defaultSettings, theme: 'light', cleanupRetentionDays: 90 });
+
+    await restoreBackup(
+      JSON.stringify({
+        data: {
+          browsebuddy_settings: {
+            theme: 'neon',
+            cleanupRetentionDays: 'thirty',
+            realtimeProtection: false,
+          },
+        },
+      })
+    );
+
+    const settings = await getSettings();
+    expect(settings.theme).toBe('light');
+    expect(settings.cleanupRetentionDays).toBe(90);
+    expect(settings.realtimeProtection).toBe(false);
+  });
+
+  it('drops malformed blacklist entries but keeps the valid ones', async () => {
+    await restoreBackup(
+      JSON.stringify({
+        data: {
+          browsebuddy_blacklist: [
+            { id: 'a', pattern: 'good.com', type: 'exact', enabled: true, createdAt: 1 },
+            { id: 'b', pattern: 'bad.com', type: 'not-a-type', enabled: true, createdAt: 1 },
+            { pattern: 'missing-id.com' },
+            'a string',
+            null,
+          ],
+        },
+      })
+    );
+
+    const blacklist = await getBlacklist();
+    expect(blacklist.map(e => e.pattern)).toEqual(['good.com']);
+  });
+
+  it('rejects a blacklist that is not an array', async () => {
+    await expect(
+      restoreBackup(JSON.stringify({ data: { browsebuddy_blacklist: { nope: 1 } } }))
+    ).rejects.toThrow(/malformed blacklist/i);
+  });
+
+  it('rejects a file with no restorable keys instead of reporting success', async () => {
+    await expect(
+      restoreBackup(JSON.stringify({ data: { unrelated: true } }))
+    ).rejects.toThrow(/no restorable data/i);
+  });
+
+  it('writes everything in a single set() call', async () => {
+    const spy = vi.spyOn(chrome.storage.local, 'set');
+
+    await restoreBackup(
+      JSON.stringify({
+        data: {
+          browsebuddy_settings: { language: 'en' },
+          browsebuddy_blacklist: [
+            { id: 'a', pattern: 'a.com', type: 'exact', enabled: true, createdAt: 1 },
+          ],
+          browsebuddy_favorites: ['b.com'],
+          browsebuddy_durations: { 'c.com': 1000 },
+        },
+      })
+    );
+
+    // Three sequential writes meant a failure partway through left settings from
+    // the backup sitting next to the old blacklist.
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(Object.keys(spy.mock.calls[0][0]).sort()).toEqual([
+      'browsebuddy_blacklist',
+      'browsebuddy_durations',
+      'browsebuddy_favorites',
+      'browsebuddy_settings',
+    ]);
+  });
+
+  it('drops non-numeric durations', async () => {
+    await restoreBackup(
+      JSON.stringify({
+        data: { browsebuddy_durations: { 'good.com': 500, 'bad.com': 'lots', 'neg.com': -1 } },
+      })
+    );
+
+    const stored = await chrome.storage.local.get('browsebuddy_durations');
+    expect(stored.browsebuddy_durations).toEqual({ 'good.com': 500 });
   });
 });
 

@@ -344,44 +344,133 @@ export async function createBackup(): Promise<string> {
   return JSON.stringify(backup);
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+// One check per settings field. Anything that fails keeps the current value,
+// which also means fields retired between versions (autoBackup, backupInterval)
+// are dropped instead of being written back.
+const settingsValidators: { [K in keyof Settings]: (value: unknown) => boolean } = {
+  language: v => v === 'en' || v === 'zh_CN',
+  theme: v => v === 'dark' || v === 'light' || v === 'system',
+  realtimeProtection: v => typeof v === 'boolean',
+  showPrivacyReminder: v => typeof v === 'boolean',
+  sessionIncognito: v => typeof v === 'boolean',
+  autoCleanup: v => typeof v === 'boolean',
+  cleanupRetentionDays: v => typeof v === 'number' && Number.isFinite(v) && v > 0,
+};
+
+function isBlacklistEntry(value: unknown): value is BlacklistEntry {
+  if (!isPlainObject(value)) return false;
+  return (
+    typeof value.id === 'string' &&
+    typeof value.pattern === 'string' &&
+    value.pattern.length > 0 &&
+    (value.type === 'exact' || value.type === 'wildcard' || value.type === 'regex') &&
+    typeof value.enabled === 'boolean' &&
+    typeof value.createdAt === 'number'
+  );
+}
+
+// Restore from a user-supplied file.
+//
+// The file is untrusted input: it may be hand-edited, truncated, or written by a
+// different version. Two rules follow from that:
+//
+//   1. Only the keys this extension owns are written, and each one is validated
+//      before it is accepted. The previous version passed the parsed object
+//      straight to set(), so any key in the file landed in storage - including
+//      junk large enough to exhaust the quota and break every later write.
+//   2. Everything is assembled first and written in a single set() call. The
+//      previous version issued three sequential writes, so a failure partway
+//      through left settings from the backup next to the old blacklist.
+//
+// Absent keys are left as they are rather than reset, and settings are merged
+// field by field - a backup missing a field no longer silently reverts it to
+// the default.
 export async function restoreBackup(backupJson: string): Promise<void> {
-  const backup = JSON.parse(backupJson);
-  if (!backup.data) return;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(backupJson);
+  } catch {
+    throw new Error('Not a valid JSON file');
+  }
+  if (!isPlainObject(parsed) || !isPlainObject(parsed.data)) {
+    throw new Error('Not a BrowseBuddy backup file');
+  }
+  const data = parsed.data;
 
-  // A file produced by an older version carries a nested snapshot. Writing it
-  // back would re-arm the growth described above.
-  delete backup.data[STORAGE_KEYS.BACKUP_DATA];
+  const next: Record<string, unknown> = {};
 
-  // Never overwrite the current blacklist with an older backup's list.
-  // Otherwise a stale backup would silently remove domains the user has
-  // already blacklisted, re-exposing history that was previously scrubbed.
-  const currentBlacklist = await getBlacklist();
-  const backupBlacklist: BlacklistEntry[] = backup.data[STORAGE_KEYS.BLACKLIST] || [];
+  if (STORAGE_KEYS.SETTINGS in data) {
+    if (!isPlainObject(data[STORAGE_KEYS.SETTINGS])) {
+      throw new Error('Backup contains malformed settings');
+    }
+    const incoming = data[STORAGE_KEYS.SETTINGS] as Record<string, unknown>;
+    const current = await getSettings();
+    const merged: Record<string, unknown> = { ...current };
+    for (const key of Object.keys(settingsValidators) as (keyof Settings)[]) {
+      if (key in incoming && settingsValidators[key](incoming[key])) {
+        merged[key] = incoming[key];
+      }
+    }
+    next[STORAGE_KEYS.SETTINGS] = merged;
+  }
 
-  const mergedPatterns = new Set([
-    ...currentBlacklist.map(e => e.pattern),
-    ...backupBlacklist.map(e => e.pattern),
-  ]);
-  const mergedBlacklist: BlacklistEntry[] = Array.from(mergedPatterns)
-    .map(pattern => {
-      return (
-        currentBlacklist.find(e => e.pattern === pattern) ||
-        backupBlacklist.find(e => e.pattern === pattern) ||
-        null
-      );
-    })
-    .filter((e): e is BlacklistEntry => e !== null);
+  if (STORAGE_KEYS.BLACKLIST in data) {
+    const incoming = data[STORAGE_KEYS.BLACKLIST];
+    if (!Array.isArray(incoming)) {
+      throw new Error('Backup contains malformed blacklist');
+    }
+    // Never overwrite the current blacklist with an older backup's list.
+    // Otherwise a stale backup would silently remove domains the user has
+    // already blacklisted, re-exposing history that was previously scrubbed.
+    const current = await getBlacklist();
+    const valid = incoming.filter(isBlacklistEntry);
+    const byPattern = new Map<string, BlacklistEntry>();
+    for (const entry of [...valid, ...current]) {
+      byPattern.set(entry.pattern, entry); // current wins on collision
+    }
+    next[STORAGE_KEYS.BLACKLIST] = Array.from(byPattern.values());
+  }
 
-  // Same protection for favorites - merging rather than overwriting so a
-  // stale backup can't drop domains the user favorited (and thus unprotected
-  // them from deletion).
-  const currentFavorites = await getFavorites();
-  const backupFavorites: string[] = backup.data[STORAGE_KEYS.FAVORITES] || [];
-  const mergedFavorites = Array.from(new Set([...currentFavorites, ...backupFavorites]));
+  if (STORAGE_KEYS.FAVORITES in data) {
+    const incoming = data[STORAGE_KEYS.FAVORITES];
+    if (!Array.isArray(incoming)) {
+      throw new Error('Backup contains malformed favorites');
+    }
+    // Same protection for favorites - merging rather than overwriting so a
+    // stale backup can't drop domains the user favorited (and thus unprotect
+    // them from deletion).
+    const current = await getFavorites();
+    const valid = incoming.filter((d): d is string => typeof d === 'string' && d.length > 0);
+    next[STORAGE_KEYS.FAVORITES] = Array.from(new Set([...current, ...valid]));
+  }
 
-  await chrome.storage.local.set(backup.data);
-  await saveBlacklist(mergedBlacklist);
-  await saveFavorites(mergedFavorites);
+  if (STORAGE_KEYS.DURATIONS in data) {
+    const incoming = data[STORAGE_KEYS.DURATIONS];
+    if (!isPlainObject(incoming)) {
+      throw new Error('Backup contains malformed durations');
+    }
+    const durations: Record<string, number> = {};
+    for (const [domain, ms] of Object.entries(incoming)) {
+      if (typeof ms === 'number' && Number.isFinite(ms) && ms >= 0) {
+        durations[domain] = ms;
+      }
+    }
+    next[STORAGE_KEYS.DURATIONS] = durations;
+  }
+
+  // STATS_CACHE and BACKUP_DATA are intentionally not restored: the first is
+  // derived data that rebuilds itself, the second is a snapshot left by an older
+  // version whose nesting is what caused the growth described above.
+
+  if (Object.keys(next).length === 0) {
+    throw new Error('Backup contains no restorable data');
+  }
+
+  await chrome.storage.local.set(next);
 }
 
 // Delete history older than the retention cutoff, protecting favorited domains.
