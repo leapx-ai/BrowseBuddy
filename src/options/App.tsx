@@ -308,44 +308,6 @@ const App: React.FC = () => {
 
           <div className="toggle-wrapper">
             <div className="toggle-info">
-              <div className="toggle-label">{getMessage('autoBackup') || 'Auto Backup'}</div>
-              <div className="toggle-description">
-                {getMessage('autoBackupDesc') || 'Automatically create backups on a schedule'}
-              </div>
-            </div>
-            <div
-              className={`toggle-switch ${settings.autoBackup ? 'active' : ''}`}
-              onClick={() => updateSettings({ autoBackup: !settings.autoBackup })}
-            >
-              <div className="toggle-knob" />
-            </div>
-          </div>
-
-          {settings.autoBackup && (
-            <div className="form-group" style={{ marginTop: '12px' }}>
-              <label className="form-label">{getMessage('backupInterval') || 'Backup interval'}</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input
-                  type="number"
-                  className="form-input"
-                  min={1}
-                  max={365}
-                  value={settings.backupInterval}
-                  onChange={(e) => {
-                    const v = Math.max(1, Math.min(365, Number(e.target.value) || 1));
-                    updateSettings({ backupInterval: v });
-                  }}
-                  style={{ maxWidth: '120px' }}
-                />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-                  {getMessage('days') || 'days'}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div className="toggle-wrapper">
-            <div className="toggle-info">
               <div className="toggle-label">{getMessage('autoCleanup') || 'Auto Cleanup'}</div>
               <div className="toggle-description">
                 {getMessage('autoCleanupDesc') || 'Automatically delete history older than the retention period'}

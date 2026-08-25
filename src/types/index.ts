@@ -47,8 +47,6 @@ export interface Settings {
   theme: 'dark' | 'light' | 'system';
   realtimeProtection: boolean;
   showPrivacyReminder: boolean;
-  autoBackup: boolean;
-  backupInterval: number; // days
   sessionIncognito: boolean;
   autoCleanup: boolean;
   cleanupRetentionDays: number; // keep history newer than this many days

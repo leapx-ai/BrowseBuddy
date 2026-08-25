@@ -6,7 +6,6 @@ import {
   addUrlToBlacklist,
   getDomainDurations,
   saveDomainDurations,
-  createBackup,
   cleanupOldHistory,
 } from "../utils/storage";
 import { extractMainDomain } from "../utils/blacklist";
@@ -79,9 +78,9 @@ async function persistActiveTabDuration() {
 // Sync badge with persisted session incognito state on startup
 getSettings().then(settings => {
   syncIncognitoBadge(settings.sessionIncognito);
-  syncAutoBackupAlarm(settings.autoBackup, settings.backupInterval);
   syncAutoCleanupAlarm(settings.autoCleanup);
   ensureDwellSnapshotAlarm();
+  clearRetiredAlarms();
 });
 
 // Run a per-minute snapshot alarm so dwell time is never lost to SW restarts.
@@ -90,18 +89,12 @@ function ensureDwellSnapshotAlarm() {
   chrome.alarms.create("dwell-snapshot", { periodInMinutes: 1 });
 }
 
-// Manage the periodic auto-backup alarm based on settings.
-// MV3 alarms fire at most once per minute; a minimum interval of 1 hour
-// is enforced to avoid excessive writes.
-function syncAutoBackupAlarm(enabled: boolean, intervalDays: number) {
+// The auto-backup feature is gone (it only ever wrote a copy of storage into
+// storage, which nothing read). Existing installs still have its alarm
+// registered, so retire it explicitly rather than leaving it firing.
+function clearRetiredAlarms() {
   if (!chrome.alarms) return;
-
-  const minutes = Math.max(Math.round(intervalDays * 24 * 60), 60);
-  if (enabled) {
-    chrome.alarms.create("auto-backup", { periodInMinutes: minutes });
-  } else {
-    chrome.alarms.clear("auto-backup");
-  }
+  chrome.alarms.clear("auto-backup");
 }
 
 // Manage the auto-cleanup alarm. Runs daily when enabled.
@@ -255,11 +248,8 @@ chrome.alarms?.onAlarm?.addListener((alarm) => {
   }
 });
 
-// Periodic tasks driven by alarms (auto-backup, auto-cleanup)
+// Periodic tasks driven by alarms (auto-cleanup)
 chrome.alarms?.onAlarm?.addListener(async (alarm) => {
-  if (alarm.name === "auto-backup") {
-    createBackup().catch(() => {});
-  }
   if (alarm.name === "auto-cleanup") {
     const settings = await getSettings();
     if (settings.autoCleanup) {
@@ -269,13 +259,12 @@ chrome.alarms?.onAlarm?.addListener(async (alarm) => {
 });
 
 // Keep the toolbar badge in sync with session incognito state,
-// and keep the auto-backup / auto-cleanup alarms in sync with settings changes.
+// and keep the auto-cleanup alarm in sync with settings changes.
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.browsebuddy_settings) {
     const settings = changes.browsebuddy_settings.newValue;
     if (settings) {
       syncIncognitoBadge(settings.sessionIncognito);
-      syncAutoBackupAlarm(settings.autoBackup, settings.backupInterval);
       syncAutoCleanupAlarm(settings.autoCleanup);
     }
   }

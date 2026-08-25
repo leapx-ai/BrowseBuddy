@@ -13,8 +13,6 @@ export const defaultSettings: Settings = {
   theme: 'dark',
   realtimeProtection: true,
   showPrivacyReminder: true,
-  autoBackup: false,
-  backupInterval: 7,
   sessionIncognito: false,
   autoCleanup: false,
   cleanupRetentionDays: 30,
@@ -281,20 +279,36 @@ async function deleteHistoryByDomain(domain: string): Promise<number> {
 }
 
 // Backup and restore
+//
+// Produces the JSON the options page downloads. It deliberately does NOT write
+// a copy back into chrome.storage.local: the previous version snapshotted
+// get(null) - which includes the previous snapshot - so every backup embedded
+// the one before it and the stored size doubled each time. Around ten runs that
+// exhausts the quota, after which every set() in the extension rejects and
+// failures like "new blacklist entry not saved" become silent.
+//
+// A copy inside the same storage it is backing up also shares its failure
+// domain, and nothing in the codebase ever read that key.
 export async function createBackup(): Promise<string> {
   const data = await chrome.storage.local.get(null);
+  // Drop any snapshot left behind by an older version so it is not carried
+  // into the exported file (and re-imported on restore).
+  delete data[STORAGE_KEYS.BACKUP_DATA];
   const backup = {
     version: '1.0.0',
     timestamp: Date.now(),
     data,
   };
-  await chrome.storage.local.set({ [STORAGE_KEYS.BACKUP_DATA]: backup });
   return JSON.stringify(backup);
 }
 
 export async function restoreBackup(backupJson: string): Promise<void> {
   const backup = JSON.parse(backupJson);
   if (!backup.data) return;
+
+  // A file produced by an older version carries a nested snapshot. Writing it
+  // back would re-arm the growth described above.
+  delete backup.data[STORAGE_KEYS.BACKUP_DATA];
 
   // Never overwrite the current blacklist with an older backup's list.
   // Otherwise a stale backup would silently remove domains the user has

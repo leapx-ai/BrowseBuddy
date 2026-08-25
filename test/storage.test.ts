@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   restoreBackup,
+  createBackup,
   getBlacklist,
   getFavorites,
   addFavorite,
@@ -25,6 +26,50 @@ function resetStorage() {
     // get() returns undefined which utils treat as defaults. Good enough.
   });
 }
+
+describe('createBackup', () => {
+  beforeEach(async () => {
+    vi.restoreAllMocks();
+    await resetStorage();
+  });
+
+  it('does not write a copy back into storage', async () => {
+    await saveBlacklist([
+      { id: '1', pattern: 'example.com', type: 'exact', enabled: true, createdAt: 0 },
+    ] as BlacklistEntry[]);
+
+    await createBackup();
+
+    const stored = await chrome.storage.local.get('browsebuddy_backup');
+    // Snapshotting get(null) into storage made every backup embed the previous
+    // one, doubling the stored size until the quota was exhausted.
+    expect(stored.browsebuddy_backup).toBeUndefined();
+  });
+
+  it('omits a snapshot left behind by an older version', async () => {
+    await chrome.storage.local.set({
+      browsebuddy_backup: { version: '1.0.0', data: { nested: 'legacy blob' } },
+    });
+
+    const json = await createBackup();
+
+    expect(JSON.parse(json).data.browsebuddy_backup).toBeUndefined();
+  });
+
+  it('does not re-import a nested snapshot on restore', async () => {
+    await restoreBackup(
+      JSON.stringify({
+        data: {
+          browsebuddy_settings: { language: 'en' },
+          browsebuddy_backup: { data: { nested: 'legacy blob' } },
+        },
+      })
+    );
+
+    const stored = await chrome.storage.local.get('browsebuddy_backup');
+    expect(stored.browsebuddy_backup).toBeUndefined();
+  });
+});
 
 describe('restoreBackup', () => {
   beforeEach(async () => {
