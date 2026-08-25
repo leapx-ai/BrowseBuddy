@@ -12,6 +12,7 @@ import {
   type BlacklistEntry 
 } from '../../utils/storage';
 import ConfirmDialog from './ConfirmDialog';
+import { useSlowLoading } from '../useSlowLoading';
 
 const PrivacyModule: React.FC = () => {
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
@@ -30,6 +31,7 @@ const PrivacyModule: React.FC = () => {
   const [pendingAdd, setPendingAdd] = useState<string | null>(null);
   const [pendingDomain, setPendingDomain] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
+  const showSlowLoading = useSlowLoading(isLoading);
 
   useEffect(() => {
     loadBlacklist();
@@ -81,13 +83,14 @@ const PrivacyModule: React.FC = () => {
   const favoriteDomain = newFavoriteUrl.trim() ? extractMainDomain(newFavoriteUrl) : '';
 
   const loadBlacklist = async () => {
-    setIsLoading(true);
     try {
       const list = await getBlacklist();
       setBlacklist(list);
     } catch (error) {
       console.error('Failed to load blacklist:', error);
     } finally {
+      // Only the first load gates rendering. Later refreshes (toggle, add,
+      // remove) update the list in place instead of blanking the whole page.
       setIsLoading(false);
     }
   };
@@ -178,12 +181,12 @@ const PrivacyModule: React.FC = () => {
     false;
 
   if (isLoading) {
-    return (
+    return showSlowLoading ? (
       <div className="loading">
         <div className="spinner" />
         {getMessage('loading')}
       </div>
-    );
+    ) : null;
   }
 
   return (

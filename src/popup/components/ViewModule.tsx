@@ -4,6 +4,7 @@ import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type 
 import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
 import { extractMainDomain } from '../../utils/blacklist';
 import { parseSearchQuery } from '../../utils/search';
+import { useSlowLoading } from '../useSlowLoading';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
 
@@ -66,6 +67,7 @@ const RestoreSession: React.FC = () => {
   const [items, setItems] = useState<chrome.sessions.Session[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const showSlowLoading = useSlowLoading(isLoading);
 
   const loadClosed = async () => {
     setIsLoading(true);
@@ -113,10 +115,12 @@ const RestoreSession: React.FC = () => {
 
       {isOpen && (
         <div style={{ marginTop: '10px' }}>
-          {isLoading ? (
-            <div className="loading" style={{ padding: '10px' }}>
-              <div className="spinner" />
-            </div>
+          {isLoading && items.length === 0 ? (
+            showSlowLoading ? (
+              <div className="loading" style={{ padding: '10px' }}>
+                <div className="spinner" />
+              </div>
+            ) : null
           ) : items.length === 0 ? (
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '8px 0' }}>
               {getMessage('noClosedTabs')}
@@ -169,6 +173,8 @@ const ViewModule: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeSearch, setActiveSearch] = useState('');
   const [transitionType, setTransitionType] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const showSlowLoading = useSlowLoading(isLoading);
   const debounceTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -205,6 +211,7 @@ const ViewModule: React.FC = () => {
       console.error('Failed to load history:', error);
     } finally {
       setIsLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -227,15 +234,6 @@ const ViewModule: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (isLoading && viewMode !== 'calendar') {
-      return (
-        <div className="loading">
-          <div className="spinner" />
-          {getMessage('loading')}
-        </div>
-      );
-    }
-
     if (viewMode === 'calendar') {
       return (
         <CalendarView
@@ -255,6 +253,19 @@ const ViewModule: React.FC = () => {
       );
     }
 
+    // Before the first result set we have nothing to show, so hold the space
+    // blank and only fall back to a spinner if the query is actually slow.
+    // Afterwards the previous list stays put while a new query runs - swapping
+    // it for a spinner made every keystroke and filter change jump the layout.
+    if (!hasLoaded) {
+      return showSlowLoading ? (
+        <div className="loading">
+          <div className="spinner" />
+          {getMessage('loading')}
+        </div>
+      ) : null;
+    }
+
     if (history.length === 0) {
       return (
         <div className="empty-state">
@@ -265,14 +276,15 @@ const ViewModule: React.FC = () => {
       );
     }
 
-    switch (viewMode) {
-      case 'date':
-        return <DateGroupView items={history} />;
-      case 'domain':
-        return <DomainGroupView items={history} />;
-      default:
-        return <ListView items={history} />;
-    }
+    // The stale list stays interactive for fast reloads; if a query really is
+    // slow, dim it so the wait is visible without collapsing the layout.
+    return (
+      <div style={showSlowLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+        {viewMode === 'date' && <DateGroupView items={history} />}
+        {viewMode === 'domain' && <DomainGroupView items={history} />}
+        {viewMode === 'list' && <ListView items={history} />}
+      </div>
+    );
   };
 
   return (
@@ -385,6 +397,7 @@ const CalendarView: React.FC<{
   const [isLoading, setIsLoading] = useState(true);
   const [maxCount, setMaxCount] = useState(1);
   const [initialized, setInitialized] = useState(false);
+  const showSlowLoading = useSlowLoading(isLoading);
 
   useEffect(() => {
     let cancelled = false;
@@ -430,15 +443,15 @@ const CalendarView: React.FC<{
       ? `rgba(74, 158, 89, ${0.25 + 0.75 * (count / maxCount)})`
       : 'var(--bg-tertiary)';
 
-  // On the very first load we have no data to render, so show a spinner.
-  // Month switches keep the previous grid on screen (faded) until the new
-  // month's data arrives, avoiding layout jumps.
-  if (!initialized && isLoading) {
-    return (
+  // Nothing to render before the first month arrives. Hold the space blank and
+  // only fall back to a spinner if the query is actually slow. Month switches
+  // keep the previous grid on screen, dimmed only if the wait becomes visible.
+  if (!initialized) {
+    return showSlowLoading ? (
       <div className="loading" style={{ padding: '20px' }}>
         <div className="spinner" />
       </div>
-    );
+    ) : null;
   }
 
   return (
@@ -450,7 +463,7 @@ const CalendarView: React.FC<{
       </div>
       <div
         className="calendar-grid"
-        style={isLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+        style={showSlowLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
       >
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;

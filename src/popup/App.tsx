@@ -6,6 +6,7 @@ import DeleteModule from './components/DeleteModule';
 import ViewModule from './components/ViewModule';
 import StatsModule from './components/StatsModule';
 import PrivacyModule from './components/PrivacyModule';
+import { useSlowLoading } from './useSlowLoading';
 
 export type TabType = 'delete' | 'view' | 'stats' | 'privacy';
 
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('view');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const showSlowLoading = useSlowLoading(isLoading);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -67,12 +69,16 @@ const App: React.FC = () => {
   };
 
   if (isLoading) {
+    // i18n has to resolve before any label can render, but keep the panel at
+    // full size and blank instead of flashing a spinner for a few milliseconds.
     return (
       <div className="popup-container">
-        <div className="loading">
-          <div className="spinner" />
-          {getMessage('loading')}
-        </div>
+        {showSlowLoading && (
+          <div className="loading">
+            <div className="spinner" />
+            {getMessage('loading')}
+          </div>
+        )}
       </div>
     );
   }

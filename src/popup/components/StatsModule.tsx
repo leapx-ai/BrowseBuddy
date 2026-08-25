@@ -4,6 +4,7 @@ import { calculateStatistics, fetchAllHistory, exportToCsv, exportToHtml, downlo
 import { filterBlacklistedItems } from '../../utils/blacklist';
 import { getBlacklist, getDomainDurations } from '../../utils/storage';
 import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
+import { useSlowLoading } from '../useSlowLoading';
 
 // Bar for charts with a hover tooltip. `label` is the tooltip line 1,
 // `subLabel` an optional second line, `value` the prominent number.
@@ -74,6 +75,7 @@ const StatsModule: React.FC = () => {
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [range, setRange] = useState<RangeKey>('all');
+  const showSlowLoading = useSlowLoading(isLoading);
 
   const loadStats = useCallback(async () => {
     setIsLoading(true);
@@ -113,16 +115,18 @@ const StatsModule: React.FC = () => {
     downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
   };
 
-  if (isLoading) {
-    return (
+  // Keep the previous numbers on screen while a new range loads. Unmounting
+  // everything for a few milliseconds made the range switcher itself disappear.
+  if (!stats) {
+    return showSlowLoading ? (
       <div className="loading">
         <div className="spinner" />
         {getMessage('loading')}
       </div>
-    );
+    ) : null;
   }
 
-  if (!stats || stats.totalRecords === 0) {
+  if (stats.totalRecords === 0) {
     return (
       <div className="empty-state">
         <div className="empty-icon">📊</div>
