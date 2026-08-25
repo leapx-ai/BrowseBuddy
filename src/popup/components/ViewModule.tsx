@@ -77,13 +77,17 @@ function domainColor(url: string): string {
     for (let i = 0; i < host.length; i++) {
       hash = (hash * 31 + host.charCodeAt(i)) >>> 0;
     }
+    // Muted tones rather than the previous fully saturated set. One saturated
+    // swatch per row turned the left edge of a 20-row list into confetti that
+    // pulled attention away from the titles; these still separate domains at a
+    // glance without competing with the text.
     const palette = [
-      '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
-      '#10b981', '#06b6d4', '#ef4444', '#84cc16',
+      '#5b6bbf', '#7a5bb5', '#a8588a', '#9a7540',
+      '#3f8f6f', '#3f8098', '#a85a52', '#6b8f45',
     ];
     return palette[hash % palette.length];
   } catch {
-    return '#6366f1';
+    return '#5b6bbf';
   }
 }
 
@@ -91,6 +95,9 @@ const DomainIcon: React.FC<{ url: string; size?: number }> = ({ url, size = 16 }
   return (
     <div
       className="history-favicon"
+      // Decorative: the domain itself is spelled out on the URL line, so the
+      // letter is redundant for a screen reader.
+      aria-hidden="true"
       style={{
         width: size,
         height: size,
@@ -188,8 +195,9 @@ const RestoreSession: React.FC = () => {
                 const url = tab?.url || '';
 
                 return (
-                  <div
+                  <button
                     key={session.lastModified}
+                    type="button"
                     className="history-item"
                     onClick={() => handleRestore(sessionId)}
                   >
@@ -202,7 +210,7 @@ const RestoreSession: React.FC = () => {
                       <div className="history-title">{title || getMessage('closedWindow')}</div>
                       {url && <div className="history-url">{displayUrl(url)}</div>}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -732,11 +740,18 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
   const mainDomain = extractMainDomain(item.url);
   const isFav = favorites.has(mainDomain);
 
-  const handleClick = () => {
+  // A real link, so the row joins the tab order, opens on Enter, and supports
+  // Cmd/Ctrl-click, middle-click and "copy link address" - all of which a
+  // div+onClick silently swallowed. Plain activation is still routed through
+  // chrome.tabs.create to keep the existing behaviour.
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
     chrome.tabs.create({ url: item.url });
   };
 
   const handleToggleFav = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     toggle(mainDomain);
   };
@@ -749,13 +764,20 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
       });
 
   return (
-    <div className="history-item" onClick={handleClick}>
+    <a
+      className="history-item"
+      href={item.url}
+      target="_blank"
+      rel="noreferrer"
+      onClick={handleClick}
+    >
       <DomainIcon url={item.url} />
       <div className="history-content">
         <div className="history-title">{item.title || '(No title)'}</div>
         <div className="history-url">{displayUrl(item.url)}</div>
       </div>
       <div className="history-meta">
+        <span className="history-time">{timeLabel}</span>
         <button
           className={`fav-btn ${isFav ? 'fav-btn-active' : ''}`}
           onClick={handleToggleFav}
@@ -765,9 +787,8 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
         >
           {isFav ? '★' : '☆'}
         </button>
-        <span className="history-time">{timeLabel}</span>
       </div>
-    </div>
+    </a>
   );
 };
 

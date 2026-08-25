@@ -499,34 +499,54 @@ body {
 
 /* Delete Section */
 
-/* History List */
+/*
+ * History List
+ *
+ * One bordered container with divided rows, not a stack of individual cards.
+ * Every row used to carry its own border, radius and 4px gap, so a 20-row list
+ * drew 40 border lines and spent ~120px on framing - the frame competed with the
+ * data it was framing.
+ */
 .history-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
-/*
- * Recessed surfaces carry a border rather than relying on a fill difference.
- * In light mode --bg-secondary and --bg-card are both white, so a fill-only
- * treatment made rows nested inside a card disappear entirely.
- */
+.history-list > * + * {
+  border-top: 1px solid var(--border-color);
+}
+
+/* Rendered as <a href> so the row is reachable by Tab, opens on Enter, and
+   supports Cmd/Ctrl-click, middle-click and "copy link address". Session rows
+   restore a tab rather than open a URL, so those use <button> - the resets below
+   cover both element types. */
 .history-item {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  /* 8px rather than 10px: the popup is 600px tall and every 8px saved per row
-     is another row visible without scrolling. */
+  width: 100%;
   padding: var(--space-2) 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s;
 }
 
 .history-item:hover {
   background: var(--hover-bg);
+}
+
+/* The row is the focus target, so the ring goes inside rather than around it -
+   an outline on a full-width row inside a clipped container gets cut off. */
+.history-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--primary-color);
 }
 
 .history-favicon {
@@ -561,15 +581,26 @@ body {
   text-overflow: ellipsis;
 }
 
+/*
+ * Time and row actions. Laid out in a row with a fixed-width time column: as a
+ * vertical stack the time sat under the star and its ragged right edge (a
+ * "14:30" next to an "Aug 20, 2026, 09:05") gave the eye no column to follow.
+ */
 .history-meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: center;
+  gap: var(--space-2);
   flex-shrink: 0;
-  padding-top: 2px;
+  /* Matches one line of .history-title so the time aligns with the title
+     rather than floating between the two text lines. */
+  height: 18px;
 }
 
+/*
+ * Favouriting is a rare action on a row that is mostly there to be read, so the
+ * star only appears on hover or focus. An empty ☆ on all 20 rows was permanent
+ * visual noise. Revealed with opacity, not display, so nothing reflows.
+ */
 .fav-btn {
   background: none;
   border: none;
@@ -578,18 +609,23 @@ body {
   line-height: 1;
   color: var(--text-muted);
   padding: 0;
-  opacity: 0.55;
+  opacity: 0;
   transition: opacity 0.15s, color 0.15s, transform 0.15s;
 }
 
-.fav-btn:hover {
+.history-item:hover .fav-btn,
+.history-item:focus-within .fav-btn,
+.fav-btn:focus-visible,
+.fav-btn-active {
   opacity: 1;
+}
+
+.fav-btn:hover {
   color: #f59e0b;
   transform: scale(1.15);
 }
 
 .fav-btn-active {
-  opacity: 1;
   color: #f59e0b;
 }
 
@@ -597,6 +633,9 @@ body {
   font-size: 11px;
   color: var(--text-secondary);
   white-space: nowrap;
+  text-align: right;
+  /* Digits share one advance width, so times line up column-wise. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Stats Grid */
@@ -982,7 +1021,12 @@ body {
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  padding: 8px;
+}
+
+/* The scroll frame is the border here - the inner list must not draw a second. */
+.day-history-list > .history-list {
+  border: none;
+  border-radius: 0;
 }
 
 .day-history-list .empty-state,
