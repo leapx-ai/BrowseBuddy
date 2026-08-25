@@ -539,6 +539,23 @@ body {
 }
 
 /*
+ * A day anchor is the list's top edge only when it happens to be the first
+ * child; every later one is a mid-list divider. Inheriting the rule above made
+ * the first pinned anchor round and all the following ones square, so the same
+ * band changed shape as you scrolled. Anchors are square everywhere, and the
+ * container gives up its top corners when it leads with one.
+ */
+.history-list > .list-date-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.history-list:has(> .list-date-header:first-child) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/*
  * Day anchor in the flat list. It replaces the full date that every row used to
  * repeat, so one ~20px header covers a whole day and each row keeps only HH:MM.
  * Opaque, because rows scroll underneath it.
