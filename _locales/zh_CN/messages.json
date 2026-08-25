@@ -598,7 +598,7 @@
     "description": "Export section title"
   },
   "blacklistDescription": {
-    "message": "匹配黑名单模式的网站将不会被记录到浏览历史中。",
+    "message": "匹配黑名单模式的网站将不会被记录到浏览历史中。你懂的。",
     "description": "Blacklist feature description"
   },
   "domainPattern": {

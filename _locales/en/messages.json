@@ -598,7 +598,7 @@
     "description": "Export section title"
   },
   "blacklistDescription": {
-    "message": "Websites matching blacklist patterns will not be recorded in browser history.",
+    "message": "Websites matching blacklist patterns will not be recorded in browser history. You know what I mean.",
     "description": "Blacklist feature description"
   },
   "domainPattern": {
