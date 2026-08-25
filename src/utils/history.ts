@@ -382,11 +382,15 @@ export async function getAllDomains(): Promise<string[]> {
 }
 
 // Group history by date
+//
+// Keyed by the user's local calendar date. toISOString() gives the UTC day, so
+// in UTC+8 everything after 08:00 was filed under the wrong date and the
+// "Today" group in the view and in exported reports was cut off mid-morning.
 export function groupByDate(items: HistoryItem[]): Map<string, HistoryItem[]> {
   const groups = new Map<string, HistoryItem[]>();
   
   items.forEach(item => {
-    const date = new Date(item.visitTime).toISOString().split('T')[0];
+    const date = toLocalDateKey(item.visitTime);
     if (!groups.has(date)) {
       groups.set(date, []);
     }
@@ -501,27 +505,30 @@ export async function calculateStatistics(
   // the full range rather than only dates that happen to have records.
   const dateCounts = new Map<string, number>();
   items.forEach(item => {
-    const date = new Date(item.visitTime).toISOString().split('T')[0];
+    const date = toLocalDateKey(item.visitTime);
     dateCounts.set(date, (dateCounts.get(date) || 0) + 1);
   });
 
   const dailyStats: DailyStats[] = [];
   if (items.length > 0) {
-    // Build the timeline in UTC so date keys match the `toISOString` keys
-    // used when aggregating dateCounts, regardless of local timezone.
+    // Walk the timeline in local days so the keys match the local keys used
+    // above. Built in UTC, the first and last cells of the chart could belong to
+    // a different day than the visits they were meant to count.
     const earliestTs = Math.min(...items.map(i => i.visitTime));
     const latestTs = Math.max(...items.map(i => i.visitTime));
 
-    const startKey = new Date(earliestTs).toISOString().split('T')[0];
-    const endKey = new Date(latestTs).toISOString().split('T')[0];
-
-    const cursor = new Date(`${startKey}T00:00:00Z`);
-    const end = new Date(`${endKey}T00:00:00Z`);
+    const cursor = new Date(earliestTs);
+    cursor.setHours(0, 0, 0, 0);
+    const end = new Date(latestTs);
+    end.setHours(0, 0, 0, 0);
 
     while (cursor.getTime() <= end.getTime()) {
-      const key = cursor.toISOString().split('T')[0];
+      const key = toLocalDateKey(cursor.getTime());
       dailyStats.push({ date: key, count: dateCounts.get(key) || 0 });
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      cursor.setDate(cursor.getDate() + 1);
+      // A DST transition leaves the cursor at 23:00 or 01:00 of the intended
+      // day, which would repeat or skip a cell.
+      cursor.setHours(0, 0, 0, 0);
     }
   }
 

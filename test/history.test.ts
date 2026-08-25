@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchAllHistory, calculateStatistics, exportToCsv, exportToHtml, getAllDomains } from '../src/utils/history';
+import { fetchAllHistory, calculateStatistics, exportToCsv, exportToHtml, groupByDate, getAllDomains } from '../src/utils/history';
 import type { HistoryItem, Statistics } from '../src/types';
 
 const BASE_TS = new Date('2026-01-10T00:00:00Z').getTime();
@@ -174,6 +174,51 @@ describe('getAllDomains', () => {
 
     const domains = await getAllDomains();
     expect(domains).toEqual(['example.com', 'zed.com']);
+  });
+});
+
+describe('local date keys', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Built from local components, so these assertions only hold if the keys are
+  // local ones. Both edges of the day are covered, so in any non-UTC zone at
+  // least one of them diverges from the UTC date.
+  const evening = new Date(2026, 7, 20, 23, 30).getTime(); // 2026-08-20 23:30 local
+  const earlyMorning = new Date(2026, 7, 20, 0, 30).getTime();
+
+  function visit(id: string, ts: number): HistoryItem {
+    return { id, url: `https://${id}.com`, title: id, visitTime: ts, visitCount: 1, lastVisitTime: ts };
+  }
+
+  it('groups by the local calendar date', () => {
+    const groups = groupByDate([visit('a', evening), visit('b', earlyMorning)]);
+
+    expect(Array.from(groups.keys())).toEqual(['2026-08-20']);
+    expect(groups.get('2026-08-20')).toHaveLength(2);
+  });
+
+  it('builds the daily trend on local days', async () => {
+    mockHistorySearch([visit('a', earlyMorning), visit('b', evening)]);
+
+    const stats = await calculateStatistics([]);
+
+    // One local day, both visits in it - a UTC timeline split them across two
+    // cells (or produced a cell keyed to a day with no visits).
+    expect(stats.dailyStats).toEqual([{ date: '2026-08-20', count: 2 }]);
+  });
+
+  it('zero-fills the gap between two local days', async () => {
+    mockHistorySearch([visit('a', evening), visit('b', new Date(2026, 7, 22, 9, 0).getTime())]);
+
+    const stats = await calculateStatistics([]);
+
+    expect(stats.dailyStats).toEqual([
+      { date: '2026-08-20', count: 1 },
+      { date: '2026-08-21', count: 0 },
+      { date: '2026-08-22', count: 1 },
+    ]);
   });
 });
 
