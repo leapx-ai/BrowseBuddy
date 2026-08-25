@@ -1,6 +1,6 @@
 import type { Settings, BlacklistEntry } from '../types';
 import { fetchHistory, deleteSingleUrl } from './history';
-import { extractMainDomain } from './blacklist';
+import { extractMainDomain, isUrlBlacklisted } from './blacklist';
 
 // Re-export types for convenience
 export type { Settings, BlacklistEntry } from '../types';
@@ -29,13 +29,14 @@ const STORAGE_KEYS = {
 };
 
 // Favorited (protected) main domains - never auto-cleaned, never counted for deletion
+//
+// Read errors propagate on purpose. Returning [] on failure meant "nothing is
+// protected", so a transient storage error silently turned the protection off
+// and favorited domains became eligible for deletion. Callers must decide, and
+// for a protection list the only safe decision is to not proceed.
 export async function getFavorites(): Promise<string[]> {
-  try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.FAVORITES);
-    return result[STORAGE_KEYS.FAVORITES] || [];
-  } catch {
-    return [];
-  }
+  const result = await chrome.storage.local.get(STORAGE_KEYS.FAVORITES);
+  return result[STORAGE_KEYS.FAVORITES] || [];
 }
 
 export async function saveFavorites(domains: string[]): Promise<void> {
@@ -71,6 +72,28 @@ export async function saveDomainDurations(durations: Record<string, number>): Pr
   await chrome.storage.local.set({ [STORAGE_KEYS.DURATIONS]: durations });
 }
 
+// Durations with blacklisted domains removed. Mirrors fetchHistory /
+// fetchVisibleHistory: the raw accessor above is for the background worker,
+// which needs the full map to write back, while anything user-facing must go
+// through here. The stats panel previously used the raw map, so a domain the
+// user had blacklisted still appeared under "Most Time Spent" and was written
+// into exported reports.
+export async function getVisibleDomainDurations(): Promise<Record<string, number>> {
+  const durations = await getDomainDurations();
+  const blacklist = await getBlacklist();
+  if (blacklist.length === 0) return durations;
+
+  const visible: Record<string, number> = {};
+  for (const [domain, ms] of Object.entries(durations)) {
+    // Keys are already main domains, but go through the URL form so matching
+    // uses the same semantics as everywhere else.
+    if (!isUrlBlacklisted(`https://${domain}`, blacklist)) {
+      visible[domain] = ms;
+    }
+  }
+  return visible;
+}
+
 // Settings management
 export async function getSettings(): Promise<Settings> {
   try {
@@ -86,13 +109,15 @@ export async function saveSettings(settings: Settings): Promise<void> {
 }
 
 // Blacklist management
+//
+// Read errors propagate for the same reason as getFavorites: `catch { return [] }`
+// meant "no domain is blacklisted", so a transient storage failure disabled the
+// extension's core privacy guarantee with no log, no badge and no UI signal -
+// and since background and UI share no message channel, nothing could ever
+// notice. Callers handle the failure explicitly.
 export async function getBlacklist(): Promise<BlacklistEntry[]> {
-  try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.BLACKLIST);
-    return result[STORAGE_KEYS.BLACKLIST] || [];
-  } catch {
-    return [];
-  }
+  const result = await chrome.storage.local.get(STORAGE_KEYS.BLACKLIST);
+  return result[STORAGE_KEYS.BLACKLIST] || [];
 }
 
 export async function saveBlacklist(blacklist: BlacklistEntry[]): Promise<void> {
@@ -144,20 +169,37 @@ export async function addUrlToBlacklist(
   }
   
   let deletedCount = 0;
-  
-  // Delete existing history entries if requested
-  if (deleteExisting) {
-    deletedCount = await deleteHistoryByDomain(mainDomain);
-  }
-  
-  // Add to blacklist
+
+  // Add to the blacklist FIRST. deleteHistoryByDomain can run for tens of
+  // seconds on a heavily visited domain (it sleeps 50ms every 10 deletions), and
+  // if the service worker is torn down during that window the protective write
+  // never lands - the user sees no error and the domain is not blacklisted.
+  // The cheap, protective write has to be the one that survives.
   const entry = await addToBlacklist({
     pattern: mainDomain,
     type: 'exact', // We store main domain as exact match
     enabled: true,
   });
-  
+
+  // Dwell time is stored separately from history, and nothing else purges it.
+  // Leaving it behind meant a blacklisted domain kept showing up under
+  // "Most Time Spent" and in every exported report.
+  await removeDomainDuration(mainDomain);
+
+  // Delete existing history entries if requested
+  if (deleteExisting) {
+    deletedCount = await deleteHistoryByDomain(mainDomain);
+  }
+
   return { entry, deletedCount };
+}
+
+// Drop a single domain's accumulated dwell time.
+async function removeDomainDuration(domain: string): Promise<void> {
+  const durations = await getDomainDurations();
+  if (!(domain in durations)) return;
+  delete durations[domain];
+  await saveDomainDurations(durations);
 }
 
 // Delete all history entries matching a domain (including subdomains)

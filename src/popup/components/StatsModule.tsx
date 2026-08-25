@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getMessage, formatNumber, formatDuration, getCurrentLocale } from '../../utils/i18n';
 import { calculateStatistics, fetchAllHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
 import { filterBlacklistedItems } from '../../utils/blacklist';
-import { getBlacklist, getDomainDurations } from '../../utils/storage';
+import { getBlacklist, getVisibleDomainDurations } from '../../utils/storage';
 import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
 import { useSlowLoading } from '../useSlowLoading';
 
@@ -88,7 +88,7 @@ const StatsModule: React.FC = () => {
         : undefined;
       const data = await calculateStatistics(list, dateRange);
       setStats(data);
-      const durationData = await getDomainDurations();
+      const durationData = await getVisibleDomainDurations();
       setDurations(durationData);
     } catch (error) {
       console.error('Failed to load stats:', error);

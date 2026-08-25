@@ -5,10 +5,13 @@ import type { BlacklistEntry } from '../types';
 export function extractMainDomain(url: string): string {
   try {
     // Normalize through the URL parser so ports, IPv6 brackets and
-    // raw hostname input are all handled correctly.
-    const hostname = url.includes('://')
-      ? new URL(url).hostname
-      : new URL(`https://${url}`).hostname;
+    // raw hostname input are all handled correctly. The trailing root label is
+    // stripped too: "example.com." is the same host as "example.com", but as a
+    // distinct string it slipped past both blacklist matching and the favorites
+    // deletion guard, which compare for equality.
+    const hostname = normalizeHost(
+      url.includes('://') ? new URL(url).hostname : new URL(`https://${url}`).hostname
+    );
     const parts = hostname.split('.');
     const lastTwo = parts.slice(-2);
 

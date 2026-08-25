@@ -23,6 +23,15 @@ export type {
   CalendarData,
 } from '../types';
 
+// "YYYY-MM-DD" in the user's own timezone. toISOString() resolves to the UTC
+// day, which puts an evening visit in UTC+8 on the previous date.
+function toLocalDateKey(ts: number): string {
+  const d = new Date(ts);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 // Fetch history from browser
 // Raw chrome.history.search wrapper. Deliberately unfiltered: paginating
 // callers must advance their cursor over the *unfiltered* result set, otherwise
@@ -531,11 +540,16 @@ export async function calculateStatistics(
   };
 }
 
-// Get calendar data
+// Get calendar data.
+// Reads the blacklist itself rather than taking it as a parameter - this was the
+// one read path that had no blacklist argument at all, so blacklisted domains
+// were still shaded into the heat map and still skewed its normalization.
 export async function getCalendarData(year: number, month: number): Promise<CalendarData[]> {
   const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0);
-  
+  // Last day of the month at 23:59:59.999 local. `new Date(year, month + 1, 0)`
+  // alone is that day at 00:00, which excluded the whole final day of the month.
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
   const items = await fetchAllHistory({
     dateRange: {
       start: startDate.getTime(),
@@ -544,10 +558,15 @@ export async function getCalendarData(year: number, month: number): Promise<Cale
     maxResults: 20000,
   });
 
-  // Count by date
+  const { getBlacklist } = await import('./storage');
+  const visible = filterBlacklistedItems(items, await getBlacklist());
+
+  // Count by date. The keys must be *local* calendar dates because that is what
+  // the calendar grid is built from; toISOString() resolves to the UTC day and
+  // shifted evening visits into the previous cell.
   const dateMap = new Map<string, number>();
-  items.forEach(item => {
-    const date = new Date(item.visitTime).toISOString().split('T')[0];
+  visible.forEach(item => {
+    const date = toLocalDateKey(item.visitTime);
     dateMap.set(date, (dateMap.get(date) || 0) + 1);
   });
 

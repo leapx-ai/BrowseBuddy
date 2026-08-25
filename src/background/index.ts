@@ -172,7 +172,22 @@ chrome.history.onVisited.addListener(async (item) => {
 
   if (!settings.realtimeProtection) return;
 
-  const blacklist = await getBlacklist();
+  let blacklist;
+  try {
+    blacklist = await getBlacklist();
+  } catch (error) {
+    // The blacklist could not be read, so whether this visit is protected is
+    // unknown. Deleting on a guess would destroy history the user wanted to
+    // keep, so the visit is left alone - but the failure is reported instead of
+    // degrading protection to "off" in silence, which is what getBlacklist's
+    // swallowed `catch { return [] }` used to do.
+    console.error(
+      'BrowseBuddy: blacklist unavailable, this visit was not screened',
+      error
+    );
+    return;
+  }
+
   if (isUrlBlacklisted(item.url, blacklist)) {
     try {
       await chrome.history.deleteUrl({ url: item.url });
@@ -302,7 +317,11 @@ if (typeof chrome !== "undefined" && chrome.contextMenus) {
     if (!targetUrl) return;
     try {
       const url = new URL(targetUrl);
-      await addUrlToBlacklist(url.hostname, true);
+      // Blacklist only. Passing `true` here deleted every history record for the
+      // domain with no confirmation dialog, no reported count and no way back,
+      // from a single right-click. Existing history is removed from the privacy
+      // page, where the choice is presented and confirmed.
+      await addUrlToBlacklist(url.hostname, false);
     } catch {
       // Invalid URL
     }
