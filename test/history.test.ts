@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchAllHistory, calculateStatistics, exportToCsv, getAllDomains } from '../src/utils/history';
-import type { HistoryItem } from '../src/types';
+import { fetchAllHistory, calculateStatistics, exportToCsv, exportToHtml, getAllDomains } from '../src/utils/history';
+import type { HistoryItem, Statistics } from '../src/types';
 
 const BASE_TS = new Date('2026-01-10T00:00:00Z').getTime();
 
@@ -192,5 +192,54 @@ describe('exportToCsv', () => {
       { id: '2', url: 'https://b.com', title: 'B', visitTime: 0, visitCount: 1 },
     ]);
     expect(csv.split('\n')).toHaveLength(3);
+  });
+
+  it('escapes quotes in urls too', () => {
+    const csv = exportToCsv([
+      { id: '1', url: 'https://a.com/?q="x"', title: 'A', visitTime: 0, visitCount: 1 },
+    ]);
+    // An unescaped quote ended the field early and shifted every later column.
+    expect(csv).toContain('"https://a.com/?q=""x"""');
+    expect(csv.split('\n')[1].split('","')).toHaveLength(2);
+  });
+});
+
+describe('exportToHtml escaping', () => {
+  const stats: Statistics = {
+    totalRecords: 1,
+    totalDomains: 1,
+    dateRange: { earliest: 0, latest: 0 },
+    topSites: [{ domain: '<img src=x onerror=alert(1)>', count: 1, lastVisit: 0 }],
+    timeDistribution: [],
+    dailyStats: [],
+  };
+
+  it('escapes titles and urls from page content', () => {
+    const html = exportToHtml(
+      [
+        {
+          id: '1',
+          url: 'https://evil.test/?<script>alert(1)</script>',
+          title: '<script>alert("xss")</script>',
+          visitTime: Date.parse('2026-08-25T10:00:00Z'),
+          visitCount: 1,
+        },
+      ],
+      stats
+    );
+
+    // A page controls its own title, and the report is opened as a local file,
+    // so a raw title used to run as script with that file's origin.
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
+  it('escapes domain names in the top-sites and duration lists', () => {
+    const html = exportToHtml([], stats, { '<b>evil.test</b>': 5000 });
+
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).toContain('&lt;b&gt;evil.test&lt;/b&gt;');
   });
 });

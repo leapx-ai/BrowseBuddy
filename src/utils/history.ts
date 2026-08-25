@@ -584,13 +584,34 @@ export async function getCalendarData(year: number, month: number): Promise<Cale
 export function exportToCsv(items: HistoryItem[]): string {
   const headers = ['Title', 'URL', 'Visit Time', 'Visit Count'];
   const rows = items.map(item => [
-    `"${item.title.replace(/"/g, '""')}"`,
-    `"${item.url}"`,
+    csvField(item.title),
+    // URLs can legitimately contain a double quote (it is a valid query-string
+    // character), which used to terminate the field early and shift every later
+    // column of that row.
+    csvField(item.url),
     new Date(item.visitTime).toISOString(),
     item.visitCount,
   ]);
 
   return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+}
+
+function csvField(value: string): string {
+  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+
+// Page titles and URLs are attacker-controlled: a page can set any title it
+// likes, and the report is written to a file the user then opens in the browser.
+// Interpolating them raw meant a title of `<script>...</script>` ran with the
+// file's origin when the report was viewed - stored XSS by way of visiting a
+// page. Escaped for both text and quoted-attribute positions.
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Export to HTML report
@@ -606,7 +627,7 @@ export function exportToHtml(
     .map((site, i) => `
     <div class="item">
       <span class="rank">${i + 1}</span>
-      <span class="item-title">${site.domain}</span>
+      <span class="item-title">${escapeHtml(site.domain)}</span>
       <span class="item-count">${site.count} visits</span>
     </div>`)
     .join('');
@@ -618,7 +639,7 @@ export function exportToHtml(
         .map(([domain, ms], i) => `
     <div class="item">
       <span class="rank">${i + 1}</span>
-      <span class="item-title">${domain}</span>
+      <span class="item-title">${escapeHtml(domain)}</span>
       <span class="item-count">${formatReportDuration(ms)}</span>
     </div>`)
         .join('')
@@ -631,7 +652,7 @@ export function exportToHtml(
 
   const dailyBars = stats.dailyStats.slice(-30)
     .map(d => `
-    <div class="hbar hbar-alt" style="height:${Math.max((d.count / Math.max(...stats.dailyStats.map(x => x.count), 1)) * 100, 2)}%;" title="${d.date} - ${d.count}"></div>`)
+    <div class="hbar hbar-alt" style="height:${Math.max((d.count / Math.max(...stats.dailyStats.map(x => x.count), 1)) * 100, 2)}%;" title="${escapeHtml(d.date)} - ${d.count}"></div>`)
     .join('');
 
   let html = `<!DOCTYPE html>
@@ -677,13 +698,13 @@ export function exportToHtml(
     .forEach(([date, dateItems]) => {
       html += `
   <div class="date-group">
-    <div class="date-header">${date} (${dateItems.length} items)</div>`;
+    <div class="date-header">${escapeHtml(date)} (${dateItems.length} items)</div>`;
       
       dateItems.forEach(item => {
         html += `
     <div class="item">
-      <div class="item-title">${item.title || '(No title)'}</div>
-      <div class="item-url">${item.url}</div>
+      <div class="item-title">${escapeHtml(item.title) || '(No title)'}</div>
+      <div class="item-url">${escapeHtml(item.url)}</div>
       <div class="item-time">${new Date(item.visitTime).toLocaleString()}</div>
     </div>`;
       });
