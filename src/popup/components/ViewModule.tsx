@@ -14,6 +14,42 @@ function displayUrl(url: string): string {
   return url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 }
 
+// Ceiling used by every query on this screen (parseSearchQuery sets the same
+// value), so a result set of exactly this size is a truncation, not a total.
+const RESULT_CAP = 1000;
+
+const VISIT_TYPE_LABELS: Record<string, string> = {
+  typed: 'visitTypeTyped',
+  link: 'visitTypeLink',
+  auto_toplevel: 'visitTypeAuto',
+  reload: 'visitTypeReload',
+  form_submit: 'visitTypeForm',
+  keyword: 'visitTypeKeyword',
+};
+
+// Chips report what actually took effect rather than the raw text: `site:WWW.Foo.com`
+// is applied as `foo.com`, and a token with an unparsable date is dropped by the
+// parser and so gets no chip.
+function buildFilterChips(query: string, transitionType: string): string[] {
+  const chips: string[] = [];
+  const options = parseSearchQuery(query);
+
+  if (options.keyword) chips.push(`"${options.keyword}"`);
+  if (options.domains?.length) chips.push(`site:${options.domains[0]}`);
+
+  for (const token of query.trim().split(/\s+/).filter(Boolean)) {
+    const lower = token.toLowerCase();
+    if (!lower.startsWith('before:') && !lower.startsWith('after:')) continue;
+    const date = token.slice(token.indexOf(':') + 1);
+    if (!Number.isNaN(new Date(`${date}T00:00:00`).getTime())) chips.push(lower);
+  }
+
+  if (transitionType) {
+    chips.push(getMessage(VISIT_TYPE_LABELS[transitionType] || 'allVisitTypes'));
+  }
+  return chips;
+}
+
 // One shared favorites read for the whole list. Each row used to call
 // getFavorites() from its own effect, so a 1000-row result set issued 1000
 // chrome.storage reads and every star toggle re-read the list per row.
@@ -275,6 +311,14 @@ const ViewModule: React.FC = () => {
     }
   };
 
+  const filterChips = buildFilterChips(activeSearch, transitionType);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setTransitionType('');
+    setShowFilters(false);
+  };
+
   const renderContent = () => {
     if (viewMode === 'calendar') {
       return (
@@ -415,6 +459,28 @@ const ViewModule: React.FC = () => {
           {getMessage('calendarView')}
         </button>
       </div>
+
+      {/* What is on screen right now, and what produced it */}
+      {viewMode !== 'calendar' && hasLoaded && history.length > 0 && (
+        <div className="result-bar">
+          <span className="result-count">
+            {getMessage('resultSummary', [
+              // maxResults truncates the query, so at the cap the real total is
+              // unknown - say "1000+" rather than claim an exact figure.
+              history.length >= RESULT_CAP ? `${RESULT_CAP}+` : String(history.length),
+              String(new Set(history.map(i => extractMainDomain(i.url))).size),
+            ])}
+          </span>
+          {filterChips.map(chip => (
+            <span key={chip} className="chip" title={chip}>{chip}</span>
+          ))}
+          {filterChips.length > 0 && (
+            <button className="chip-clear" onClick={clearFilters}>
+              {getMessage('clearFilters')}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       {renderContent()}
@@ -573,6 +639,32 @@ const ListView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
   );
 };
 
+// Truncated group that can be opened in place. The count used to be printed as
+// plain text with no way to reach the records it referred to.
+const CollapsibleGroup: React.FC<{
+  items: HistoryItem[];
+  limit: number;
+  showDate?: boolean;
+}> = ({ items, limit, showDate = true }) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, limit);
+
+  return (
+    <div className="history-list">
+      {visible.map((item, index) => (
+        <HistoryListItem key={`${item.url}-${index}`} item={item} showDate={showDate} />
+      ))}
+      {items.length > limit && (
+        <button className="list-expander" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+          {expanded
+            ? getMessage('collapseList')
+            : getMessage('showAllCount', String(items.length))}
+        </button>
+      )}
+    </div>
+  );
+};
+
 // Date Group View
 const DateGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
   const grouped = groupByDate(items);
@@ -588,16 +680,7 @@ const DateGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
               {grouped.get(date)?.length} {getMessage('items')}
             </span>
           </div>
-          <div className="history-list">
-            {grouped.get(date)?.slice(0, 5).map((item: HistoryItem, index: number) => (
-              <HistoryListItem key={`${item.url}-${index}`} item={item} showDate={false} />
-            ))}
-            {(grouped.get(date)?.length || 0) > 5 && (
-              <div style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>
-                +{(grouped.get(date)?.length || 0) - 5} {getMessage('more')}
-              </div>
-            )}
-          </div>
+          <CollapsibleGroup items={grouped.get(date) || []} limit={5} showDate={false} />
         </div>
       ))}
     </div>
@@ -615,30 +698,28 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
       {sortedDomains.map(([domain, domainItems]: [string, HistoryItem[]]) => (
         <div key={domain} className="card">
           <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <DomainIcon url={`https://${domain}`} />
-              {domain}
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{domain}</span>
             </span>
-            <span style={{ 
-              background: 'var(--primary-color)', 
-              color: 'white', 
-              padding: '2px 8px', 
-              borderRadius: '12px',
-              fontSize: '12px'
-            }}>
-              {domainItems.length}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+              {/* Most recent visit for this domain - the counts alone did not say
+                  whether a domain is current or months stale. */}
+              <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)' }}>
+                {formatDateTime(Math.max(...domainItems.map(i => i.visitTime)))}
+              </span>
+              <span style={{
+                background: 'var(--primary-color)',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '12px'
+              }}>
+                {domainItems.length}
+              </span>
             </span>
           </div>
-          <div className="history-list">
-            {domainItems.slice(0, 3).map((item: HistoryItem, index: number) => (
-              <HistoryListItem key={`${item.url}-${index}`} item={item} />
-            ))}
-            {domainItems.length > 3 && (
-              <div style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>
-                +{domainItems.length - 3} {getMessage('more')}
-              </div>
-            )}
-          </div>
+          <CollapsibleGroup items={domainItems} limit={3} showDate={false} />
         </div>
       ))}
     </div>

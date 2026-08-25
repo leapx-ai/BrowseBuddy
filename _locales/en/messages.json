@@ -665,6 +665,38 @@
     "message": "items",
     "description": "Items count"
   },
+  "resultSummary": {
+    "message": "$count$ records · $domains$ domains",
+    "description": "One-line summary of the current result set",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "128"
+      },
+      "domains": {
+        "content": "$2",
+        "example": "23"
+      }
+    }
+  },
+  "showAllCount": {
+    "message": "Show all $count$",
+    "description": "Expands a truncated group to its full list",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "18"
+      }
+    }
+  },
+  "collapseList": {
+    "message": "Collapse",
+    "description": "Collapses an expanded group"
+  },
+  "clearFilters": {
+    "message": "Clear all filters",
+    "description": "Clears the search query and the visit-type filter"
+  },
   "more": {
     "message": "more",
     "description": "More items indicator"
