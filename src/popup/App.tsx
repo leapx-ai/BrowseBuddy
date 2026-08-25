@@ -114,9 +114,16 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
 
-      <footer className="footer">
-        {getMessage('privacyPromise')}
-      </footer>
+      {/*
+        The privacy promise is a claim about how the extension handles data, so it
+        belongs on the page that manages that. Pinned to every tab it consumed
+        ~36px of a 600px window permanently - space the history list needs more.
+      */}
+      {activeTab === 'privacy' && (
+        <footer className="footer">
+          {getMessage('privacyPromise')}
+        </footer>
+      )}
     </div>
   );
 };

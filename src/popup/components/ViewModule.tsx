@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { getMessage, formatDateTime, getCurrentLocale } from '../../utils/i18n';
 import { fetchVisibleHistory, groupByDate, groupByDomain, getCalendarData, type HistoryItem, type SearchOptions } from '../../utils/history';
 import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../utils/storage';
@@ -7,6 +7,20 @@ import { parseSearchQuery } from '../../utils/search';
 import { useSlowLoading } from '../useSlowLoading';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
+
+// Every row carried the full URL including "https://" and "www.", which is the
+// same on nearly every row and pushed the part that differs out of view.
+function displayUrl(url: string): string {
+  return url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+}
+
+// One shared favorites read for the whole list. Each row used to call
+// getFavorites() from its own effect, so a 1000-row result set issued 1000
+// chrome.storage reads and every star toggle re-read the list per row.
+const FavoritesContext = React.createContext<{
+  favorites: Set<string>;
+  toggle: (domain: string) => void;
+}>({ favorites: new Set(), toggle: () => {} });
 
 // Render a deterministic colored letter avatar for a domain.
 // Fully local - no network request, no CSP issues, no domain leaks.
@@ -63,6 +77,9 @@ const DomainIcon: React.FC<{ url: string; size?: number }> = ({ url, size = 16 }
 };
 
 // Recently closed tabs/windows restore panel
+//
+// Collapsed to a single line. As a .card with its own title it occupied ~65px at
+// the top of the default tab - the tab where the history list is the point.
 const RestoreSession: React.FC = () => {
   const [items, setItems] = useState<chrome.sessions.Session[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -100,21 +117,17 @@ const RestoreSession: React.FC = () => {
   };
 
   return (
-    <div className="card">
-      <div
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-        onClick={handleToggle}
-      >
-        <h3 className="card-title" style={{ marginBottom: 0 }}>
+    <div>
+      <button className="inline-toggle" onClick={handleToggle} aria-expanded={isOpen}>
+        <span>
           {getMessage('restoreClosedTabs')}
-        </h3>
-        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-          {isOpen ? '▾' : '▸'}
+          {items.length > 0 && ` (${items.length})`}
         </span>
-      </div>
+        <span aria-hidden="true">{isOpen ? '▾' : '▸'}</span>
+      </button>
 
       {isOpen && (
-        <div style={{ marginTop: '10px' }}>
+        <div style={{ marginBottom: 'var(--space-2)' }}>
           {isLoading && items.length === 0 ? (
             showSlowLoading ? (
               <div className="loading" style={{ padding: '10px' }}>
@@ -126,36 +139,37 @@ const RestoreSession: React.FC = () => {
               {getMessage('noClosedTabs')}
             </div>
           ) : (
-            items.map((session) => {
-              const tab = session.tab;
-              const window_ = session.window;
-              const sessionId = (tab?.sessionId || window_?.sessionId) || '';
-              const title = tab
-                ? tab.title || tab.url || ''
-                : window_
-                  ? `${window_.tabs?.length || 0} ${getMessage('items')}`
-                  : '';
-              const url = tab?.url || '';
+            <div className="history-list">
+              {items.map((session) => {
+                const tab = session.tab;
+                const window_ = session.window;
+                const sessionId = (tab?.sessionId || window_?.sessionId) || '';
+                const title = tab
+                  ? tab.title || tab.url || ''
+                  : window_
+                    ? `${window_.tabs?.length || 0} ${getMessage('items')}`
+                    : '';
+                const url = tab?.url || '';
 
-              return (
-                <div
-                  key={session.lastModified}
-                  className="history-item"
-                  onClick={() => handleRestore(sessionId)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {url ? (
-                    <DomainIcon url={url} />
-                  ) : (
-                    <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
-                  )}
-                  <div className="history-content">
-                    <div className="history-title">{title || getMessage('closedWindow')}</div>
-                    {url && <div className="history-url">{url}</div>}
+                return (
+                  <div
+                    key={session.lastModified}
+                    className="history-item"
+                    onClick={() => handleRestore(sessionId)}
+                  >
+                    {url ? (
+                      <DomainIcon url={url} />
+                    ) : (
+                      <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: '4px' }} />
+                    )}
+                    <div className="history-content">
+                      <div className="history-title">{title || getMessage('closedWindow')}</div>
+                      {url && <div className="history-url">{displayUrl(url)}</div>}
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -174,8 +188,36 @@ const ViewModule: React.FC = () => {
   const [activeSearch, setActiveSearch] = useState('');
   const [transitionType, setTransitionType] = useState('');
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFilters, setShowFilters] = useState(false);
   const showSlowLoading = useSlowLoading(isLoading);
   const debounceTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    getFavorites()
+      .then(favs => setFavorites(new Set(favs)))
+      .catch(() => {
+        // Leave the stars empty rather than claiming nothing is protected.
+      });
+  }, []);
+
+  const toggleFavorite = useCallback(async (domain: string) => {
+    if (!domain) return;
+    const wasFav = favorites.has(domain);
+    const flip = (add: boolean) => setFavorites(prev => {
+      const next = new Set(prev);
+      if (add) next.add(domain); else next.delete(domain);
+      return next;
+    });
+
+    flip(!wasFav); // optimistic - the star reacts on the same frame as the click
+    try {
+      if (wasFav) await removeFavorite(domain);
+      else await addFavorite(domain);
+    } catch {
+      flip(wasFav); // roll back rather than show a state that was never stored
+    }
+  }, [favorites]);
 
   useEffect(() => {
     if (viewMode === 'calendar') return;
@@ -288,12 +330,12 @@ const ViewModule: React.FC = () => {
   };
 
   return (
-    <div>
+    <FavoritesContext.Provider value={{ favorites, toggle: toggleFavorite }}>
       {/* Restore recently closed tabs */}
       <RestoreSession />
 
-      {/* Search */}
-      <div className="input-group">
+      {/* Search and filters share one row */}
+      <div className="toolbar">
         <input
           type="text"
           className="input"
@@ -301,16 +343,29 @@ const ViewModule: React.FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {viewMode !== 'calendar' && (
+          <button
+            className={`icon-btn ${showFilters ? 'active' : ''} ${transitionType ? 'icon-btn-dot' : ''}`}
+            onClick={() => setShowFilters(v => !v)}
+            aria-expanded={showFilters}
+            aria-label={getMessage('allVisitTypes')}
+            title={getMessage('allVisitTypes')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+            </svg>
+          </button>
+        )}
       </div>
-      {searchQuery && (
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '-8px', marginBottom: '8px' }}>
-          {getMessage('searchSyntaxHint')}
-        </div>
-      )}
 
-      {/* Transition type filter */}
-      {viewMode !== 'calendar' && (
-        <div className="input-group">
+      {/*
+        The visit-type selector and the query-syntax hint only take space when the
+        filter panel is open or a filter is actually narrowing the results. Kept
+        permanently visible they cost ~70px before the first row - and the hint
+        appearing on the first keystroke shifted the whole list down.
+      */}
+      {viewMode !== 'calendar' && (showFilters || transitionType) && (
+        <div style={{ marginBottom: 'var(--space-2)' }}>
           <select
             className="input"
             value={transitionType}
@@ -325,6 +380,11 @@ const ViewModule: React.FC = () => {
             <option value="form_submit">{getMessage('visitTypeForm')}</option>
             <option value="keyword">{getMessage('visitTypeKeyword')}</option>
           </select>
+          {showFilters && (
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+              {getMessage('searchSyntaxHint')}
+            </div>
+          )}
         </div>
       )}
 
@@ -380,7 +440,7 @@ const ViewModule: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </FavoritesContext.Provider>
   );
 };
 
@@ -587,35 +647,17 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
 
 // Single History Item
 const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ item, showDate = true }) => {
-  const [isFav, setIsFav] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const mainDomain = extractMainDomain(item.url);
-    getFavorites().then(favs => {
-      if (!cancelled) setIsFav(favs.includes(mainDomain));
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [item.url]);
+  const { favorites, toggle } = useContext(FavoritesContext);
+  const mainDomain = extractMainDomain(item.url);
+  const isFav = favorites.has(mainDomain);
 
   const handleClick = () => {
     chrome.tabs.create({ url: item.url });
   };
 
-  const handleToggleFav = async (e: React.MouseEvent) => {
+  const handleToggleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const mainDomain = extractMainDomain(item.url);
-    try {
-      if (isFav) {
-        await removeFavorite(mainDomain);
-        setIsFav(false);
-      } else {
-        await addFavorite(mainDomain);
-        setIsFav(true);
-      }
-    } catch {
-      // Ignore storage errors
-    }
+    toggle(mainDomain);
   };
 
   const timeLabel = showDate
@@ -630,7 +672,7 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
       <DomainIcon url={item.url} />
       <div className="history-content">
         <div className="history-title">{item.title || '(No title)'}</div>
-        <div className="history-url">{item.url}</div>
+        <div className="history-url">{displayUrl(item.url)}</div>
       </div>
       <div className="history-meta">
         <button
