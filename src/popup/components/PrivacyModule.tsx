@@ -11,16 +11,21 @@ import {
   extractMainDomain,
   type BlacklistEntry 
 } from '../../utils/storage';
+import ConfirmDialog from './ConfirmDialog';
 
 const PrivacyModule: React.FC = () => {
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newUrl, setNewUrl] = useState('');
+  // Blacklist and favorites are opposite operations, so they must never share
+  // an input buffer - otherwise typing a domain to protect also arms the
+  // "add to blacklist" button with the same value.
+  const [newBlacklistUrl, setNewBlacklistUrl] = useState('');
+  const [newFavoriteUrl, setNewFavoriteUrl] = useState('');
   const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [extractedDomain, setExtractedDomain] = useState('');
-  const [deleteExisting, setDeleteExisting] = useState(true);
+  // Destructive by nature, so it defaults to off and is confirmed in the modal.
+  const [deleteExisting, setDeleteExisting] = useState(false);
   const [lastAction, setLastAction] = useState<{type: 'add'|'delete', message: string} | null>(null);
   const [pendingAdd, setPendingAdd] = useState<string | null>(null);
   const [pendingDomain, setPendingDomain] = useState('');
@@ -42,12 +47,10 @@ const PrivacyModule: React.FC = () => {
   };
 
   const handleAddFavorite = async () => {
-    if (!newUrl.trim()) return;
+    if (!favoriteDomain) return;
     try {
-      const mainDomain = extractMainDomain(newUrl.trim());
-      if (!mainDomain) return;
-      await addFavorite(mainDomain);
-      setNewUrl('');
+      await addFavorite(favoriteDomain);
+      setNewFavoriteUrl('');
       await loadFavorites();
     } catch (error) {
       console.error('Failed to add favorite:', error);
@@ -73,13 +76,9 @@ const PrivacyModule: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (newUrl.trim()) {
-      setExtractedDomain(extractMainDomain(newUrl));
-    } else {
-      setExtractedDomain('');
-    }
-  }, [newUrl]);
+  // Derived, not state - each input owns its own normalized domain.
+  const blacklistDomain = newBlacklistUrl.trim() ? extractMainDomain(newBlacklistUrl) : '';
+  const favoriteDomain = newFavoriteUrl.trim() ? extractMainDomain(newFavoriteUrl) : '';
 
   const loadBlacklist = async () => {
     setIsLoading(true);
@@ -107,6 +106,8 @@ const PrivacyModule: React.FC = () => {
   const requestConfirmAdd = (url: string, domain: string) => {
     setPendingAdd(url);
     setPendingDomain(domain);
+    // Never carry a previous "delete history too" choice into a new confirmation.
+    setDeleteExisting(false);
     setIsConfirming(true);
   };
 
@@ -127,7 +128,7 @@ const PrivacyModule: React.FC = () => {
           message += ` (${getMessage('deletedNHistoryRecords', deletedCount.toString())})`;
         }
         setLastAction({ type: 'add', message });
-        setNewUrl('');
+        setNewBlacklistUrl('');
         setShowAddForm(false);
         await loadBlacklist();
         // Clear message after 3 seconds
@@ -135,7 +136,7 @@ const PrivacyModule: React.FC = () => {
       } else {
         // Already exists
         setLastAction({ type: 'add', message: getMessage('domainAlreadyInBlacklist', pendingDomain) });
-        setNewUrl('');
+        setNewBlacklistUrl('');
         setShowAddForm(false);
         setTimeout(() => setLastAction(null), 3000);
       }
@@ -145,8 +146,8 @@ const PrivacyModule: React.FC = () => {
   };
 
   const handleAdd = () => {
-    if (!newUrl.trim() || !extractedDomain) return;
-    requestConfirmAdd(newUrl.trim(), extractedDomain);
+    if (!blacklistDomain) return;
+    requestConfirmAdd(newBlacklistUrl.trim(), blacklistDomain);
   };
 
   const handleAddCurrentPage = () => {
@@ -202,35 +203,6 @@ const PrivacyModule: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Existing History Option */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px', 
-        marginBottom: '12px',
-        padding: '10px 12px',
-        background: 'var(--bg-secondary)',
-        borderRadius: '8px',
-        fontSize: '13px'
-      }}>
-        <label className="checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <div className={`checkbox ${deleteExisting ? 'checked' : ''}`} style={{ width: '18px', height: '18px' }}>
-            {deleteExisting && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
-          </div>
-          <input
-            type="checkbox"
-            checked={deleteExisting}
-            onChange={(e) => setDeleteExisting(e.target.checked)}
-            style={{ display: 'none' }}
-          />
-          <span>{getMessage('alsoDeleteExistingHistory') || '同时删除已有历史记录'}</span>
-        </label>
-      </div>
-
       {/* Current Domain Display */}
       {currentTab?.url && (
         <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
@@ -284,12 +256,12 @@ const PrivacyModule: React.FC = () => {
               type="text"
               className="input"
               placeholder="https://example.com 或 example.com"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
+              value={newBlacklistUrl}
+              onChange={(e) => setNewBlacklistUrl(e.target.value)}
             />
-            {extractedDomain && (
+            {blacklistDomain && (
               <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                {getMessage('willAddMainDomain')} <strong>{extractedDomain}</strong>{getMessage('includesAllSubdomains')}
+                {getMessage('willAddMainDomain')} <strong>{blacklistDomain}</strong>{getMessage('includesAllSubdomains')}
               </p>
             )}
           </div>
@@ -297,7 +269,7 @@ const PrivacyModule: React.FC = () => {
             <button className="btn btn-secondary" onClick={() => setShowAddForm(false)}>
               {getMessage('cancel')}
             </button>
-            <button className="btn btn-primary" onClick={handleAdd} disabled={!extractedDomain}>
+            <button className="btn btn-primary" onClick={handleAdd} disabled={!blacklistDomain}>
               {getMessage('add')}
             </button>
           </div>
@@ -306,25 +278,36 @@ const PrivacyModule: React.FC = () => {
 
       {/* Confirmation Modal */}
       {isConfirming && (
-        <div className="modal-overlay" onClick={cancelConfirm}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">{getMessage('confirm')}</h3>
-            <div className="modal-content">
-              {getMessage(
-                deleteExisting ? 'confirmAddBlacklist' : 'confirmAddBlacklistNoDelete',
-                pendingDomain
-              )}
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={cancelConfirm}>
-                {getMessage('cancel')}
-              </button>
-              <button className="btn btn-danger" onClick={executeAdd}>
-                {getMessage('confirmButton')}
-              </button>
-            </div>
+        <ConfirmDialog
+          title={getMessage('confirm')}
+          confirmLabel={getMessage('confirmButton')}
+          onCancel={cancelConfirm}
+          onConfirm={executeAdd}
+        >
+          <div className="modal-content">
+            {getMessage(
+              deleteExisting ? 'confirmAddBlacklist' : 'confirmAddBlacklistNoDelete',
+              pendingDomain
+            )}
           </div>
-        </div>
+          {/* The destructive option lives next to the button that acts on it. */}
+          <label className="checkbox-wrapper modal-option">
+            <input
+              type="checkbox"
+              className="checkbox-input"
+              checked={deleteExisting}
+              onChange={(e) => setDeleteExisting(e.target.checked)}
+            />
+            <span className={`checkbox ${deleteExisting ? 'checked' : ''}`} aria-hidden="true">
+              {deleteExisting && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </span>
+            <span className="checkbox-label">{getMessage('alsoDeleteExistingHistory')}</span>
+          </label>
+        </ConfirmDialog>
       )}
 
       {/* Blacklist */}
@@ -345,19 +328,19 @@ const PrivacyModule: React.FC = () => {
               <div key={entry.id} className="blacklist-item">
                 <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
                   <label className="checkbox-wrapper" style={{ flex: 1 }}>
-                    <div className={`checkbox ${entry.enabled ? 'checked' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="checkbox-input"
+                      checked={entry.enabled}
+                      onChange={() => handleToggle(entry.id, entry.enabled)}
+                    />
+                    <span className={`checkbox ${entry.enabled ? 'checked' : ''}`} aria-hidden="true">
                       {entry.enabled && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={entry.enabled}
-                      onChange={() => handleToggle(entry.id, entry.enabled)}
-                      style={{ display: 'none' }}
-                    />
+                    </span>
                     <span className="blacklist-pattern" style={{ 
                       opacity: entry.enabled ? 1 : 0.5,
                       textDecoration: entry.enabled ? 'none' : 'line-through'
@@ -369,6 +352,7 @@ const PrivacyModule: React.FC = () => {
                 <button
                   className="btn btn-sm btn-danger"
                   onClick={() => handleRemove(entry.id)}
+                  aria-label={getMessage('removeFromBlacklistLabel', entry.pattern)}
                   style={{ padding: '4px 8px' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -387,11 +371,8 @@ const PrivacyModule: React.FC = () => {
         <h3 className="card-title">
           {getMessage('favorites')} ({favorites.length})
         </h3>
-        <div className="alert alert-info" style={{ marginBottom: '12px' }}>
-          <p style={{ margin: 0, fontSize: '12px' }}>
-            {getMessage('favoritesDescription')}
-          </p>
-        </div>
+        {/* Explanatory copy, not a warning - a full alert block over-weights it. */}
+        <p className="card-hint">{getMessage('favoritesDescription')}</p>
 
         {currentTab?.url && !currentTab.url.startsWith('chrome://') && (
           <button
@@ -408,15 +389,15 @@ const PrivacyModule: React.FC = () => {
             type="text"
             className="input"
             placeholder={getMessage('enterDomainForFavorites')}
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
+            value={newFavoriteUrl}
+            onChange={(e) => setNewFavoriteUrl(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddFavorite(); }}
           />
         </div>
         <button
           className="btn btn-primary btn-block"
           onClick={handleAddFavorite}
-          disabled={!extractedDomain}
+          disabled={!favoriteDomain}
           style={{ marginBottom: '12px' }}
         >
           ★ {getMessage('addFavorite')}
@@ -437,6 +418,7 @@ const PrivacyModule: React.FC = () => {
                 <button
                   className="btn btn-sm btn-danger"
                   onClick={() => handleRemoveFavorite(domain)}
+                  aria-label={getMessage('removeFromFavoritesLabel', domain)}
                   style={{ padding: '4px 8px' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -450,10 +432,11 @@ const PrivacyModule: React.FC = () => {
         )}
       </div>
 
-      {/* Pattern Examples */}
-      <div className="card" style={{ marginTop: '16px' }}>
-        <h3 className="card-title">{getMessage('usageInstructions')}</h3>
-        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+      {/* Pattern Examples - reference material, collapsed so it does not
+          push the actual controls off the first screen. */}
+      <details className="disclosure">
+        <summary className="disclosure-summary">{getMessage('usageInstructions')}</summary>
+        <div className="disclosure-body">
           <p style={{ marginBottom: '8px' }}>
             {getMessage('autoExtractDescription')}
           </p>
@@ -464,7 +447,7 @@ const PrivacyModule: React.FC = () => {
             {getMessage('autoMatchDescription')}: <code>example.com</code>、<code>www.example.com</code>、<code>sub.example.com</code>
           </p>
         </div>
-      </div>
+      </details>
     </div>
   );
 };

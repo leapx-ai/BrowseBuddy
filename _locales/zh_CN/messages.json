@@ -105,6 +105,44 @@
       }
     }
   },
+  "heatmapLess": {
+    "message": "少",
+    "description": "Low end of the calendar heatmap colour scale"
+  },
+  "heatmapMore": {
+    "message": "多",
+    "description": "High end of the calendar heatmap colour scale"
+  },
+  "removeFromBlacklistLabel": {
+    "message": "从黑名单移除 $1$",
+    "description": "Accessible label for the blacklist remove icon button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "removeFromFavoritesLabel": {
+    "message": "从收藏移除 $1$",
+    "description": "Accessible label for the favorites remove icon button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "andMoreRecords": {
+    "message": "还有 $count$ 条记录",
+    "description": "Truncation hint under the delete preview list",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "980"
+      }
+    }
+  },
   "deleteSuccess": {
     "message": "已删除 $1$ 条记录",
     "description": "Delete success message",
@@ -485,17 +523,21 @@
     "message": "快速操作",
     "description": "Quick actions section"
   },
+  "quickActionsHint": {
+    "message": "点击填入日期范围，再用上方「预览」确认删除",
+    "description": "Explains that quick action buttons only prefill the date range"
+  },
   "deleteYesterday": {
-    "message": "删除昨天",
-    "description": "Delete yesterday's history"
+    "message": "昨天",
+    "description": "Prefill yesterday's date range"
   },
   "deleteLast7Days": {
-    "message": "删除最近7天",
-    "description": "Delete last 7 days history"
+    "message": "最近7天",
+    "description": "Prefill last 7 days date range"
   },
   "deleteLast30Days": {
-    "message": "删除最近30天",
-    "description": "Delete last 30 days history"
+    "message": "最近30天",
+    "description": "Prefill last 30 days date range"
   },
   "domainsVisited": {
     "message": "访问域名数",

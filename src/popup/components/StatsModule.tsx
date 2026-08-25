@@ -137,13 +137,12 @@ const StatsModule: React.FC = () => {
   return (
     <div>
       {/* Time range switcher */}
-      <div className="segmented" style={{ marginBottom: '12px', width: '100%', justifyContent: 'space-between' }}>
+      <div className="segmented">
         {RANGE_OPTIONS.map(opt => (
           <button
             key={opt.key}
             className={`segmented-item ${range === opt.key ? 'active' : ''}`}
             onClick={() => setRange(opt.key)}
-            style={{ flex: 1 }}
           >
             {getMessage(`range_${opt.key}`)}
           </button>

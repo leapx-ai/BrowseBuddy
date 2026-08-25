@@ -10,7 +10,8 @@ import PrivacyModule from './components/PrivacyModule';
 export type TabType = 'delete' | 'view' | 'stats' | 'privacy';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('privacy');
+  // Browsing history is the high-frequency task; blacklist setup is a one-off.
+  const [activeTab, setActiveTab] = useState<TabType>('view');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -91,6 +92,7 @@ const App: React.FC = () => {
         <button
           className="btn btn-sm btn-secondary"
           onClick={() => chrome.runtime.openOptionsPage?.()}
+          aria-label={getMessage('settings')}
           title={getMessage('settings')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

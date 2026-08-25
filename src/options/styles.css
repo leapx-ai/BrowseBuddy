@@ -16,7 +16,8 @@
   
   --text-primary: #eaeaea;
   --text-secondary: #a0a0b0;
-  --text-muted: #6b6b7b;
+  /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1). */
+  --text-muted: #9a9aab;
   
   --border-color: #2d2d4a;
   --hover-bg: #2a2a4a;
@@ -173,6 +174,13 @@ body {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* The tinted shadow above is too faint to serve as a keyboard focus indicator. */
+.form-input:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
 }
 
 .form-select {

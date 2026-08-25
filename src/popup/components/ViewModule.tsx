@@ -317,27 +317,27 @@ const ViewModule: React.FC = () => {
       )}
 
       {/* View Mode Tabs */}
-      <div className="delete-tabs">
+      <div className="segmented">
         <button
-          className={`delete-tab ${viewMode === 'list' ? 'active' : ''}`}
+          className={`segmented-item ${viewMode === 'list' ? 'active' : ''}`}
           onClick={() => setViewMode('list')}
         >
           {getMessage('listView')}
         </button>
         <button
-          className={`delete-tab ${viewMode === 'date' ? 'active' : ''}`}
+          className={`segmented-item ${viewMode === 'date' ? 'active' : ''}`}
           onClick={() => setViewMode('date')}
         >
           {getMessage('groupByDate')}
         </button>
         <button
-          className={`delete-tab ${viewMode === 'domain' ? 'active' : ''}`}
+          className={`segmented-item ${viewMode === 'domain' ? 'active' : ''}`}
           onClick={() => setViewMode('domain')}
         >
           {getMessage('groupByDomain')}
         </button>
         <button
-          className={`delete-tab ${viewMode === 'calendar' ? 'active' : ''}`}
+          className={`segmented-item ${viewMode === 'calendar' ? 'active' : ''}`}
           onClick={() => setViewMode('calendar')}
         >
           {getMessage('calendarView')}
@@ -420,7 +420,15 @@ const CalendarView: React.FC<{
     cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  // Local calendar date - toISOString() would resolve to the UTC day and mark
+  // the wrong cell as "today" for any non-UTC timezone.
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  const heatColor = (count: number) =>
+    count > 0
+      ? `rgba(74, 158, 89, ${0.25 + 0.75 * (count / maxCount)})`
+      : 'var(--bg-tertiary)';
 
   // On the very first load we have no data to render, so show a spinner.
   // Month switches keep the previous grid on screen (faded) until the new
@@ -447,23 +455,35 @@ const CalendarView: React.FC<{
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;
           const count = data[date] || 0;
-          const intensity = count > 0 ? 0.25 + 0.75 * (count / maxCount) : 0;
           const isSelected = date === selectedDay;
           const isToday = date === today;
           return (
-            <div
+            <button
               key={date}
+              type="button"
               className={`calendar-cell ${isSelected ? 'calendar-cell-selected' : ''} ${isToday ? 'calendar-cell-today' : ''}`}
-              style={{
-                background: count > 0 ? `rgba(74, 158, 89, ${intensity})` : 'var(--bg-tertiary)',
-              }}
+              style={{ background: heatColor(count) }}
               title={`${date}: ${count} ${getMessage('visits')}`}
+              aria-label={`${date}: ${count} ${getMessage('visits')}`}
+              aria-pressed={isSelected}
               onClick={() => onSelectDay(date)}
             >
               {Number(date.slice(-2))}
-            </div>
+            </button>
           );
         })}
+      </div>
+      {/* Colour scale is meaningless without a key. */}
+      <div className="heatmap-legend">
+        <span>{getMessage('heatmapLess')}</span>
+        {[0, 0.25, 0.5, 0.75, 1].map((step) => (
+          <span
+            key={step}
+            className="heatmap-swatch"
+            style={{ background: heatColor(step * maxCount) }}
+          />
+        ))}
+        <span>{getMessage('heatmapMore')}</span>
       </div>
     </div>
   );
@@ -603,6 +623,8 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
         <button
           className={`fav-btn ${isFav ? 'fav-btn-active' : ''}`}
           onClick={handleToggleFav}
+          aria-pressed={isFav}
+          aria-label={isFav ? getMessage('removeFromFavorites') : getMessage('addToFavorites')}
           title={isFav ? getMessage('removeFromFavorites') : getMessage('addToFavorites')}
         >
           {isFav ? '★' : '☆'}

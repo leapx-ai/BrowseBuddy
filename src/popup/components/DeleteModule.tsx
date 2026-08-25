@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
-import { getMessage } from '../../utils/i18n';
+import { getMessage, formatDateTime } from '../../utils/i18n';
 import { deleteHistory, previewDelete, type DeleteOptions, type HistoryItem } from '../../utils/history';
 import { extractMainDomain } from '../../utils/blacklist';
+import ConfirmDialog from './ConfirmDialog';
 
 type DeleteType = 'date' | 'domain' | 'keyword';
+
+// How many preview rows to render before collapsing into a count.
+const PREVIEW_LIMIT = 20;
+
+// `<input type="date">` expects a local calendar date. toISOString() would shift
+// it by the UTC offset and pick the wrong day for most timezones.
+function toDateInputValue(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 
 const DeleteModule: React.FC = () => {
   const [deleteType, setDeleteType] = useState<DeleteType>('date');
@@ -89,24 +101,36 @@ const DeleteModule: React.FC = () => {
     setResult(null);
   };
 
+  // Prefills the date range only - deletion still goes through preview + confirm.
+  // `singleDay` targets just that one day instead of the range up to today.
+  const prefillLastDays = (days: number, singleDay = false) => {
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(from.getDate() - days);
+    setStartDate(toDateInputValue(from));
+    setEndDate(toDateInputValue(singleDay ? from : today));
+    setDeleteType('date');
+    clearResult();
+  };
+
   return (
     <div>
       {/* Delete Type Tabs */}
-      <div className="delete-tabs">
+      <div className="segmented">
         <button
-          className={`delete-tab ${deleteType === 'date' ? 'active' : ''}`}
+          className={`segmented-item ${deleteType === 'date' ? 'active' : ''}`}
           onClick={() => { setDeleteType('date'); clearResult(); }}
         >
           {getMessage('deleteByDate')}
         </button>
         <button
-          className={`delete-tab ${deleteType === 'domain' ? 'active' : ''}`}
+          className={`segmented-item ${deleteType === 'domain' ? 'active' : ''}`}
           onClick={() => { setDeleteType('domain'); clearResult(); }}
         >
           {getMessage('deleteByDomain')}
         </button>
         <button
-          className={`delete-tab ${deleteType === 'keyword' ? 'active' : ''}`}
+          className={`segmented-item ${deleteType === 'keyword' ? 'active' : ''}`}
           onClick={() => { setDeleteType('keyword'); clearResult(); }}
         >
           {getMessage('deleteByKeyword')}
@@ -121,6 +145,7 @@ const DeleteModule: React.FC = () => {
             className="btn btn-sm btn-secondary" 
             style={{ marginLeft: '10px' }}
             onClick={clearResult}
+            aria-label={getMessage('close')}
           >
             ✕
           </button>
@@ -204,47 +229,18 @@ const DeleteModule: React.FC = () => {
         </button>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - these only prefill the date range, they never delete. */}
       <div className="card">
         <h3 className="card-title">{getMessage('quickActions')}</h3>
+        <p className="card-hint">{getMessage('quickActionsHint')}</p>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              const today = new Date();
-              const yesterday = new Date(today);
-              yesterday.setDate(yesterday.getDate() - 1);
-              setStartDate(yesterday.toISOString().split('T')[0]);
-              setEndDate(yesterday.toISOString().split('T')[0]);
-              setDeleteType('date');
-            }}
-          >
+          <button className="btn btn-secondary btn-sm" onClick={() => prefillLastDays(1, true)}>
             {getMessage('deleteYesterday')}
           </button>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              const today = new Date();
-              const lastWeek = new Date(today);
-              lastWeek.setDate(lastWeek.getDate() - 7);
-              setStartDate(lastWeek.toISOString().split('T')[0]);
-              setEndDate(today.toISOString().split('T')[0]);
-              setDeleteType('date');
-            }}
-          >
+          <button className="btn btn-secondary btn-sm" onClick={() => prefillLastDays(7)}>
             {getMessage('deleteLast7Days')}
           </button>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              const today = new Date();
-              const lastMonth = new Date(today);
-              lastMonth.setMonth(lastMonth.getMonth() - 1);
-              setStartDate(lastMonth.toISOString().split('T')[0]);
-              setEndDate(today.toISOString().split('T')[0]);
-              setDeleteType('date');
-            }}
-          >
+          <button className="btn btn-secondary btn-sm" onClick={() => prefillLastDays(30)}>
             {getMessage('deleteLast30Days')}
           </button>
         </div>
@@ -252,33 +248,36 @@ const DeleteModule: React.FC = () => {
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">{getMessage('confirmDelete')}</h3>
-            <div className="modal-content">
-              {getMessage('recordsWillBeDeleted', previewItems.length.toString())}
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowConfirm(false)}
-              >
-                {getMessage('cancel')}
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="spinner" style={{ width: 16, height: 16 }} />
-                ) : (
-                  getMessage('delete')
-                )}
-              </button>
-            </div>
+        <ConfirmDialog
+          title={getMessage('confirmDelete')}
+          confirmLabel={getMessage('delete')}
+          isBusy={isLoading}
+          onCancel={() => setShowConfirm(false)}
+          onConfirm={handleDelete}
+        >
+          <div className="modal-content">
+            {getMessage('recordsWillBeDeleted', previewItems.length.toString())}
           </div>
-        </div>
+          {/* Show what is actually about to go - a count alone is not a preview. */}
+          {previewItems.length > 0 && (
+            <div className="preview-list">
+              {previewItems.slice(0, PREVIEW_LIMIT).map((item) => (
+                <div key={item.id} className="preview-item">
+                  <div className="history-title">{item.title || item.url}</div>
+                  <div className="history-url">{item.url}</div>
+                  {item.lastVisitTime && (
+                    <div className="history-time">{formatDateTime(item.lastVisitTime)}</div>
+                  )}
+                </div>
+              ))}
+              {previewItems.length > PREVIEW_LIMIT && (
+                <div className="preview-more">
+                  {getMessage('andMoreRecords', (previewItems.length - PREVIEW_LIMIT).toString())}
+                </div>
+              )}
+            </div>
+          )}
+        </ConfirmDialog>
       )}
     </div>
   );

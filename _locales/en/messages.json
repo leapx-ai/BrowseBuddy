@@ -105,6 +105,44 @@
       }
     }
   },
+  "heatmapLess": {
+    "message": "Less",
+    "description": "Low end of the calendar heatmap colour scale"
+  },
+  "heatmapMore": {
+    "message": "More",
+    "description": "High end of the calendar heatmap colour scale"
+  },
+  "removeFromBlacklistLabel": {
+    "message": "Remove $1$ from blacklist",
+    "description": "Accessible label for the blacklist remove icon button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "removeFromFavoritesLabel": {
+    "message": "Remove $1$ from favorites",
+    "description": "Accessible label for the favorites remove icon button",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "andMoreRecords": {
+    "message": "and $count$ more records",
+    "description": "Truncation hint under the delete preview list",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "980"
+      }
+    }
+  },
   "deleteSuccess": {
     "message": "$1$ records deleted",
     "description": "Delete success message",
@@ -485,17 +523,21 @@
     "message": "Quick Actions",
     "description": "Quick actions section"
   },
+  "quickActionsHint": {
+    "message": "Fills the date range above - then use Preview to confirm",
+    "description": "Explains that quick action buttons only prefill the date range"
+  },
   "deleteYesterday": {
-    "message": "Delete Yesterday",
-    "description": "Delete yesterday's history"
+    "message": "Yesterday",
+    "description": "Prefill yesterday's date range"
   },
   "deleteLast7Days": {
-    "message": "Delete Last 7 Days",
-    "description": "Delete last 7 days history"
+    "message": "Last 7 Days",
+    "description": "Prefill last 7 days date range"
   },
   "deleteLast30Days": {
-    "message": "Delete Last 30 Days",
-    "description": "Delete last 30 days history"
+    "message": "Last 30 Days",
+    "description": "Prefill last 30 days date range"
   },
   "domainsVisited": {
     "message": "Domains Visited",
