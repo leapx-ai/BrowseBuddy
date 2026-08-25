@@ -543,6 +543,14 @@
     "message": "Domains Visited",
     "description": "Domains visited stats label"
   },
+  "activeDays": {
+    "message": "Active Days",
+    "description": "Number of days in range that have at least one visit"
+  },
+  "avgPerActiveDay": {
+    "message": "Avg / Active Day",
+    "description": "Average visits per day, counting only days with visits"
+  },
   "24HourDistribution": {
     "message": "24-Hour Distribution",
     "description": "24 hour time distribution label"

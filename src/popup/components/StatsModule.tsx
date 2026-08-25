@@ -62,6 +62,62 @@ const ChartBar: React.FC<{
 
 type RangeKey = 'all' | '7' | '30' | '90';
 
+// Ranked list of domains with a bar. Both leaderboards on this screen were the
+// same 10-row block spelled out twice; at ~34px a row that is 680px of scrolling
+// before the charts. Five rows fit the panel, the rest is one click away.
+const RANK_LIMIT = 5;
+
+const RankedDomains: React.FC<{
+  rows: { domain: string; value: number; ratio: number; display: string }[];
+  accent: string;
+  secondaryFill?: boolean;
+}> = ({ rows, accent, secondaryFill }) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? rows : rows.slice(0, RANK_LIMIT);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+      {visible.map((row, index) => (
+        <div key={row.domain} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <span style={{
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: index < 3 ? accent : 'var(--bg-tertiary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            flexShrink: 0,
+          }}>
+            {index + 1}
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {row.domain}
+            </div>
+            <div className="progress-bar" style={{ marginTop: '3px', height: '6px' }}>
+              <div
+                className={`progress-fill ${secondaryFill ? 'progress-fill-secondary' : ''}`}
+                style={{ width: `${row.ratio * 100}%` }}
+              />
+            </div>
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', flexShrink: 0 }}>
+            {row.display}
+          </span>
+        </div>
+      ))}
+      {rows.length > RANK_LIMIT && (
+        <button className="list-expander" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+          {expanded ? getMessage('collapseList') : getMessage('showAllCount', String(rows.length))}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const RANGE_OPTIONS: { key: RangeKey; days?: number }[] = [
   { key: 'all' },
   { key: '7', days: 7 },
@@ -138,6 +194,19 @@ const StatsModule: React.FC = () => {
     );
   }
 
+  const activeDays = stats.dailyStats.filter((d: DailyStats) => d.count > 0).length;
+  const avgPerActiveDay = Math.round(stats.totalRecords / Math.max(activeDays, 1));
+
+  const maxDuration = Math.max(...Object.values(durations), 1);
+  const durationRows = Object.entries(durations)
+    .sort((a, b) => b[1] - a[1])
+    .map(([domain, ms]) => ({
+      domain,
+      value: ms,
+      ratio: ms / maxDuration,
+      display: formatDuration(Math.round(ms / 1000)),
+    }));
+
   return (
     <div>
       {/* Time range switcher */}
@@ -163,48 +232,38 @@ const StatsModule: React.FC = () => {
           <div className="stat-value">{formatNumber(stats.totalDomains)}</div>
           <div className="stat-label">{getMessage('domainsVisited')}</div>
         </div>
+        {/*
+          Totals alone do not say whether the range was one heavy day or spread
+          out. Active days and the per-active-day average come out of dailyStats,
+          which is already computed - averaging over calendar days instead would
+          be diluted by every day the browser was not used.
+        */}
+        <div className="stat-card">
+          <div className="stat-value">{formatNumber(activeDays)}</div>
+          <div className="stat-label">{getMessage('activeDays')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{formatNumber(avgPerActiveDay)}</div>
+          <div className="stat-label">{getMessage('avgPerActiveDay')}</div>
+        </div>
       </div>
 
       {/* Top Sites */}
       <div className="card">
         <h3 className="card-title">{getMessage('topSites')}</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {stats.topSites.slice(0, 10).map((site: DomainStats, index: number) => (
-            <div key={site.domain} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ 
-                width: '24px', 
-                height: '24px', 
-                borderRadius: '50%', 
-                background: index < 3 ? 'var(--primary-color)' : 'var(--bg-tertiary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}>
-                {index + 1}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {site.domain}
-                </div>
-                <div className="progress-bar" style={{ marginTop: '4px' }}>
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${(site.count / Math.max(stats.topSites[0].count, 1)) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                {formatNumber(site.count)}
-              </span>
-            </div>
-          ))}
-        </div>
+        <RankedDomains
+          accent="var(--primary-color)"
+          rows={stats.topSites.map((site: DomainStats) => ({
+            domain: site.domain,
+            value: site.count,
+            ratio: site.count / Math.max(stats.topSites[0].count, 1),
+            display: formatNumber(site.count),
+          }))}
+        />
       </div>
 
       {/* Top Sites by Dwell Time */}
-      {Object.keys(durations).length > 0 && (
+      {durationRows.length > 0 && (
         <div className="card">
           <h3 className="card-title">
             {getMessage('topSitesByTime')}
@@ -214,42 +273,7 @@ const StatsModule: React.FC = () => {
               </span>
             )}
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {Object.entries(durations)
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 10)
-              .map(([domain, ms], index) => (
-                <div key={domain} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: index < 3 ? 'var(--secondary-color)' : 'var(--bg-tertiary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {index + 1}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {domain}
-                    </div>
-                    <div className="progress-bar" style={{ marginTop: '4px' }}>
-                      <div
-                        className="progress-fill progress-fill-secondary"
-                        style={{ width: `${(ms / Math.max(...Object.values(durations), 1)) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    {formatDuration(Math.round(ms / 1000))}
-                  </span>
-                </div>
-              ))}
-          </div>
+          <RankedDomains accent="var(--secondary-color)" secondaryFill rows={durationRows} />
         </div>
       )}
 
@@ -266,22 +290,30 @@ const StatsModule: React.FC = () => {
                 heightPct={height}
                 color="var(--primary-color)"
                 value={formatNumber(hour.count)}
-                label={getMessage('hourLabel', `${hour.hour}:00`) }
+                label={getMessage('hourLabel', `${hour.hour}:00` )}
                 subLabel={getMessage('visitsInHour')}
                 showAxis={hour.hour % 6 === 0 ? `${hour.hour}` : undefined}
               />
             );
           })}
         </div>
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
-          {getMessage('timeDistributionDesc')}
-        </div>
       </div>
 
       {/* Daily Trend (Last 30 days) */}
       {stats.dailyStats.length > 0 && (
         <div className="card">
-          <h3 className="card-title">{getMessage('dailyTrend')}</h3>
+          {/*
+            The window used to be spelled out in a centred caption under the
+            chart; as part of the title it is the same fact in ~35px less space,
+            and the axis labels plus the hover tooltip already carry the rest of
+            what the caption repeated.
+          */}
+          <h3 className="card-title">
+            {getMessage('dailyTrend')}
+            <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)', marginLeft: '8px' }}>
+              {getMessage('range_30')}
+            </span>
+          </h3>
           <div style={{ display: 'flex', alignItems: 'flex-end', height: '100px', gap: '2px' }}>
             {stats.dailyStats.slice(-30).map((day: DailyStats, index: number, arr: DailyStats[]) => {
               const maxCount = Math.max(...stats.dailyStats.map((d: DailyStats) => d.count), 1);
@@ -308,29 +340,26 @@ const StatsModule: React.FC = () => {
               );
             })}
           </div>
-          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
-            {getMessage('dailyTrendDesc')}
-          </div>
         </div>
       )}
 
-      {/* Export Actions */}
-      <div className="card">
-        <h3 className="card-title">{getMessage('export')}</h3>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            {getMessage('exportCSV')}
-          </button>
-          <button className="btn btn-secondary btn-sm" onClick={handleExportHTML}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            {getMessage('exportHTML')}
-          </button>
-        </div>
+      {/*
+        Two buttons do not need a card and a heading to announce themselves - the
+        icons and labels already say "download". That wrapper was ~50px.
+      */}
+      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          {getMessage('exportCSV')}
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={handleExportHTML}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          {getMessage('exportHTML')}
+        </button>
       </div>
     </div>
   );

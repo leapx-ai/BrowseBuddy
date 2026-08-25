@@ -543,6 +543,14 @@
     "message": "访问域名数",
     "description": "Domains visited stats label"
   },
+  "activeDays": {
+    "message": "活跃天数",
+    "description": "Number of days in range that have at least one visit"
+  },
+  "avgPerActiveDay": {
+    "message": "活跃日均",
+    "description": "Average visits per day, counting only days with visits"
+  },
   "24HourDistribution": {
     "message": "24小时分布",
     "description": "24 hour time distribution label"
