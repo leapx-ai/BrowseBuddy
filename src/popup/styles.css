@@ -74,23 +74,38 @@
 }
 
 /* Light Theme */
+/*
+ * Light theme. Two things were wrong with the previous values.
+ *
+ * They were Bootstrap's neutral greys, so light mode looked like a different
+ * product than the hue-240 dark mode. These carry the same hue at low
+ * saturation, which is what makes the two themes read as one design.
+ *
+ * And the surface ladder had collapsed: the page was #f8f9fa against a #ffffff
+ * list (3% apart) and --bg-tertiary was #f1f3f5 against the same white (2%
+ * apart), so panels did not lift off the page and the sticky day band was
+ * almost invisible - exactly the separation this list depends on.
+ */
 [data-theme="light"] {
-  --bg-primary: #f8f9fa;
+  --bg-primary: #f1f2f8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f3f5;
+  --bg-tertiary: #e7e9f4;
   --bg-card: #ffffff;
-  
-  --text-primary: #212529;
-  --text-secondary: #495057;
-  --text-muted: #6c757d;
-  
-  --border-color: #dee2e6;
-  --hover-bg: #e9ecef;
-  --bg-tertiary-hover: #e2e6ea;
-  
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  --text-primary: #1f2033;
+  --text-secondary: #4b4d63;
+  /* Was #6c757d, which reached only ~4.45:1 on the page background (AA needs
+     4.5:1). The dark theme's muted was fixed for this earlier; this one had not
+     been checked. Now ~5.7:1 on the page, ~4.7:1 at its worst surface. */
+  --text-muted: #5c5e75;
+
+  --border-color: #d5d8e8;
+  --hover-bg: #e9ebf5;
+  --bg-tertiary-hover: #dbdeee;
+
+  --shadow-sm: 0 1px 2px rgba(31, 32, 51, 0.06);
+  --shadow-md: 0 4px 6px rgba(31, 32, 51, 0.1);
+  --shadow-lg: 0 10px 15px rgba(31, 32, 51, 0.12);
 }
 
 [data-theme="light"] .alert-info {
