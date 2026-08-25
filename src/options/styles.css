@@ -445,7 +445,9 @@ body {
 .storage-bar {
   width: 100%;
   height: 12px;
-  background: var(--bg-secondary);
+  /* Tertiary, not secondary - the unfilled track has to stay visible against
+     a white card in light mode. */
+  background: var(--bg-tertiary);
   border-radius: 6px;
   overflow: hidden;
   margin-top: 12px;

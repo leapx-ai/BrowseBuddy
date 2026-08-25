@@ -320,12 +320,18 @@ body {
   gap: 8px;
 }
 
+/*
+ * Recessed surfaces carry a border rather than relying on a fill difference.
+ * In light mode --bg-secondary and --bg-card are both white, so a fill-only
+ * treatment made rows nested inside a card disappear entirely.
+ */
 .history-item {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
   background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.2s;
@@ -411,6 +417,7 @@ body {
 
 .stat-card {
   background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
@@ -432,7 +439,9 @@ body {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: var(--bg-secondary);
+  /* Tertiary, not secondary - the unfilled track has to stay visible against
+     a white card in light mode. */
+  background: var(--bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -571,6 +580,7 @@ body {
   justify-content: space-between;
   padding: 10px;
   background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   margin-bottom: 8px;
 }
