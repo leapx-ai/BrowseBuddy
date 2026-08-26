@@ -134,6 +134,17 @@
 }
 
 /*
+ * Control density, as the two surfaces set it. The shared component layer sizes
+ * buttons, fields and segmented items from --control-h / --control-h-sm, so the
+ * options page's roomier scale is these two values and nothing else - switching
+ * this is how you check that claim rather than trusting it.
+ */
+[data-density="roomy"] {
+  --control-h: 42px;
+  --control-h-sm: 34px;
+}
+
+/*
  * Hover and active states cannot be shown side by side without faking them.
  * These re-apply the same declarations the real :hover rules use, so a specimen
  * marked "hover" is a simulation - the real interaction still has to be checked
@@ -154,31 +165,41 @@
 }
 
 /*
- * Direction A is the shipping token set - "柔和中性" was chosen and folded into
- * popup/styles.css, so it needs no overrides here and serves as the baseline.
+ * Direction C "高对比" is the shipping token set - it was chosen and folded into
+ * styles/tokens.css, so it needs no overrides here and serves as the baseline.
  */
 
-/* Direction C "高对比": tighter, flatter, edges do the separating. Kept as the
-   standing alternative to compare against when a surface looks unclear. */
-[data-direction="contrast"] {
-  --radius: 2px;
-  --space-2: 6px;
-  --space-3: 10px;
-  --border-color: #4d4d75;
-  --text-secondary: #b4b4c6;
-  --text-muted: #a8a8bd;
-  --bg-secondary: #1d1d33;
-  --bg-card: #1d1d33;
-  --bg-tertiary: #2b2b4a;
+/* Direction A "柔和中性": the previous shipping set, kept as the standing
+   alternative to compare against when an edge looks too hard or a screen too
+   tight. Softer edges need a longer surface ladder to keep panels legible without
+   the border, which is why this one restores the fourth surface. */
+[data-direction="soft"] {
+  --radius: 8px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --space-6: 24px;
+  --border-color: #34344f;
+  --text-secondary: #a0a0b0;
+  --text-muted: #a3a3b5;
+  --bg-secondary: #23233c;
+  --bg-card: #28284c;
+  --bg-tertiary: #313154;
+  --hover-bg: #2a2a45;
+  --bg-tertiary-hover: #3a3a60;
 }
 
-[data-direction="contrast"][data-theme="light"],
-[data-direction="contrast"] [data-theme="light"] {
-  --border-color: #b9bed4;
-  --text-secondary: #3b3d52;
-  --text-muted: #4c4e66;
-  --bg-primary: #eeeff6;
+[data-direction="soft"][data-theme="light"],
+[data-direction="soft"] [data-theme="light"] {
+  --border-color: #e0e3ef;
+  --text-secondary: #4b4d63;
+  --text-muted: #5c5e75;
+  --bg-primary: #f5f6fb;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --bg-tertiary: #e0e3f0;
+  --bg-tertiary: #edeef8;
+  --bg-tertiary-hover: #dbdeee;
+  /* The soft direction's border cannot lift a white card off a near-white page,
+     so in that direction this theme pays for a shadow. */
+  --shadow-card: var(--shadow-sm);
 }

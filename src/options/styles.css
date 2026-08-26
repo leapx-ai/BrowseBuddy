@@ -1,52 +1,58 @@
 /* Options Page Styles */
 
-@import "../styles/tokens.css";
+@import "../styles/base.css";
 
 /*
  * The options page fills a browser tab rather than a 400px popup, so it starts
  * one step darker than the popup and puts --bg-tertiary below --bg-card, keeping
- * inset controls recessed inside a card. Everything else - radius, spacing, type,
- * motion, the light theme - comes from the shared tokens; this file must never
- * redeclare those again.
+ * inset controls recessed inside a card. Under the "高对比" direction the shared
+ * ladder is shorter - --bg-secondary and --bg-card are one value - so this page's
+ * copy of it is too: the page, the panel, and one step below the panel for inset
+ * controls. What separates the panel from the page is the border, not a lightness
+ * step.
+ *
+ * These are per-theme, and the selectors carry the theme condition rather than
+ * relying on which rule comes last. They used to be one unconditional `:root`
+ * block holding the dark values, which has the same specificity as the
+ * `[data-theme="light"]` block in tokens.css but sits after it - so it won, and
+ * the light theme on this page got dark surfaces with light-theme text on top of
+ * them: #2b2d3f body copy on a #101020 page. `:not([data-theme="light"])` also
+ * covers the first paint, before applyTheme() has set the attribute at all.
+ *
+ * Everything else - radius, spacing, type, motion, the palette itself - comes
+ * from the shared tokens; this file must never redeclare those again.
  */
+:root:not([data-theme="light"]) {
+  --bg-primary: #101020;
+  --bg-secondary: #1d1d33;
+  --bg-card: #1d1d33;
+  --bg-tertiary: #17172a;
+  --bg-tertiary-hover: #22223c;
+}
+
+/* Same three steps in the same order as the dark set - page darkest, panel
+   lightest, inset controls between - which is what keeps the two themes reading
+   as one page rather than two. */
+:root[data-theme="light"] {
+  --bg-primary: #eaecf4;
+  --bg-secondary: #fbfbfe;
+  --bg-card: #fbfbfe;
+  --bg-tertiary: #eef0f7;
+  --bg-tertiary-hover: #e4e7f1;
+}
+
+/* The roomy surface: the shared controls are scaled up here by raising the two
+   height tokens, not by redeclaring .btn and .form-input with their own padding,
+   which is what made the same button 40px in the popup and 44px here. */
 :root {
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #22223a;
-  --bg-card: #252547;
-}
-
-[data-theme="light"] .alert-info {
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #4338ca;
-}
-
-[data-theme="light"] .alert-success {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #15803d;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  --control-h: 42px;
+  --control-h-sm: 34px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 14px;
+  /* The one place this surface differs from the shared body: longer lines in a
+     full tab need more leading than a 400px popup. */
   line-height: 1.6;
-}
-
-/* The popup has had this since the token pass; the options page never did, so
-   only inputs showed a keyboard focus ring and every button showed none. */
-:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
 }
 
 .options-container {
@@ -87,7 +93,7 @@ body {
 
 .options-title p {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 /* Main Content */
@@ -99,21 +105,21 @@ body {
 .section {
   background: var(--bg-card);
   border-radius: var(--radius);
-  padding: 24px 28px;
-  margin-bottom: 20px;
+  padding: var(--space-6) var(--space-6);
+  margin-bottom: var(--space-6);
   border: 1px solid var(--border-color);
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 
+/* Same role as the popup's .card-title - the label of the panel it heads - so it
+   gets the same weight and size. It used to be uppercase, letter-spaced and
+   muted, which is a different, quieter tier than the popup uses for the same job.
+   Uppercasing is also lost on Chinese, which is what these headings mostly are. */
 .section-title {
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 600;
-  margin-bottom: 8px;
-  padding-bottom: 0;
-  border-bottom: none;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3);
+  color: var(--text-primary);
 }
 
 /* Form Elements */
@@ -123,47 +129,26 @@ body {
 
 .form-label {
   display: block;
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   margin-bottom: 8px;
   color: var(--text-primary);
 }
 
 .form-description {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
+/*
+ * The controls themselves are shared - see styles/base.css. What is local is how
+ * wide they are allowed to get: a full-width text field in a 900px column is a
+ * 900px text field, which reads as a mistake.
+ */
 .form-input,
 .form-select {
-  width: 100%;
   max-width: 400px;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* The tinted shadow above is too faint to serve as a keyboard focus indicator. */
-.form-input:focus-visible,
-.form-select:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 1px;
-}
-
-.form-select {
-  cursor: pointer;
 }
 
 /* Toggle Switch */
@@ -184,13 +169,13 @@ body {
 }
 
 .toggle-label {
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .toggle-description {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -230,85 +215,18 @@ body {
   transform: translateX(24px);
 }
 
-/* Buttons */
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-tertiary-hover);
-}
-
-.btn-danger {
-  background: var(--danger-color);
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #dc2626;
-}
-
-/* Segmented control */
+/* Buttons and the segmented control are shared - see styles/base.css. The
+   options page only differs in that its segmented control hugs its content
+   instead of filling the column. */
 .segmented {
   display: inline-flex;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 4px;
-  gap: 4px;
+  width: auto;
 }
 
 .segmented-item {
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease);
-}
-
-.segmented-item:hover {
-  color: var(--text-primary);
-}
-
-.segmented-item.active {
-  background: var(--primary-color);
-  color: white;
+  flex: 0 0 auto;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
 }
 
 /* Toast */
@@ -319,7 +237,7 @@ body {
   transform: translateX(-50%);
   padding: 12px 20px;
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   box-shadow: var(--shadow-lg);
   z-index: 1000;
@@ -363,7 +281,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -432,7 +350,8 @@ body {
 
 /* The single call to action on the welcome screen. */
 .btn.is-hero {
-  padding: 16px 48px;
+  min-height: 56px;
+  padding: 0 48px;
   font-size: var(--text-lg);
 }
 
@@ -443,7 +362,7 @@ body {
 }
 
 .welcome-subtitle {
-  font-size: 18px;
+  font-size: var(--text-xl);
   color: var(--text-secondary);
   margin-bottom: 32px;
 }
@@ -460,6 +379,7 @@ body {
   padding: 20px;
   border-radius: var(--radius);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
 }
 
 .welcome-feature-icon {
@@ -476,13 +396,13 @@ body {
 }
 
 .welcome-feature-title {
-  font-size: 16px;
+  font-size: var(--text-lg);
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .welcome-feature-desc {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -513,7 +433,7 @@ body {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -522,27 +442,16 @@ body {
   padding: 8px 32px 32px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 /* Alert */
+/* Shared - see styles/base.css. In a full tab an alert is a block of prose
+   rather than a one-line notice, so only its scale is set here. */
 .alert {
-  padding: 16px 20px;
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.alert-info {
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
-}
-
-.alert-success {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #86efac;
+  padding: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-md);
 }
 
 /* Responsive */

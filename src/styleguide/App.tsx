@@ -15,8 +15,16 @@ import './styleguide.css';
 import { Icon } from '../popup/components/Icon';
 
 const DIRECTIONS = [
-  { id: 'density', label: 'A 柔和中性（已采纳，当前令牌）' },
-  { id: 'contrast', label: 'C 高对比（备选参照）' },
+  { id: 'contrast', label: 'C 高对比（已采纳，当前令牌）' },
+  { id: 'soft', label: 'A 柔和中性（前一版，备选参照）' },
+];
+
+// The two surfaces' control scales. Both are the same rules in styles/base.css
+// with --control-h / --control-h-sm set differently, which is the whole of the
+// difference between a popup button and a settings button now.
+const DENSITIES = [
+  { id: 'compact', label: '弹窗（36 / 28px）' },
+  { id: 'roomy', label: '设置页（42 / 34px）' },
 ];
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -263,14 +271,19 @@ const Gallery: React.FC = () => (
     </Section>
 
     <Section title="确认弹窗（就地展示，未套 overlay）">
-      <div className="modal-content" style={{ position: 'static', transform: 'none' }}>
+      {/* The box is .modal. This specimen used to put the dialog's chrome on
+          .modal-content, which is the body-copy class - so it showed no card, no
+          border and no padding, i.e. not the component whose proportions this
+          page exists to judge. */}
+      <div className="modal">
         <h3 className="modal-title">删除 128 条记录？</h3>
+        <div className="modal-content">此操作不可撤销。</div>
         <div className="preview-list">
           <div className="preview-item">github.com/user/repo</div>
           <div className="preview-item">news.ycombinator.com</div>
           <div className="preview-more">另有 126 条</div>
         </div>
-        <label className="checkbox-wrapper">
+        <label className="checkbox-wrapper modal-option">
           <input type="checkbox" className="checkbox-input" />
           <span className="checkbox-label">同时加入黑名单</span>
         </label>
@@ -288,9 +301,10 @@ const Gallery: React.FC = () => (
 );
 
 export default function App() {
-  const [direction, setDirection] = useState('density');
+  const [direction, setDirection] = useState('contrast');
+  const [density, setDensity] = useState('compact');
   return (
-    <div className="sg-root" data-direction={direction}>
+    <div className="sg-root" data-direction={direction} data-density={density}>
       <div className="sg-bar">
         <h1>BrowseBuddy 组件总览</h1>
         <label>
@@ -303,11 +317,22 @@ export default function App() {
             ))}
           </select>
         </label>
+        <label>
+          控件密度
+          <select value={density} onChange={e => setDensity((e.target as HTMLSelectElement).value)}>
+            {DENSITIES.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <p className="sg-note">
-        左右两栏是同一批组件在深色与浅色下的表现，宽度与真实弹窗一致（400px）。切换风格方向只改
-        令牌，不改任何组件代码。标注「hover」的样本是用同名声明模拟出来的静态效果，真实交互仍需在
-        浏览器里确认。
+        左右两栏是同一批组件在深色与浅色下的表现，宽度与真实弹窗一致（400px）。按钮、输入框、分段
+        控件、提示条与加载态都来自 styles/base.css，弹窗与设置页共用同一份定义，两个页面的差别只是
+        上面的「控件密度」两个令牌。切换风格方向同样只改令牌，不改任何组件代码。标注「hover」的样本
+        是用同名声明模拟出来的静态效果，真实交互仍需在浏览器里确认。
       </p>
       <div className="sg-panels">
         <section className="sg-panel">

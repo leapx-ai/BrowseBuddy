@@ -17,61 +17,73 @@
   --warning-color: #f59e0b;
   
   /*
-   * Dark theme (default). All four surfaces share hue 240 (the primary colour's
-   * hue) and differ only in lightness, so stacking reads as depth rather than as
-   * a colour change. --bg-tertiary used to be #0f3460 - a 72%-saturated blue,
-   * which made .btn-secondary compete with .btn-primary for attention.
+   * Dark theme (default). All surfaces share hue 240 (the primary colour's hue)
+   * and differ only in lightness, so stacking reads as depth rather than as a
+   * colour change. --bg-tertiary used to be #0f3460 - a 72%-saturated blue, which
+   * made .btn-secondary compete with .btn-primary for attention.
    *
-   * The three raised surfaces were lifted one step in the "柔和中性" pass: softer
-   * edges need a slightly wider surface ladder to keep panels legible without
-   * relying on the border.
+   * "高对比" is the chosen direction, so the ladder is deliberately shorter than
+   * it was under "柔和中性": --bg-secondary and --bg-card are the same value. A
+   * panel is no longer told apart from the list inside it by a 5% lightness step
+   * that most screens swallow anyway - it is told apart by its border, which is
+   * now strong enough to do that job (2.06:1 against the surface, where the soft
+   * direction's was 1.28:1).
    */
   --bg-primary: #1a1a2e;
-  --bg-secondary: #23233c;
-  --bg-card: #28284c;
-  --bg-tertiary: #313154;
-  
+  --bg-secondary: #1d1d33;
+  --bg-card: #1d1d33;
+  --bg-tertiary: #2b2b4a;
+
   --text-primary: #eaeaea;
-  --text-secondary: #a0a0b0;
+  /* Both secondary tiers are brighter than the soft direction's #a0a0b0/#a3a3b5.
+     The point of this direction is that a tier is legible on its own rather than
+     rescued by the surface under it, so they are measured against the worst
+     surface they land on - --bg-tertiary, the day band and the secondary button:
+     8.06:1 on a card, 6.65:1 there. */
+  --text-secondary: #b4b4c6;
   /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1).
-     Raised again from #9a9aab when the surfaces lifted: on the new --bg-tertiary
-     that value measured 4.47:1, just under AA. Now 4.98:1 there, 6.9:1 on the
-     page. */
-  --text-muted: #a3a3b5;
-  
+     Now 7.06:1 on a card and 5.82:1 on --bg-tertiary, i.e. the metadata tier
+     clears AA even where it sits on the lightest surface. */
+  --text-muted: #a8a8bd;
+
   /* Error text needs its own value: --danger-color (#ef4444) is tuned for filled
      buttons and only measures 3.7:1 as text on --bg-card in either theme, under
-     the 4.5:1 AA floor. This one is 5.07:1 on --bg-card and 5.51:1 on
-     --bg-secondary. */
+     the 4.5:1 AA floor. This one is 5.95:1 on --bg-card. */
   --text-error: #f87171;
-  
-  /* Softer than the previous #3c3c62 to match the low-contrast-edge direction.
-     Separation now comes mostly from the surface ladder above. */
-  --border-color: #34344f;
-  --hover-bg: #2a2a45;
-  /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
-     above it. Only --text-primary is ever drawn on this one. */
-  --bg-tertiary-hover: #3a3a60;
-  
-  /*
-   * One radius for every surface: a card, its input and the button inside it
-   * curving differently reads as sloppiness, not hierarchy. The value is 8px
-   * per the chosen "柔和中性" direction - it was briefly 4px, which made the same
-   * components feel harder than the direction intends. Pills (999px) and circles
-   * (50%) stay as they are - those are shapes, not radii.
-   */
-  --radius: 8px;
 
   /*
-   * Spacing scale. Quantised to 2px rather than a strict 4px base because the
-   * chosen direction is the airier one: the middle steps sit between the old
-   * 8/12/16 and the next 4px stop.
+   * The edge is what separates one surface from another in this direction, so it
+   * is the token that changed most: #34344f measured 1.28:1 against a card and
+   * was never going to carry that job. This is 2.06:1 against a card, 2.14:1
+   * against the page.
+   */
+  --border-color: #4d4d75;
+  /* Rows start at --bg-secondary and their press state is --bg-tertiary, so hover
+     has to sit between the two or the two states look identical. */
+  --hover-bg: #26263f;
+  /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
+     above it. Only --text-primary is ever drawn on this one. */
+  --bg-tertiary-hover: #35355a;
+
+  /*
+   * One radius for every surface: a card, its input and the button inside it
+   * curving differently reads as sloppiness, not hierarchy. 2px per the chosen
+   * "高对比" direction - just enough to avoid a hard pixel corner, not enough to
+   * soften the edge that this direction relies on. Pills (999px) and circles
+   * (50%) stay as they are - those are shapes, not radii.
+   */
+  --radius: 2px;
+
+  /*
+   * Spacing scale. Tighter than the airy direction's 10/14/18: with edges doing
+   * the separating, the gaps no longer have to. In a 400x600 popup that buys
+   * roughly two more history rows per screen.
    */
   --space-1: 4px;
-  --space-2: 10px;
-  --space-3: 14px;
-  --space-4: 18px;
-  --space-6: 24px;
+  --space-2: 6px;
+  --space-3: 10px;
+  --space-4: 14px;
+  --space-6: 20px;
 
   /*
    * Padding of the scrolling content pane. Sticky headers inside it must cancel
@@ -107,11 +119,58 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+
+  /*
+   * Elevation of a card. Under "柔和中性" this was `none` in dark mode and a
+   * shadow in light mode, because a 1.28:1 border could not lift a white card off
+   * a near-white page. In this direction the border does that in both themes, so
+   * the shadow is off everywhere and the token is kept only so .card and .section
+   * still state elevation in one place rather than branching on theme themselves.
+   */
+  --shadow-card: none;
+
+  /*
+   * Control height. Buttons, inputs, selects and icon-only buttons on the same
+   * row have to agree on one height or the row looks assembled from parts - and
+   * they used to disagree, because .btn was padding-only and each surface picked
+   * its own padding (10/16 in the popup, 12/24 on the options page, which is how
+   * the same button ended up 40px in one place and 44px in the other).
+   *
+   * The popup is the dense surface, so it keeps the base values; the options page
+   * raises them on its own :root.
+   */
+  --control-h: 36px;
+  --control-h-sm: 28px;
+
+  /*
+   * Focus indicator. Written out once so the ~10 rules that restyle or clear a
+   * default ring cannot each invent their own width.
+   */
+  --focus-ring: 2px solid var(--primary-color);
+
+  /*
+   * Alert tints. These were three rgba() triples repeated in popup/styles.css and
+   * options/styles.css, plus a light-theme override block repeated at the top of
+   * both files - and .alert-warning was missing from both of those blocks, so a
+   * warning in light mode drew #fcd34d text on a near-white tint (~1.6:1, i.e.
+   * unreadable). As tokens, a theme cannot forget one of them.
+   */
+  --alert-info-bg: rgba(99, 102, 241, 0.1);
+  --alert-info-border: rgba(99, 102, 241, 0.3);
+  --alert-info-text: #a5b4fc;
+
+  --alert-success-bg: rgba(34, 197, 94, 0.1);
+  --alert-success-border: rgba(34, 197, 94, 0.3);
+  --alert-success-text: #86efac;
+
+  --alert-warning-bg: rgba(245, 158, 11, 0.1);
+  --alert-warning-border: rgba(245, 158, 11, 0.3);
+  --alert-warning-text: #fcd34d;
 }
 
 /* Light Theme */
 /*
- * Light theme. Two things were wrong with the previous values.
+ * Light theme. Two things were wrong with the values this replaced.
  *
  * They were Bootstrap's neutral greys, so light mode looked like a different
  * product than the hue-240 dark mode. These carry the same hue at low
@@ -120,34 +179,66 @@
  * And the surface ladder had collapsed: the page was #f8f9fa against a #ffffff
  * list (3% apart) and --bg-tertiary was #f1f3f5 against the same white (2%
  * apart), so panels did not lift off the page and the sticky day band was
- * almost invisible - exactly the separation this list depends on.
+ * almost invisible.
+ *
+ * "高对比" then overcorrected here. Dark mode can spend contrast freely; this
+ * theme cannot, because white is the ceiling, so every step the direction wanted
+ * came out of the page and out of the text, and the result was a screen that
+ * measured well and felt harsh. The values below keep the direction - edges still
+ * separate, --shadow-card is still off - at roughly three quarters of its
+ * contrast. Every tier is still over AA.
  */
 [data-theme="light"] {
-  --bg-primary: #f5f6fb;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #edeef8;
-  --bg-card: #ffffff;
+  /*
+   * Panels are off-white rather than #ffffff and the page sits closer to them
+   * than it did. Pure white behind 13px body text under a bright office light is
+   * the thing that makes a light theme feel like it is shouting, and this
+   * direction had made that worse by pushing the page further down to buy the
+   * ladder more room.
+   */
+  --bg-primary: #f0f1f7;
+  --bg-secondary: #fbfbfe;
+  --bg-tertiary: #e6e8f2;
+  --bg-card: #fbfbfe;
 
-  --text-primary: #1f2033;
-  --text-secondary: #4b4d63;
-  /* Was #6c757d, which reached only ~4.45:1 on the page background (AA needs
-     4.5:1). The dark theme's muted was fixed for this earlier; this one had not
-     been checked. Now ~5.9:1 on the page, ~5.5:1 on the day band. */
-  --text-muted: #5c5e75;
+  /*
+   * All three text tiers pulled back from the near-black end. Against a panel:
+   * 13.12:1 / 7.61:1 / 5.86:1, where the unsoftened set measured 16:1 / 10.63:1 /
+   * 8.11:1 - the direction's point is that a tier is legible without help from
+   * the surface, not that it is as dark as the sRGB gamut allows. The tightest
+   * one left is the muted tier on the day band at 4.96:1, still over AA's 4.5.
+   */
+  --text-primary: #2b2d3f;
+  --text-secondary: #4e5068;
+  --text-muted: #5f6178;
 
-  /* The dark theme's #f87171 would sit at 2.4:1 on white. This one is 5.74:1. */
+  /* The dark theme's #f87171 would sit at 2.4:1 on a panel. This one is 5.55:1. */
   --text-error: #c81e1e;
 
-  /* Softer than the #d5d8e8 measured before the direction was chosen: 1.28:1
-     against a white panel instead of 1.42:1. That is the cost of the softer
-     direction and it is deliberate - the surface ladder does the separating. */
-  --border-color: #e0e3ef;
-  --hover-bg: #e9ebf5;
-  --bg-tertiary-hover: #dbdeee;
+  /*
+   * The light theme's edge. Softened with the rest (1.58:1 against a panel where
+   * it measured 1.85:1) but deliberately not back to the 1.28:1 of the previous
+   * direction - it is still the border that separates a panel from the page here,
+   * since --shadow-card is off in both themes.
+   */
+  --border-color: #c6cad9;
+  --hover-bg: #edeef6;
+  --bg-tertiary-hover: #dadde9;
 
   --shadow-sm: 0 1px 2px rgba(31, 32, 51, 0.06);
   --shadow-md: 0 4px 6px rgba(31, 32, 51, 0.1);
   --shadow-lg: 0 10px 15px rgba(31, 32, 51, 0.12);
+
+  /* No --shadow-card override here any more: under this direction the border
+     separates a white card from the page on its own. --shadow-sm above is still
+     used by the options page's toggle knob, and -md/-lg by the toast and the
+     chart tooltip. */
+
+  /* Tinted backgrounds survive the theme change; the text on them does not.
+     All three are measured against their own tint on a white panel. */
+  --alert-info-text: #4338ca;
+  --alert-success-text: #15803d;
+  --alert-warning-text: #8a5200;
 }
 
 /*
