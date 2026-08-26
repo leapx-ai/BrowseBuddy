@@ -1,137 +1,6 @@
 /* BrowseBuddy Popup Styles */
 
-:root {
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
-  --secondary-color: #8b5cf6;
-  --danger-color: #ef4444;
-  --success-color: #22c55e;
-  --warning-color: #f59e0b;
-  
-  /*
-   * Dark theme (default). All four surfaces share hue 240 (the primary colour's
-   * hue) and differ only in lightness, so stacking reads as depth rather than as
-   * a colour change. --bg-tertiary used to be #0f3460 - a 72%-saturated blue,
-   * which made .btn-secondary compete with .btn-primary for attention.
-   *
-   * The three raised surfaces were lifted one step in the "柔和中性" pass: softer
-   * edges need a slightly wider surface ladder to keep panels legible without
-   * relying on the border.
-   */
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #23233c;
-  --bg-card: #28284c;
-  --bg-tertiary: #313154;
-  
-  --text-primary: #eaeaea;
-  --text-secondary: #a0a0b0;
-  /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1).
-     Raised again from #9a9aab when the surfaces lifted: on the new --bg-tertiary
-     that value measured 4.47:1, just under AA. Now 4.98:1 there, 6.9:1 on the
-     page. */
-  --text-muted: #a3a3b5;
-  
-  /* Softer than the previous #3c3c62 to match the low-contrast-edge direction.
-     Separation now comes mostly from the surface ladder above. */
-  --border-color: #34344f;
-  --hover-bg: #2a2a45;
-  /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
-     above it. Only --text-primary is ever drawn on this one. */
-  --bg-tertiary-hover: #3a3a60;
-  
-  /*
-   * One radius for every surface: a card, its input and the button inside it
-   * curving differently reads as sloppiness, not hierarchy. The value is 8px
-   * per the chosen "柔和中性" direction - it was briefly 4px, which made the same
-   * components feel harder than the direction intends. Pills (999px) and circles
-   * (50%) stay as they are - those are shapes, not radii.
-   */
-  --radius: 8px;
-
-  /*
-   * Spacing scale. Quantised to 2px rather than a strict 4px base because the
-   * chosen direction is the airier one: the middle steps sit between the old
-   * 8/12/16 and the next 4px stop.
-   */
-  --space-1: 4px;
-  --space-2: 10px;
-  --space-3: 14px;
-  --space-4: 18px;
-  --space-6: 24px;
-
-  /*
-   * Padding of the scrolling content pane. Sticky headers inside it must cancel
-   * this value, so it is a token rather than a literal in two places.
-   */
-  --content-padding: var(--space-3);
-
-  /*
-   * Type scale. --text-xs is the intended floor. --text-2xs sits below it and is
-   * knowingly out of policy: it carries the metadata tier (timestamps, counts,
-   * URLs, badge labels) that has to fit beside content in a 400px popup. It is a
-   * token rather than a literal so the debt is countable - resolving it means
-   * relayouting those rows, not editing nine rules.
-   */
-  --text-2xs: 11px;
-  --text-xs: 12px;
-  --text-sm: 13px;
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 24px;
-
-  /*
-   * Motion. Every transition in this file used its own ad-hoc duration
-   * (0.1s/0.15s/0.2s/0.3s), so the same gesture felt different depending on
-   * which control it landed on. State feedback uses --duration-fast, anything
-   * that changes size or position uses --duration.
-   */
-  --duration-fast: 120ms;
-  --duration: 160ms;
-  --ease: cubic-bezier(0.2, 0, 0.2, 1);
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-}
-
-/* Light Theme */
-/*
- * Light theme. Two things were wrong with the previous values.
- *
- * They were Bootstrap's neutral greys, so light mode looked like a different
- * product than the hue-240 dark mode. These carry the same hue at low
- * saturation, which is what makes the two themes read as one design.
- *
- * And the surface ladder had collapsed: the page was #f8f9fa against a #ffffff
- * list (3% apart) and --bg-tertiary was #f1f3f5 against the same white (2%
- * apart), so panels did not lift off the page and the sticky day band was
- * almost invisible - exactly the separation this list depends on.
- */
-[data-theme="light"] {
-  --bg-primary: #f5f6fb;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #edeef8;
-  --bg-card: #ffffff;
-
-  --text-primary: #1f2033;
-  --text-secondary: #4b4d63;
-  /* Was #6c757d, which reached only ~4.45:1 on the page background (AA needs
-     4.5:1). The dark theme's muted was fixed for this earlier; this one had not
-     been checked. Now ~5.9:1 on the page, ~5.5:1 on the day band. */
-  --text-muted: #5c5e75;
-
-  /* Softer than the #d5d8e8 measured before the direction was chosen: 1.28:1
-     against a white panel instead of 1.42:1. That is the cost of the softer
-     direction and it is deliberate - the surface ladder does the separating. */
-  --border-color: #e0e3ef;
-  --hover-bg: #e9ebf5;
-  --bg-tertiary-hover: #dbdeee;
-
-  --shadow-sm: 0 1px 2px rgba(31, 32, 51, 0.06);
-  --shadow-md: 0 4px 6px rgba(31, 32, 51, 0.1);
-  --shadow-lg: 0 10px 15px rgba(31, 32, 51, 0.12);
-}
+@import "../styles/tokens.css";
 
 [data-theme="light"] .alert-info {
   background: rgba(99, 102, 241, 0.1);
@@ -168,18 +37,6 @@ body {
   outline-offset: 2px;
 }
 
-/*
- * Honour the OS "reduce motion" setting. Overriding the two duration tokens
- * covers every transition in this file, because none of them carry their own
- * timing any more.
- */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-fast: 0.01ms;
-    --duration: 0.01ms;
-  }
-}
-
 /* Layout */
 .popup-container {
   width: 400px;
@@ -214,6 +71,7 @@ body {
 .header-icon {
   width: 24px;
   height: 24px;
+  border-radius: var(--radius);
 }
 
 /* Navigation */
@@ -1591,6 +1449,27 @@ body {
 /* Square-ish button whose whole content is a 14px icon. */
 .btn-icon-only {
   padding: 4px 8px;
+}
+
+/*
+ * Spinner sitting inside a button. .spinner carries margin-right: 8px for
+ * standalone use, but .btn is inline-flex with its own gap, so the margin has to
+ * come back off or the label sits 14px away from it.
+ */
+.spinner.is-sm {
+  width: 16px;
+  height: 16px;
+  margin-right: 0;
+}
+
+/* Dismiss button at the end of an alert row. */
+.alert-dismiss {
+  margin-left: var(--space-2);
+}
+
+/* Preset buttons wrap onto a second line in a 400px popup. */
+.btn-row.is-wrap {
+  flex-wrap: wrap;
 }
 
 .disclosure-body p {

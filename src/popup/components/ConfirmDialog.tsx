@@ -96,7 +96,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {getMessage('cancel')}
           </button>
           <button className="btn btn-danger" onClick={onConfirm} disabled={isBusy}>
-            {isBusy ? <div className="spinner" style={{ width: 16, height: 16 }} /> : confirmLabel}
+            {isBusy ? <div className="spinner is-sm" /> : confirmLabel}
           </button>
         </div>
       </div>

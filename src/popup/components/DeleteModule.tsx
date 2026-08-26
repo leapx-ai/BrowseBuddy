@@ -3,6 +3,7 @@ import { getMessage, formatDateTime } from '../../utils/i18n';
 import { deleteHistory, previewDelete, type DeleteOptions, type HistoryItem } from '../../utils/history';
 import { extractMainDomain } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
+import { Icon } from './Icon';
 
 type DeleteType = 'date' | 'domain' | 'keyword';
 
@@ -157,13 +158,12 @@ const DeleteModule: React.FC = () => {
       {result && (
         <div className={`alert alert-${result.success ? 'success' : 'warning'}`}>
           {result.message}
-          <button 
-            className="btn btn-sm btn-secondary" 
-            style={{ marginLeft: '10px' }}
+          <button
+            className="btn btn-sm btn-secondary alert-dismiss btn-icon-only"
             onClick={clearResult}
             aria-label={getMessage('close')}
           >
-            ✕
+            <Icon name="close" size={14} />
           </button>
         </div>
       )}
@@ -206,7 +206,7 @@ const DeleteModule: React.FC = () => {
             {/* Echo what will actually be targeted - the raw input is normalized
                 to a registrable domain, and unparseable input yields nothing. */}
             {normalizedDomain && (
-              <p className="card-hint" style={{ marginTop: '4px', marginBottom: 0 }}>
+              <p className="card-hint form-note">
                 {getMessage('deleteTargetDomain', normalizedDomain)}
               </p>
             )}
@@ -237,7 +237,7 @@ const DeleteModule: React.FC = () => {
         >
           {isLoading ? (
             <>
-              <div className="spinner" style={{ width: 16, height: 16, marginRight: 8 }} />
+              <div className="spinner is-sm" />
               {getMessage('preview')}
             </>
           ) : (
@@ -256,7 +256,7 @@ const DeleteModule: React.FC = () => {
       <div className="card">
         <h3 className="card-title">{getMessage('quickActions')}</h3>
         <p className="card-hint">{getMessage('quickActionsHint')}</p>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="btn-row is-wrap">
           <button className="btn btn-secondary btn-sm" onClick={() => prefillLastDays(1, true)}>
             {getMessage('deleteYesterday')}
           </button>

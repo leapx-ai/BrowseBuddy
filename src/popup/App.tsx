@@ -91,7 +91,6 @@ const App: React.FC = () => {
             className="header-icon" 
             src={chrome.runtime.getURL('icons/icon64.png')} 
             alt="BrowseBuddy"
-            style={{ width: '24px', height: '24px', borderRadius: 'var(--radius)' }}
           />
           BrowseBuddy
         </div>
