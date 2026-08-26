@@ -282,6 +282,40 @@ body {
   min-width: 0;
 }
 
+/* Search box plus its in-field clear button. */
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+/* Room for the clear button, so a long query does not run underneath it. */
+.search-field > .input {
+  padding-right: 32px;
+}
+
+.search-clear {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.search-clear:hover {
+  color: var(--text-primary);
+}
+
 /* Square control that carries an icon instead of a label. */
 .icon-btn {
   flex-shrink: 0;
@@ -524,6 +558,12 @@ body {
 
 .history-item:hover {
   background: var(--hover-bg);
+}
+
+/* Press feedback: a row that opens a tab should acknowledge the click before the
+   new tab takes focus away, otherwise the click reads as having missed. */
+.history-item:active {
+  background: var(--bg-tertiary);
 }
 
 /* The row is the focus target, so the ring goes inside rather than around it -

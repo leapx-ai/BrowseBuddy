@@ -401,20 +401,34 @@ const ViewModule: React.FC = () => {
 
       {/* Search and filters share one row */}
       <div className="toolbar">
-        <input
-          type="text"
-          className="input"
-          placeholder={getMessage('searchPlaceholderAdvanced')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="search-field">
+          <input
+            type="text"
+            className="input"
+            placeholder={getMessage('searchPlaceholderAdvanced')}
+            aria-label={getMessage('searchLabel')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {/* Getting back to the full list used to mean select-all then delete. */}
+          {searchQuery && (
+            <button
+              className="search-clear"
+              onClick={() => setSearchQuery('')}
+              aria-label={getMessage('clearSearch')}
+              title={getMessage('clearSearch')}
+            >
+              <Icon name="close" size={14} />
+            </button>
+          )}
+        </div>
         {viewMode !== 'calendar' && (
           <button
             className={`icon-btn ${showFilters ? 'active' : ''} ${transitionType ? 'icon-btn-dot' : ''}`}
             onClick={() => setShowFilters(v => !v)}
             aria-expanded={showFilters}
-            aria-label={getMessage('allVisitTypes')}
-            title={getMessage('allVisitTypes')}
+            aria-label={getMessage('filterByVisitType')}
+            title={getMessage('filterByVisitType')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />

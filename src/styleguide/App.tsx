@@ -121,9 +121,22 @@ const Gallery: React.FC = () => (
 
     <Section title="工具条与结果栏">
       <div className="toolbar">
-        <input className="input" placeholder="搜索标题或网址" />
-        <button className="icon-btn" aria-label="筛选">⚲</button>
-        <button className="icon-btn icon-btn-dot" aria-label="筛选（有筛选生效）">⚲</button>
+        <div className="search-field">
+          <input className="input" defaultValue="github" aria-label="搜索历史记录" />
+          <button className="search-clear" aria-label="清除搜索">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+        <button className="icon-btn" aria-label="按访问类型筛选">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+          </svg>
+        </button>
+        <button className="icon-btn icon-btn-dot" aria-label="按访问类型筛选（已生效）">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+          </svg>
+        </button>
       </div>
       <div className="result-bar">
         <span className="result-count">128 条记录 · 37 个网站</span>

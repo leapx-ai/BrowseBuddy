@@ -860,5 +860,14 @@
         "example": "example.com"
       }
     }
+  },
+  "searchLabel": {
+    "message": "Search history"
+  },
+  "clearSearch": {
+    "message": "Clear search"
+  },
+  "filterByVisitType": {
+    "message": "Filter by visit type"
   }
 }

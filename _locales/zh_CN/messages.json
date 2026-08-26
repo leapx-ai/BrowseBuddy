@@ -860,5 +860,14 @@
         "example": "example.com"
       }
     }
+  },
+  "searchLabel": {
+    "message": "搜索历史记录"
+  },
+  "clearSearch": {
+    "message": "清除搜索"
+  },
+  "filterByVisitType": {
+    "message": "按访问类型筛选"
   }
 }
