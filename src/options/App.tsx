@@ -221,11 +221,11 @@ const App: React.FC = () => {
       <main className="options-content">
         {/* General Settings */}
         <section className="section">
-          <h2 className="section-title">{getMessage('generalSettings') || 'General Settings'}</h2>
+          <h2 className="section-title">{getMessage('generalSettings')}</h2>
           
           <div className="form-group">
             <label className="form-label">{getMessage('language')}</label>
-            <p className="form-description">{getMessage('chooseLanguage') || 'Choose your preferred language'}</p>
+            <p className="form-description">{getMessage('chooseLanguage')}</p>
             {/* Not a tablist - these buttons switch a setting, not a panel. A
                 screen reader announced "tab" and looked for tabpanels that do
                 not exist. A labelled group of pressed/unpressed buttons is what
@@ -250,7 +250,7 @@ const App: React.FC = () => {
 
           <div className="form-group">
             <label className="form-label">{getMessage('theme')}</label>
-            <p className="form-description">{getMessage('chooseTheme') || 'Select the interface appearance'}</p>
+            <p className="form-description">{getMessage('chooseTheme')}</p>
             <div className="segmented" role="group" aria-label={getMessage('theme')}>
               <button
                 className={`segmented-item ${settings.theme === 'light' ? 'active' : ''}`}
@@ -271,7 +271,7 @@ const App: React.FC = () => {
                 aria-pressed={settings.theme === 'system'}
                 onClick={() => updateSettings({ theme: 'system' })}
               >
-                {getMessage('systemDefault') || 'System Default'}
+                {getMessage('systemDefault')}
               </button>
             </div>
           </div>
@@ -279,25 +279,25 @@ const App: React.FC = () => {
 
         {/* Privacy Settings */}
         <section className="section">
-          <h2 className="section-title">{getMessage('privacySettings') || 'Privacy Settings'}</h2>
+          <h2 className="section-title">{getMessage('privacySettings')}</h2>
           
           <ToggleRow
             label={getMessage('realtimeProtection')}
-            description={getMessage('realtimeProtectionDesc') || 'Automatically delete history entries matching blacklist patterns'}
+            description={getMessage('realtimeProtectionDesc')}
             checked={settings.realtimeProtection}
             onChange={() => updateSettings({ realtimeProtection: !settings.realtimeProtection })}
           />
 
           <ToggleRow
-            label={getMessage('privacyReminder') || 'Privacy Reminder'}
-            description={getMessage('privacyReminderDesc') || 'Show a badge when visiting a blacklisted site'}
+            label={getMessage('privacyReminder')}
+            description={getMessage('privacyReminderDesc')}
             checked={settings.showPrivacyReminder}
             onChange={() => updateSettings({ showPrivacyReminder: !settings.showPrivacyReminder })}
           />
 
           <ToggleRow
-            label={getMessage('sessionIncognito') || 'Session Incognito Mode'}
-            description={getMessage('sessionIncognitoDesc') || 'While enabled, no browsing history is recorded. This session leaves no trace.'}
+            label={getMessage('sessionIncognito')}
+            description={getMessage('sessionIncognitoDesc')}
             checked={settings.sessionIncognito}
             onChange={() => updateSettings({ sessionIncognito: !settings.sessionIncognito })}
           />
@@ -317,22 +317,22 @@ const App: React.FC = () => {
                 />
               </div>
               <div className="storage-info">
-                <span>{formatBytes(storageInfo.used)} {getMessage('used') || 'used'}</span>
-                <span>{formatBytes(storageInfo.total)} {getMessage('total') || 'total'}</span>
+                <span>{formatBytes(storageInfo.used)} {getMessage('used')}</span>
+                <span>{formatBytes(storageInfo.total)} {getMessage('total')}</span>
               </div>
             </div>
           )}
 
           <ToggleRow
-            label={getMessage('autoCleanup') || 'Auto Cleanup'}
-            description={getMessage('autoCleanupDesc') || 'Automatically delete history older than the retention period'}
+            label={getMessage('autoCleanup')}
+            description={getMessage('autoCleanupDesc')}
             checked={settings.autoCleanup}
             onChange={() => updateSettings({ autoCleanup: !settings.autoCleanup })}
           />
 
           {settings.autoCleanup && (
             <div className="form-group is-spaced">
-              <label className="form-label">{getMessage('cleanupRetention') || 'Retention period'}</label>
+              <label className="form-label">{getMessage('cleanupRetention')}</label>
               <div className="field-row">
                 <input
                   type="number"
@@ -346,7 +346,7 @@ const App: React.FC = () => {
                   }}
                 />
                 <span className="field-unit">
-                  {getMessage('days') || 'days'}
+                  {getMessage('days')}
                 </span>
               </div>
             </div>
@@ -374,19 +374,19 @@ const App: React.FC = () => {
 
         {/* About */}
         <section className="section">
-          <h2 className="section-title">{getMessage('about') || 'About'}</h2>
+          <h2 className="section-title">{getMessage('about')}</h2>
           <p className="about-text">
             BrowseBuddy v{chrome.runtime.getManifest().version} - {getMessage('extDescription')}
           </p>
           <div className="alert alert-info">
-            <strong>{getMessage('privacyPromiseTitle') || 'Privacy Promise:'}</strong>{' '}
+            <strong>{getMessage('privacyPromiseTitle')}</strong>{' '}
             {getMessage('privacyPromise')}
           </div>
         </section>
       </main>
 
       <footer className="options-footer">
-        © 2024 BrowseBuddy. {getMessage('allDataLocal') || 'All data stays on your device.'}
+        © {new Date().getFullYear()} BrowseBuddy. {getMessage('allDataLocal')}
       </footer>
     </div>
   );
@@ -405,7 +405,7 @@ const WelcomePage: React.FC<{
           <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
         </svg>
       ),
-      title: getMessage('smartDelete') || 'Smart Delete',
+      title: getMessage('smartDelete'),
       desc: `${getMessage('deleteByDate')}, ${getMessage('deleteByDomain')}, ${getMessage('deleteByKeyword')}`,
     },
     {
@@ -415,8 +415,8 @@ const WelcomePage: React.FC<{
           <path d="M18 17V9M13 17V5M8 17v-3" />
         </svg>
       ),
-      title: getMessage('statistics') || 'Statistics',
-      desc: getMessage('statsDesc') || 'Visualize your browsing patterns',
+      title: getMessage('statistics'),
+      desc: getMessage('statsDesc'),
     },
     {
       icon: (
@@ -424,8 +424,8 @@ const WelcomePage: React.FC<{
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       ),
-      title: getMessage('privacyProtection') || 'Privacy Protection',
-      desc: getMessage('blacklistDesc') || 'Blacklist sensitive websites',
+      title: getMessage('privacyProtection'),
+      desc: getMessage('blacklistDesc'),
     },
     {
       icon: (
@@ -435,7 +435,7 @@ const WelcomePage: React.FC<{
         </svg>
       ),
       title: getMessage('calendarView'),
-      desc: getMessage('localStorageDesc') || 'Your data never leaves your device',
+      desc: getMessage('localStorageDesc'),
     },
   ];
 
@@ -467,9 +467,9 @@ const WelcomePage: React.FC<{
           alt="BrowseBuddy"
         />
       </div>
-      <h1 className="welcome-title">{getMessage('welcomeTitle') || 'Welcome to BrowseBuddy!'}</h1>
+      <h1 className="welcome-title">{getMessage('welcomeTitle')}</h1>
       <p className="welcome-subtitle">
-        {getMessage('welcomeSubtitle') || 'Your personal browser history manager with powerful privacy protection.'}
+        {getMessage('welcomeSubtitle')}
       </p>
 
       <div className="welcome-features">
@@ -483,17 +483,17 @@ const WelcomePage: React.FC<{
       </div>
 
       <div className="alert alert-info is-left">
-        <strong>{getMessage('permissionNotice') || 'Permission Notice:'}</strong>
+        <strong>{getMessage('permissionNotice')}</strong>
         <ul className="permission-list">
-          <li>{getMessage('permissionHistory') || 'History access - to read and manage your browsing history'}</li>
-          <li>{getMessage('permissionStorage') || 'Storage access - to save settings locally'}</li>
-          <li>{getMessage('permissionTabs') || 'Tab access - for real-time protection'}</li>
-          <li>{getMessage('permissionSessions') || 'Session access - to restore closed tabs'}</li>
+          <li>{getMessage('permissionHistory')}</li>
+          <li>{getMessage('permissionStorage')}</li>
+          <li>{getMessage('permissionTabs')}</li>
+          <li>{getMessage('permissionSessions')}</li>
         </ul>
       </div>
 
       <button className="btn btn-primary is-hero" onClick={onGetStarted}>
-        {getMessage('getStarted') || 'Get Started'}
+        {getMessage('getStarted')}
       </button>
     </div>
   );

@@ -145,7 +145,7 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
 }
 
 .form-input:focus,
@@ -238,7 +238,7 @@ body {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-fast) var(--ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -299,7 +299,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-fast) var(--ease);
 }
 
 .segmented-item:hover {
@@ -323,7 +323,7 @@ body {
   font-weight: 500;
   box-shadow: var(--shadow-lg);
   z-index: 1000;
-  animation: toast-in 0.2s ease-out;
+  animation: toast-in var(--duration-fast) var(--ease);
 }
 
 .toast-success {
@@ -502,7 +502,7 @@ body {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   border-radius: 6px;
-  transition: width 0.3s;
+  transition: width var(--duration) var(--ease);
 }
 
 .storage-fill-danger {
