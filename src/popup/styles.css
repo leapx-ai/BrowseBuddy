@@ -66,16 +66,29 @@
   --content-padding: var(--space-3);
 
   /*
-   * Type scale. --text-xs is the intended floor; a few rules still use 11px
-   * and 10px and are pending migration (they need per-screen layout checks
-   * in a 400px popup).
+   * Type scale. --text-xs is the intended floor. --text-2xs sits below it and is
+   * knowingly out of policy: it carries the metadata tier (timestamps, counts,
+   * URLs, badge labels) that has to fit beside content in a 400px popup. It is a
+   * token rather than a literal so the debt is countable - resolving it means
+   * relayouting those rows, not editing nine rules.
    */
+  --text-2xs: 11px;
   --text-xs: 12px;
   --text-sm: 13px;
   --text-md: 14px;
   --text-lg: 16px;
   --text-xl: 18px;
   --text-2xl: 24px;
+
+  /*
+   * Motion. Every transition in this file used its own ad-hoc duration
+   * (0.1s/0.15s/0.2s/0.3s), so the same gesture felt different depending on
+   * which control it landed on. State feedback uses --duration-fast, anything
+   * that changes size or position uses --duration.
+   */
+  --duration-fast: 120ms;
+  --duration: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
@@ -142,7 +155,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--text-md);
   line-height: 1.5;
 }
 
@@ -153,6 +166,18 @@ body {
 :focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+}
+
+/*
+ * Honour the OS "reduce motion" setting. Overriding the two duration tokens
+ * covers every transition in this file, because none of them carry their own
+ * timing any more.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0.01ms;
+    --duration: 0.01ms;
+  }
 }
 
 /* Layout */
@@ -216,7 +241,7 @@ body {
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: 500;
-  transition: color 0.2s, background 0.2s;
+  transition: color var(--duration-fast) var(--ease), background var(--duration-fast) var(--ease);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -308,7 +333,7 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-fast) var(--ease);
 }
 
 .input:focus {
@@ -334,7 +359,7 @@ body {
   font-size: var(--text-md);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -411,7 +436,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
   position: relative;
 }
 
@@ -467,7 +492,7 @@ body {
   border-radius: 999px;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -479,7 +504,7 @@ body {
   background: none;
   border: none;
   color: var(--primary-color);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   cursor: pointer;
 }
 
@@ -525,7 +550,7 @@ body {
   font-size: var(--text-xs);
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 
 .inline-toggle:hover {
@@ -606,7 +631,7 @@ body {
   padding: 4px 10px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: 600;
   /* A day boundary should read as a boundary. The row separator alone was the
      same 1px used between rows inside a day, so days did not visually part. */
@@ -636,7 +661,7 @@ body {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--duration-fast) var(--ease);
 }
 
 .history-item:hover {
@@ -674,7 +699,7 @@ body {
 }
 
 .history-url {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   line-height: 1.35;
   color: var(--text-muted);
   white-space: nowrap;
@@ -711,7 +736,7 @@ body {
   color: var(--text-muted);
   padding: 0;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s, transform 0.15s;
+  transition: opacity var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
 }
 
 .history-item:hover .fav-btn,
@@ -731,7 +756,7 @@ body {
 }
 
 .history-time {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--text-secondary);
   white-space: nowrap;
   text-align: right;
@@ -763,7 +788,7 @@ body {
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--text-secondary);
   margin-top: 2px;
 }
@@ -783,7 +808,7 @@ body {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   border-radius: var(--radius);
-  transition: width 0.3s;
+  transition: width var(--duration) var(--ease);
 }
 
 .progress-fill-secondary {
@@ -800,7 +825,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: var(--text-2xs);
   line-height: 1.4;
   white-space: nowrap;
   color: var(--text-primary);
@@ -821,7 +846,7 @@ body {
   border-radius: 2px 2px 0 0;
   min-height: 2px;
   cursor: pointer;
-  transition: background 0.15s, filter 0.15s;
+  transition: background var(--duration-fast) var(--ease), filter var(--duration-fast) var(--ease);
 }
 
 .chart-bar:hover {
@@ -924,7 +949,7 @@ body {
 }
 
 .blacklist-type {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--text-muted);
   text-transform: uppercase;
   padding: 2px 6px;
@@ -1043,7 +1068,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--duration-fast) var(--ease), border-color var(--duration-fast) var(--ease);
 }
 
 .checkbox.checked {
@@ -1103,7 +1128,7 @@ body {
   font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
   white-space: nowrap;
 }
 
@@ -1159,7 +1184,7 @@ body {
   border-radius: var(--radius);
   cursor: pointer;
   color: var(--text-primary);
-  transition: transform 0.1s;
+  transition: transform var(--duration-fast) var(--ease);
 }
 
 .calendar-cell:hover {
@@ -1229,7 +1254,7 @@ body {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
   text-align: center;
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--text-muted);
   flex-shrink: 0;
 }
