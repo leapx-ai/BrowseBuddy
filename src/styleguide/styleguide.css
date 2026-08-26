@@ -1,0 +1,202 @@
+/*
+ * Styleguide-only styles. Never shipped: the styleguide entry is registered in
+ * webpack.config.js for development builds only, so nothing here reaches dist/
+ * in a production build or the store zip.
+ *
+ * Two jobs:
+ *  1. the page chrome that holds the specimens (.sg-*)
+ *  2. the candidate style directions, expressed purely as token overrides on
+ *     [data-direction]. Custom properties inherit, so overriding them on a
+ *     wrapper is enough to retheme everything inside it without touching
+ *     popup/styles.css. Whichever direction wins gets folded into :root there.
+ */
+
+.sg-root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #16161f;
+  color: #e8e8ee;
+  min-height: 100vh;
+  padding: 16px 20px 64px;
+}
+
+.sg-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  background: #16161f;
+  border-bottom: 1px solid #33334a;
+}
+
+.sg-bar h1 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.sg-bar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #a6a6bb;
+}
+
+.sg-bar select,
+.sg-bar button {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #44445e;
+  background: #22222f;
+  color: #e8e8ee;
+}
+
+.sg-note {
+  font-size: 12px;
+  color: #9a9ab0;
+  max-width: 68ch;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.sg-panels {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Each panel is the real popup width, so density is judged at true size. */
+.sg-panel {
+  width: 400px;
+  flex: 0 0 auto;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid #33334a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sg-panel-label {
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #22222f;
+  color: #9a9ab0;
+  border-bottom: 1px solid #33334a;
+}
+
+.sg-panel-body {
+  padding: 12px;
+}
+
+.sg-section {
+  margin-bottom: 20px;
+}
+
+.sg-section > h3 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.sg-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.sg-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.sg-swatch {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  min-height: 44px;
+}
+
+/*
+ * Hover and active states cannot be shown side by side without faking them.
+ * These re-apply the same declarations the real :hover rules use, so a specimen
+ * marked "hover" is a simulation - the real interaction still has to be checked
+ * in the browser. The class goes on the specimen itself rather than a wrapper: a
+ * wrapper inside .history-list would take the row separator border with it.
+ */
+.history-item.sg-hover,
+.nav-item.sg-hover {
+  background: var(--hover-bg);
+}
+
+.btn-primary.sg-hover {
+  background: var(--primary-hover);
+}
+
+.history-item.sg-hover .fav-btn {
+  opacity: 1;
+}
+
+/*
+ * Direction A "密度优先" is the current token set, so it has no overrides -
+ * it is the baseline the other two are judged against.
+ */
+
+/* Direction B "柔和中性": rounder, airier, lower-contrast edges. */
+[data-direction="soft"] {
+  --radius: 8px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --border-color: #34344f;
+  --bg-secondary: #23233c;
+  --bg-card: #28284c;
+  --bg-tertiary: #313154;
+}
+
+[data-direction="soft"][data-theme="light"],
+[data-direction="soft"] [data-theme="light"] {
+  --border-color: #e0e3ef;
+  --bg-primary: #f5f6fb;
+  --bg-tertiary: #edeef8;
+}
+
+/* Direction C "高对比": tighter, flatter, edges do the separating. */
+[data-direction="contrast"] {
+  --radius: 2px;
+  --space-2: 6px;
+  --space-3: 10px;
+  --border-color: #4d4d75;
+  --text-secondary: #b4b4c6;
+  --text-muted: #a8a8bd;
+  --bg-secondary: #1d1d33;
+  --bg-card: #1d1d33;
+  --bg-tertiary: #2b2b4a;
+}
+
+[data-direction="contrast"][data-theme="light"],
+[data-direction="contrast"] [data-theme="light"] {
+  --border-color: #b9bed4;
+  --text-secondary: #3b3d52;
+  --text-muted: #4c4e66;
+  --bg-primary: #eeeff6;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-tertiary: #e0e3f0;
+}

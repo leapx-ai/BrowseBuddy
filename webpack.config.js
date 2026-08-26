@@ -4,13 +4,21 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
-  
+
+  // The component gallery is a development tool. Registering its entry and page
+  // only outside production means it can never land in dist/ - and therefore
+  // never in the store zip, which packages whatever dist/ contains.
+  const entry = {
+    background: './src/background/index.ts',
+    popup: './src/popup/index.tsx',
+    options: './src/options/index.tsx',
+  };
+  if (!isProduction) {
+    entry.styleguide = './src/styleguide/index.tsx';
+  }
+
   return {
-    entry: {
-      background: './src/background/index.ts',
-      popup: './src/popup/index.tsx',
-      options: './src/options/index.tsx',
-    },
+    entry,
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].js',
@@ -59,6 +67,15 @@ module.exports = (env, argv) => {
         filename: 'options.html',
         chunks: ['options'],
       }),
+      ...(isProduction
+        ? []
+        : [
+            new HtmlWebpackPlugin({
+              template: './public/styleguide.html',
+              filename: 'styleguide.html',
+              chunks: ['styleguide'],
+            }),
+          ]),
       new CopyWebpackPlugin({
         patterns: [
           { from: 'public/manifest.json', to: 'manifest.json' },
