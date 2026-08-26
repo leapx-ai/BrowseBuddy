@@ -161,12 +161,6 @@ body {
   cursor: pointer;
 }
 
-/* A select or input that has to fit beside other controls. */
-.input-compact {
-  min-height: var(--control-h-sm);
-  font-size: var(--text-sm);
-}
-
 /* ---- Segmented control ---------------------------------------------------- */
 
 /*

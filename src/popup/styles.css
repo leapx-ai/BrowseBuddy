@@ -326,13 +326,18 @@
 /*
  * Secondary action collapsed onto one line. As a .card with a title it cost
  * ~65px at the top of the default tab for a feature used occasionally.
+ *
+ * Height comes from --control-h, not from vertical padding, so it matches the
+ * search field it sits above - it is the same kind of full-width control. With
+ * padding alone it measured ~28px against the field's 36px.
  */
 .inline-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--space-1) var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-2);
   margin-bottom: var(--space-2);
   background: none;
   border: 1px solid var(--border-color);
@@ -1077,8 +1082,6 @@
 .loading-block {
   padding: var(--space-4);
 }
-
-/* .input-compact is shared - see styles/base.css. */
 
 /* Group headers: "17 条" on the right of a date, last-visit time and a count
    pill on the right of a domain. */

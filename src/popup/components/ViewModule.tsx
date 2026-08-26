@@ -446,7 +446,7 @@ const ViewModule: React.FC = () => {
       {viewMode !== 'calendar' && (showFilters || transitionType) && (
         <div className="gap-below">
           <select
-            className="input input-compact"
+            className="input"
             value={transitionType}
             onChange={(e) => setTransitionType(e.target.value)}
           >
