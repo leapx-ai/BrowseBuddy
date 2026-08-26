@@ -391,6 +391,48 @@
 }
 
 /*
+ * The same list inside a card - what the "by date" and "by domain" views build,
+ * one card per group. The card is already the frame, so the list gives its own up:
+ * two concentric borders per group, ten groups deep, is what made those two views
+ * read as a stack of boxes rather than a list.
+ *
+ * It bleeds through the card's padding so the dividers span the card's full width
+ * and the rows still line up with the group title above them (both are one
+ * --space-3 in). The border-top is the line that parts the first row from that
+ * title, which the sibling rule above cannot draw.
+ */
+.card > .history-list {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0 calc(-1 * var(--space-3));
+}
+
+/*
+ * A card that ends in one of those lists ends at the list. Its bottom padding sat
+ * under the last row - or under the "show all" button, which is full width - as a
+ * band of empty card, and the button's own rounded corners then failed to line up
+ * with anything. The clip is what keeps the list's square bottom corners inside
+ * the card's rounded ones; safe here because these grouped cards hold no sticky
+ * element (the day anchors only exist in the flat list).
+ */
+.card:has(> .history-list:last-child) {
+  padding-bottom: 0;
+  overflow: clip;
+}
+
+/*
+ * With the list bled to the card's edges and drawing the line under the title,
+ * that title is a band of its own - so the space above it (the card's padding) and
+ * below it (this margin) have to match, or the label rides high inside its band.
+ */
+.card:has(> .history-list) > .card-title {
+  margin-bottom: var(--space-3);
+}
+
+/*
  * Day anchor in the flat list. It replaces the full date that every row used to
  * repeat, so one ~20px header covers a whole day and each row keeps only HH:MM.
  * Opaque, because rows scroll underneath it.
@@ -408,7 +450,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-2);
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-3);
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-size: var(--text-2xs);
@@ -430,10 +472,13 @@
    cover both element types. */
 .history-item {
   display: flex;
-  align-items: flex-start;
+  /* Centred, not top-aligned. The row is a two-line block (title over URL) next to
+     a 16px favicon and a one-line time, and aligning all three to the first line
+     left the favicon and the time sitting high against a taller middle column. */
+  align-items: center;
   gap: var(--space-2);
   width: 100%;
-  padding: var(--space-2) 10px;
+  padding: var(--space-2) var(--space-3);
   background: none;
   border: none;
   color: inherit;
@@ -470,7 +515,6 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  margin-top: 2px;
   border-radius: var(--radius);
   overflow: hidden;
   display: flex;
@@ -520,9 +564,6 @@
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
-  /* Matches one line of .history-title so the time aligns with the title
-     rather than floating between the two text lines. */
-  height: 18px;
 }
 
 /*
@@ -751,15 +792,30 @@
 }
 
 /* Blacklist */
+
+/*
+ * A blacklist or favourites row. The card around it already draws the frame, so
+ * the row draws a divider - it used to draw a full bordered, rounded box of its
+ * own, which put a frame inside a frame N times over, and with the button inside
+ * it that was three concentric borders per entry. Same rule the history list
+ * follows: one container frames, its rows divide.
+ *
+ * The background is gone with the border: under this direction --bg-secondary and
+ * --bg-card are the same value, so it was painting the card's own colour back
+ * onto it.
+ *
+ * No horizontal padding either - the card's padding already holds the row off the
+ * edge, and doubling it indented these rows further than every other list.
+ */
 .blacklist-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  margin-bottom: 8px;
+  padding: var(--space-2) 0;
+}
+
+.blacklist-item + .blacklist-item {
+  border-top: 1px solid var(--border-color);
 }
 
 .blacklist-pattern {
@@ -872,11 +928,13 @@
 }
 
 /* Destructive opt-in inside a confirmation modal */
+/* Destructive opt-in inside a confirmation modal. Recessed by its background
+   rather than boxed by a border - the modal is already a bordered box and the
+   preview list above it another, so a third edge here read as clutter. */
 .modal-option {
   padding: var(--space-2);
   margin-bottom: var(--space-3);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
   border-radius: var(--radius);
   font-size: var(--text-sm);
 }
