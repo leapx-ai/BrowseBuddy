@@ -42,6 +42,13 @@ body {
   line-height: 1.6;
 }
 
+/* The popup has had this since the token pass; the options page never did, so
+   only inputs showed a keyboard focus ring and every button showed none. */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 .options-container {
   max-width: 900px;
   margin: 0 auto;
@@ -194,7 +201,13 @@ body {
   background: var(--bg-tertiary);
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background var(--duration) var(--ease);
+  /* It is a <button> now, so the UA border and padding have to go, and it must
+     not shrink inside the flex row. */
+  border: none;
+  padding: 0;
+  flex: 0 0 auto;
+  appearance: none;
 }
 
 .toggle-switch.active {
@@ -209,7 +222,7 @@ body {
   height: 20px;
   background: white;
   border-radius: 50%;
-  transition: transform 0.3s;
+  transition: transform var(--duration) var(--ease);
   box-shadow: var(--shadow-sm);
 }
 

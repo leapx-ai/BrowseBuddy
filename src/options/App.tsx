@@ -4,6 +4,39 @@ import { getSettings, saveSettings, getStorageUsage, createBackup, restoreBackup
 
 type ToastType = 'success' | 'error';
 
+/*
+ * A labelled on/off row.
+ *
+ * The switch was a <div onClick>, four times over: not focusable, not operable
+ * from the keyboard, and announced as nothing. It is a <button role="switch">
+ * now, so Tab reaches it, Space/Enter toggle it and aria-checked carries the
+ * state. Written once instead of four times so the attributes cannot drift
+ * between copies.
+ */
+const ToggleRow: React.FC<{
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+}> = ({ label, description, checked, onChange }) => (
+  <div className="toggle-wrapper">
+    <div className="toggle-info">
+      <div className="toggle-label">{label}</div>
+      <div className="toggle-description">{description}</div>
+    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      className={`toggle-switch ${checked ? 'active' : ''}`}
+      onClick={onChange}
+    >
+      <span className="toggle-knob" />
+    </button>
+  </div>
+);
+
 const App: React.FC = () => {
   const [isWelcome, setIsWelcome] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -193,15 +226,21 @@ const App: React.FC = () => {
           <div className="form-group">
             <label className="form-label">{getMessage('language')}</label>
             <p className="form-description">{getMessage('chooseLanguage') || 'Choose your preferred language'}</p>
-            <div className="segmented" role="tablist">
+            {/* Not a tablist - these buttons switch a setting, not a panel. A
+                screen reader announced "tab" and looked for tabpanels that do
+                not exist. A labelled group of pressed/unpressed buttons is what
+                this actually is. */}
+            <div className="segmented" role="group" aria-label={getMessage('language')}>
               <button
                 className={`segmented-item ${settings.language === 'zh_CN' ? 'active' : ''}`}
+                aria-pressed={settings.language === 'zh_CN'}
                 onClick={() => handleLanguageChange('zh_CN')}
               >
                 简体中文
               </button>
               <button
                 className={`segmented-item ${settings.language === 'en' ? 'active' : ''}`}
+                aria-pressed={settings.language === 'en'}
                 onClick={() => handleLanguageChange('en')}
               >
                 English
@@ -212,21 +251,24 @@ const App: React.FC = () => {
           <div className="form-group">
             <label className="form-label">{getMessage('theme')}</label>
             <p className="form-description">{getMessage('chooseTheme') || 'Select the interface appearance'}</p>
-            <div className="segmented" role="tablist">
+            <div className="segmented" role="group" aria-label={getMessage('theme')}>
               <button
                 className={`segmented-item ${settings.theme === 'light' ? 'active' : ''}`}
+                aria-pressed={settings.theme === 'light'}
                 onClick={() => updateSettings({ theme: 'light' })}
               >
                 {getMessage('light')}
               </button>
               <button
                 className={`segmented-item ${settings.theme === 'dark' ? 'active' : ''}`}
+                aria-pressed={settings.theme === 'dark'}
                 onClick={() => updateSettings({ theme: 'dark' })}
               >
                 {getMessage('dark')}
               </button>
               <button
                 className={`segmented-item ${settings.theme === 'system' ? 'active' : ''}`}
+                aria-pressed={settings.theme === 'system'}
                 onClick={() => updateSettings({ theme: 'system' })}
               >
                 {getMessage('systemDefault') || 'System Default'}
@@ -239,50 +281,26 @@ const App: React.FC = () => {
         <section className="section">
           <h2 className="section-title">{getMessage('privacySettings') || 'Privacy Settings'}</h2>
           
-          <div className="toggle-wrapper">
-            <div className="toggle-info">
-              <div className="toggle-label">{getMessage('realtimeProtection')}</div>
-              <div className="toggle-description">
-                {getMessage('realtimeProtectionDesc') || 'Automatically delete history entries matching blacklist patterns'}
-              </div>
-            </div>
-            <div
-              className={`toggle-switch ${settings.realtimeProtection ? 'active' : ''}`}
-              onClick={() => updateSettings({ realtimeProtection: !settings.realtimeProtection })}
-            >
-              <div className="toggle-knob" />
-            </div>
-          </div>
+          <ToggleRow
+            label={getMessage('realtimeProtection')}
+            description={getMessage('realtimeProtectionDesc') || 'Automatically delete history entries matching blacklist patterns'}
+            checked={settings.realtimeProtection}
+            onChange={() => updateSettings({ realtimeProtection: !settings.realtimeProtection })}
+          />
 
-          <div className="toggle-wrapper">
-            <div className="toggle-info">
-              <div className="toggle-label">{getMessage('privacyReminder') || 'Privacy Reminder'}</div>
-              <div className="toggle-description">
-                {getMessage('privacyReminderDesc') || 'Show a badge when visiting a blacklisted site'}
-              </div>
-            </div>
-            <div
-              className={`toggle-switch ${settings.showPrivacyReminder ? 'active' : ''}`}
-              onClick={() => updateSettings({ showPrivacyReminder: !settings.showPrivacyReminder })}
-            >
-              <div className="toggle-knob" />
-            </div>
-          </div>
+          <ToggleRow
+            label={getMessage('privacyReminder') || 'Privacy Reminder'}
+            description={getMessage('privacyReminderDesc') || 'Show a badge when visiting a blacklisted site'}
+            checked={settings.showPrivacyReminder}
+            onChange={() => updateSettings({ showPrivacyReminder: !settings.showPrivacyReminder })}
+          />
 
-          <div className="toggle-wrapper">
-            <div className="toggle-info">
-              <div className="toggle-label">{getMessage('sessionIncognito') || 'Session Incognito Mode'}</div>
-              <div className="toggle-description">
-                {getMessage('sessionIncognitoDesc') || 'While enabled, no browsing history is recorded. This session leaves no trace.'}
-              </div>
-            </div>
-            <div
-              className={`toggle-switch ${settings.sessionIncognito ? 'active' : ''}`}
-              onClick={() => updateSettings({ sessionIncognito: !settings.sessionIncognito })}
-            >
-              <div className="toggle-knob" />
-            </div>
-          </div>
+          <ToggleRow
+            label={getMessage('sessionIncognito') || 'Session Incognito Mode'}
+            description={getMessage('sessionIncognitoDesc') || 'While enabled, no browsing history is recorded. This session leaves no trace.'}
+            checked={settings.sessionIncognito}
+            onChange={() => updateSettings({ sessionIncognito: !settings.sessionIncognito })}
+          />
         </section>
 
         {/* Data Management */}
@@ -305,20 +323,12 @@ const App: React.FC = () => {
             </div>
           )}
 
-          <div className="toggle-wrapper">
-            <div className="toggle-info">
-              <div className="toggle-label">{getMessage('autoCleanup') || 'Auto Cleanup'}</div>
-              <div className="toggle-description">
-                {getMessage('autoCleanupDesc') || 'Automatically delete history older than the retention period'}
-              </div>
-            </div>
-            <div
-              className={`toggle-switch ${settings.autoCleanup ? 'active' : ''}`}
-              onClick={() => updateSettings({ autoCleanup: !settings.autoCleanup })}
-            >
-              <div className="toggle-knob" />
-            </div>
-          </div>
+          <ToggleRow
+            label={getMessage('autoCleanup') || 'Auto Cleanup'}
+            description={getMessage('autoCleanupDesc') || 'Automatically delete history older than the retention period'}
+            checked={settings.autoCleanup}
+            onChange={() => updateSettings({ autoCleanup: !settings.autoCleanup })}
+          />
 
           {settings.autoCleanup && (
             <div className="form-group is-spaced">
@@ -433,15 +443,17 @@ const WelcomePage: React.FC<{
     <div className="welcome-container">
       <div className="welcome-language">
         <span>{getMessage('language')}:</span>
-        <div className="segmented" role="tablist">
+        <div className="segmented" role="group" aria-label={getMessage('language')}>
           <button
             className={`segmented-item ${language === 'zh_CN' ? 'active' : ''}`}
+            aria-pressed={language === 'zh_CN'}
             onClick={() => onLanguageChange('zh_CN')}
           >
             简体中文
           </button>
           <button
             className={`segmented-item ${language === 'en' ? 'active' : ''}`}
+            aria-pressed={language === 'en'}
             onClick={() => onLanguageChange('en')}
           >
             English
