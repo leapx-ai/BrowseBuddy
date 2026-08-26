@@ -765,6 +765,10 @@
     "message": "输入网址或域名",
     "description": "Input placeholder for URL or domain"
   },
+  "urlOrDomainExample": {
+    "message": "https://example.com 或 example.com",
+    "description": "Example URL/domain shown as input placeholder"
+  },
   "willAddMainDomain": {
     "message": "将添加主域名:",
     "description": "Label showing extracted main domain"

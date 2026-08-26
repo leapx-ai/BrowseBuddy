@@ -1436,10 +1436,6 @@ body {
   margin-bottom: var(--space-3);
 }
 
-.card.is-spaced {
-  margin-top: var(--space-4);
-}
-
 /* "当前域名: example.com" above the quick-add button. */
 .meta-line {
   font-size: var(--text-2xs);

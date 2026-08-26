@@ -190,6 +190,13 @@ const PrivacyModule: React.FC = () => {
     blacklist.some(entry => entry.enabled && entry.pattern === extractMainDomain(currentTab.url!)) : 
     false;
 
+  // Blacklisting and favouriting both act on a domain, so neither makes sense for
+  // a browser-internal page. The two buttons used to filter different scheme sets
+  // - the blacklist button checked four, the favourites button only chrome:// -
+  // so an extension page could be added to favourites but not to the blacklist.
+  const INTERNAL_SCHEMES = ['chrome://', 'chrome-extension://', 'about:', 'edge://'];
+  const isAddressable = !!currentTab?.url && !INTERNAL_SCHEMES.some(s => currentTab.url!.startsWith(s));
+
   if (isLoading) {
     return showSlowLoading ? (
       <div className="loading">
@@ -224,25 +231,16 @@ const PrivacyModule: React.FC = () => {
       )}
 
       {/* Quick Add Current Page */}
-      {currentTab?.url && !currentTab.url.startsWith('chrome://') && !currentTab.url.startsWith('chrome-extension://') && !currentTab.url.startsWith('about:') && !currentTab.url.startsWith('edge://') && (
+      {isAddressable && (
         <button
           className={`btn btn-block gap-below-lg ${isCurrentPageBlacklisted ? 'btn-secondary' : 'btn-primary'}`}
           onClick={handleAddCurrentPage}
           disabled={isCurrentPageBlacklisted}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            {isCurrentPageBlacklisted ? (
-              <polyline points="20 6 9 17 4 12" />
-            ) : (
-              <>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </>
-            )}
-          </svg>
+          <Icon name={isCurrentPageBlacklisted ? 'check' : 'plus'} size={16} />
           {isCurrentPageBlacklisted 
-            ? getMessage('alreadyInBlacklist', extractMainDomain(currentTab.url))
-            : getMessage('addCurrentPage', extractMainDomain(currentTab.url))}
+            ? getMessage('alreadyInBlacklist', extractMainDomain(currentTab!.url!))
+            : getMessage('addCurrentPage', extractMainDomain(currentTab!.url!))}
         </button>
       )}
 
@@ -251,10 +249,7 @@ const PrivacyModule: React.FC = () => {
         className="btn btn-secondary btn-block gap-below-lg"
         onClick={() => setShowAddForm(!showAddForm)}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <Icon name="plus" size={16} />
         {getMessage('manualAddDomain')}
       </button>
 
@@ -266,7 +261,7 @@ const PrivacyModule: React.FC = () => {
             <input
               type="text"
               className="input"
-              placeholder="https://example.com 或 example.com"
+              placeholder={getMessage('urlOrDomainExample')}
               value={newBlacklistUrl}
               onChange={(e) => setNewBlacklistUrl(e.target.value)}
             />
@@ -322,8 +317,10 @@ const PrivacyModule: React.FC = () => {
         </ConfirmDialog>
       )}
 
-      {/* Blacklist */}
-      <div>
+      {/* Blacklist. Blacklist and favourites are two lists of the same kind, so
+          they get the same container - the blacklist used to be a bare div and
+          the favourites a card, which read as two unrelated levels. */}
+      <div className="card">
         <h3 className="card-title">
           {getMessage('blacklist')} ({blacklist.length})
         </h3>
@@ -363,10 +360,7 @@ const PrivacyModule: React.FC = () => {
                   onClick={() => handleRemove(entry.id)}
                   aria-label={getMessage('removeFromBlacklistLabel', entry.pattern)}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <Icon name="close" size={14} />
                 </button>
               </div>
             ))}
@@ -375,20 +369,20 @@ const PrivacyModule: React.FC = () => {
       </div>
 
       {/* Favorites (Protected Domains) */}
-      <div className="card is-spaced">
+      <div className="card">
         <h3 className="card-title">
           {getMessage('favorites')} ({favorites.length})
         </h3>
         {/* Explanatory copy, not a warning - a full alert block over-weights it. */}
         <p className="card-hint">{getMessage('favoritesDescription')}</p>
 
-        {currentTab?.url && !currentTab.url.startsWith('chrome://') && (
+        {isAddressable && (
           <button
             className="btn btn-secondary btn-block gap-below-lg"
             onClick={handleAddCurrentAsFavorite}
           >
             <Icon name="star" size={16} />
-            {getMessage('addCurrentToFavorites', extractMainDomain(currentTab.url))}
+            {getMessage('addCurrentToFavorites', extractMainDomain(currentTab!.url!))}
           </button>
         )}
 
@@ -430,10 +424,7 @@ const PrivacyModule: React.FC = () => {
                   onClick={() => handleRemoveFavorite(domain)}
                   aria-label={getMessage('removeFromFavoritesLabel', domain)}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <Icon name="close" size={14} />
                 </button>
               </div>
             ))}
@@ -453,7 +444,9 @@ const PrivacyModule: React.FC = () => {
             <strong>{getMessage('example')}:</strong> <code>https://www.example.com/page</code> → <code>example.com</code>
           </p>
           <p>
-            {getMessage('autoMatchDescription')}: <code>example.com</code>、<code>www.example.com</code>、<code>sub.example.com</code>
+            {/* Comma, not the CJK "、" that used to be hard-coded here - these are
+                latin code samples and the page also renders in English. */}
+            {getMessage('autoMatchDescription')}: <code>example.com</code>, <code>www.example.com</code>, <code>sub.example.com</code>
           </p>
         </div>
       </details>

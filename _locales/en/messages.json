@@ -765,6 +765,10 @@
     "message": "Enter URL or Domain",
     "description": "Input placeholder for URL or domain"
   },
+  "urlOrDomainExample": {
+    "message": "https://example.com or example.com",
+    "description": "Example URL/domain shown as input placeholder"
+  },
   "willAddMainDomain": {
     "message": "Will add main domain:",
     "description": "Label showing extracted main domain"
