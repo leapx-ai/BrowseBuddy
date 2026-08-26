@@ -1241,6 +1241,13 @@ body {
   margin-top: var(--space-1);
 }
 
+/* A hint that explains why a control is disabled is not an optional aside, so it
+   does not use the muted colour. See --text-error for why this is not
+   --danger-color. */
+.field-hint.is-error {
+  color: var(--text-error);
+}
+
 .text-note {
   font-size: var(--text-xs);
   color: var(--text-muted);

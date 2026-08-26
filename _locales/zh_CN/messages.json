@@ -71,6 +71,10 @@
     "message": "结束日期",
     "description": "End date label"
   },
+  "invalidDateRange": {
+    "message": "结束日期不能早于开始日期",
+    "description": "Hint shown when the selected date range is inverted"
+  },
   "domain": {
     "message": "域名",
     "description": "Domain label"

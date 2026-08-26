@@ -84,6 +84,12 @@ const DeleteModule: React.FC = () => {
   // input, and an empty domain means "no domain filter", i.e. the whole history.
   const normalizedDomain = domain.trim() ? extractMainDomain(domain) : '';
 
+  // yyyy-mm-dd strings sort chronologically, so a plain comparison is enough.
+  // An inverted range built an empty window and Preview reported "0 records",
+  // which reads as "nothing matched" rather than "the dates are backwards".
+  const today = toDateInputValue(new Date());
+  const isRangeInverted = !!startDate && !!endDate && startDate > endDate;
+
   const buildDeleteOptions = (): DeleteOptions => {
     const options: DeleteOptions = {};
 
@@ -174,9 +180,12 @@ const DeleteModule: React.FC = () => {
           <>
             <div className="input-group">
               <label className="input-label">{getMessage('startDate')}</label>
+              {/* max stops at today: history cannot contain future visits, so a
+                  future date can only produce an empty result. */}
               <input
                 type="date"
                 className="input"
+                max={endDate || today}
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
@@ -186,9 +195,14 @@ const DeleteModule: React.FC = () => {
               <input
                 type="date"
                 className="input"
+                min={startDate || undefined}
+                max={today}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
+              {isRangeInverted && (
+                <p className="field-hint is-error">{getMessage('invalidDateRange')}</p>
+              )}
             </div>
           </>
         )}
@@ -230,7 +244,7 @@ const DeleteModule: React.FC = () => {
           className="btn btn-danger btn-block"
           onClick={handlePreview}
           disabled={isLoading || 
-            (deleteType === 'date' && (!startDate || !endDate)) ||
+            (deleteType === 'date' && (!startDate || !endDate || isRangeInverted)) ||
             (deleteType === 'domain' && !normalizedDomain) ||
             (deleteType === 'keyword' && !keyword)
           }
@@ -242,10 +256,7 @@ const DeleteModule: React.FC = () => {
             </>
           ) : (
             <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <Icon name="eye" size={16} />
               {getMessage('preview')}
             </>
           )}

@@ -13,7 +13,7 @@
  */
 import React from 'react';
 
-export type IconName = 'inbox' | 'shield' | 'star' | 'star-filled' | 'chart' | 'chevron-down' | 'chevron-right' | 'close' | 'plus' | 'check';
+export type IconName = 'inbox' | 'shield' | 'star' | 'star-filled' | 'chart' | 'chevron-down' | 'chevron-right' | 'close' | 'plus' | 'check' | 'eye';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   inbox: (
@@ -40,6 +40,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
   close: <path d="M6 6l12 12M18 6L6 18" />,
   plus: <path d="M12 5v14M5 12h14" />,
   check: <path d="M20 6L9 17l-5-5" />,
+  eye: (
+    <>
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
 };
 
 export const Icon: React.FC<{ name: IconName; size?: number; className?: string }> = ({

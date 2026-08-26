@@ -71,6 +71,10 @@
     "message": "End Date",
     "description": "End date label"
   },
+  "invalidDateRange": {
+    "message": "End date cannot be earlier than start date",
+    "description": "Hint shown when the selected date range is inverted"
+  },
   "domain": {
     "message": "Domain",
     "description": "Domain label"

@@ -39,6 +39,12 @@
      page. */
   --text-muted: #a3a3b5;
   
+  /* Error text needs its own value: --danger-color (#ef4444) is tuned for filled
+     buttons and only measures 3.7:1 as text on --bg-card in either theme, under
+     the 4.5:1 AA floor. This one is 5.07:1 on --bg-card and 5.51:1 on
+     --bg-secondary. */
+  --text-error: #f87171;
+  
   /* Softer than the previous #3c3c62 to match the low-contrast-edge direction.
      Separation now comes mostly from the surface ladder above. */
   --border-color: #34344f;
@@ -128,6 +134,9 @@
      4.5:1). The dark theme's muted was fixed for this earlier; this one had not
      been checked. Now ~5.9:1 on the page, ~5.5:1 on the day band. */
   --text-muted: #5c5e75;
+
+  /* The dark theme's #f87171 would sit at 2.4:1 on white. This one is 5.74:1. */
+  --text-error: #c81e1e;
 
   /* Softer than the #d5d8e8 measured before the direction was chosen: 1.28:1
      against a white panel instead of 1.42:1. That is the cost of the softer
