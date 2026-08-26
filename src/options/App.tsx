@@ -132,7 +132,7 @@ const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="options-container">
-        <div style={{ padding: '40px', textAlign: 'center' }}>{getMessage('loading')}</div>
+        <div className="page-status">{getMessage('loading')}</div>
       </div>
     );
   }
@@ -160,7 +160,7 @@ const App: React.FC = () => {
   if (!settings) {
     return (
       <div className="options-container">
-        <div style={{ padding: '40px', textAlign: 'center' }}>Error loading settings</div>
+        <div className="page-status">Error loading settings</div>
       </div>
     );
   }
@@ -177,7 +177,6 @@ const App: React.FC = () => {
           <img
             src={chrome.runtime.getURL('icons/icon64.png')}
             alt="BrowseBuddy"
-            style={{ width: '32px', height: '32px', borderRadius: 'var(--radius)' }}
           />
         </div>
         <div className="options-title">
@@ -322,12 +321,12 @@ const App: React.FC = () => {
           </div>
 
           {settings.autoCleanup && (
-            <div className="form-group" style={{ marginTop: '12px' }}>
+            <div className="form-group is-spaced">
               <label className="form-label">{getMessage('cleanupRetention') || 'Retention period'}</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div className="field-row">
                 <input
                   type="number"
-                  className="form-input"
+                  className="form-input is-narrow"
                   min={1}
                   max={3650}
                   value={settings.cleanupRetentionDays}
@@ -335,16 +334,15 @@ const App: React.FC = () => {
                     const v = Math.max(1, Math.min(3650, Number(e.target.value) || 1));
                     updateSettings({ cleanupRetentionDays: v });
                   }}
-                  style={{ maxWidth: '120px' }}
                 />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                <span className="field-unit">
                   {getMessage('days') || 'days'}
                 </span>
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+          <div className="btn-row">
             <button className="btn btn-primary" onClick={handleBackup}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -367,8 +365,8 @@ const App: React.FC = () => {
         {/* About */}
         <section className="section">
           <h2 className="section-title">{getMessage('about') || 'About'}</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            BrowseBuddy v1.0.0 - {getMessage('extDescription')}
+          <p className="about-text">
+            BrowseBuddy v{chrome.runtime.getManifest().version} - {getMessage('extDescription')}
           </p>
           <div className="alert alert-info">
             <strong>{getMessage('privacyPromiseTitle') || 'Privacy Promise:'}</strong>{' '}
@@ -455,7 +453,6 @@ const WelcomePage: React.FC<{
         <img
           src={chrome.runtime.getURL('icons/icon64.png')}
           alt="BrowseBuddy"
-          style={{ width: '80px', height: '80px', borderRadius: '20px' }}
         />
       </div>
       <h1 className="welcome-title">{getMessage('welcomeTitle') || 'Welcome to BrowseBuddy!'}</h1>
@@ -473,9 +470,9 @@ const WelcomePage: React.FC<{
         ))}
       </div>
 
-      <div className="alert alert-info" style={{ textAlign: 'left' }}>
+      <div className="alert alert-info is-left">
         <strong>{getMessage('permissionNotice') || 'Permission Notice:'}</strong>
-        <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+        <ul className="permission-list">
           <li>{getMessage('permissionHistory') || 'History access - to read and manage your browsing history'}</li>
           <li>{getMessage('permissionStorage') || 'Storage access - to save settings locally'}</li>
           <li>{getMessage('permissionTabs') || 'Tab access - for real-time protection'}</li>
@@ -483,7 +480,7 @@ const WelcomePage: React.FC<{
         </ul>
       </div>
 
-      <button className="btn btn-primary" style={{ padding: '16px 48px', fontSize: '16px' }} onClick={onGetStarted}>
+      <button className="btn btn-primary is-hero" onClick={onGetStarted}>
         {getMessage('getStarted') || 'Get Started'}
       </button>
     </div>
