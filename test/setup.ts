@@ -25,7 +25,18 @@ const chromeMock = {
         return result;
       },
       set: async (items: Record<string, unknown>) => {
+        const changes: Record<string, { oldValue?: unknown; newValue?: unknown }> = {};
+        for (const [key, newValue] of Object.entries(items)) {
+          changes[key] = { oldValue: storageStore[key], newValue };
+        }
         Object.assign(storageStore, items);
+        // Chrome fires onChanged in every context after every local write.
+        // The storage read cache relies on it to drop stale values, so the mock
+        // has to fire it too - otherwise a test that seeds the store directly
+        // would be served a value cached by the previous test.
+        for (const cb of listeners['storage.onChanged'] || []) {
+          cb(changes, 'local');
+        }
       },
       getBytesInUse: async () => 1024,
     },

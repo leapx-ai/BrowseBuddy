@@ -11,6 +11,8 @@ import {
   updateBlacklistEntry,
   getSettings,
   saveSettings,
+  saveDomainDurations,
+  getVisibleDomainDurations,
   defaultSettings,
 } from '../src/utils/storage';
 import type { BlacklistEntry } from '../src/types';
@@ -357,5 +359,83 @@ describe('getSettings defaults', () => {
     expect(s.realtimeProtection).toBe(true);
     expect(s.autoCleanup).toBe(false);
     expect(s.cleanupRetentionDays).toBe(30);
+  });
+});
+
+describe('read cache', () => {
+  beforeEach(async () => {
+    vi.restoreAllMocks();
+    await resetStorage();
+  });
+
+  it('collapses concurrent reads of the same key into one get()', async () => {
+    const spy = vi.spyOn(chrome.storage.local, 'get');
+
+    // Opening the popup read the blacklist five times: the view filter, the
+    // domain grouping, stats, the privacy list, and getVisibleDomainDurations.
+    await Promise.all([
+      getBlacklist(),
+      getBlacklist(),
+      getBlacklist(),
+      getBlacklist(),
+      getBlacklist(),
+    ]);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('serves later reads from cache without touching storage', async () => {
+    await getBlacklist();
+    const spy = vi.spyOn(chrome.storage.local, 'get');
+
+    await getBlacklist();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('does not serve a stale value after a write', async () => {
+    await getBlacklist();
+
+    await saveBlacklist([
+      { id: '1', pattern: 'later.com', type: 'exact', enabled: true, createdAt: 1 },
+    ]);
+
+    expect((await getBlacklist()).map(e => e.pattern)).toEqual(['later.com']);
+  });
+
+  it('drops the cached value when another context writes the key', async () => {
+    await getSettings();
+
+    // Background worker and options page writes reach the popup only through
+    // chrome.storage.onChanged - the extension has no message channel.
+    await chrome.storage.local.set({
+      browsebuddy_settings: { ...defaultSettings, theme: 'light' },
+    });
+
+    expect((await getSettings()).theme).toBe('light');
+  });
+
+  it('does not cache a rejection', async () => {
+    const failing = vi
+      .spyOn(chrome.storage.local, 'get')
+      .mockRejectedValueOnce(new Error('storage unavailable'));
+
+    // A cached rejection would turn one transient error into a permanent
+    // "nothing is blacklisted" for the life of the context.
+    await expect(getBlacklist()).rejects.toThrow('storage unavailable');
+    failing.mockRestore();
+
+    await expect(getBlacklist()).resolves.toEqual([]);
+  });
+
+  it('reads durations and blacklist once each for visible durations', async () => {
+    await saveDomainDurations({ 'a.com': 1000 });
+    const spy = vi.spyOn(chrome.storage.local, 'get');
+
+    await getVisibleDomainDurations();
+    await getVisibleDomainDurations();
+
+    // Two keys, one read each, regardless of how many callers ask.
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 });

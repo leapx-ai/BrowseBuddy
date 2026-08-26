@@ -51,6 +51,103 @@ function withStorageLock<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
+// Shared read cache for the four keys this module owns.
+//
+// Nothing shared reads before this: opening the popup read the blacklist five
+// separate times (view filter, domain grouping, stats, privacy list, and again
+// inside getVisibleDomainDurations), and every module re-read settings on
+// mount. chrome.storage.local is not free - each call crosses into the browser
+// process and yields to the event loop - so those turned into avoidable frames
+// of latency on the one path where the popup has to paint fast.
+//
+// Two mechanisms, both required:
+//   - in-flight sharing, so N callers awaiting the same key in the same tick
+//     issue one get() rather than N;
+//   - a resolved-value cache, invalidated on write and on chrome.storage
+//     onChanged, so a later mount reuses what is already known.
+//
+// onChanged is what makes this safe across contexts. Chrome fires it in every
+// context for every local-storage write, including writes made by the service
+// worker or the options page, so a cached value cannot outlive the data it
+// mirrors. This is the same channel App.tsx already listens on for settings;
+// here it covers all four keys instead of one.
+const CACHED_KEYS: readonly string[] = [
+  STORAGE_KEYS.SETTINGS,
+  STORAGE_KEYS.BLACKLIST,
+  STORAGE_KEYS.FAVORITES,
+  STORAGE_KEYS.DURATIONS,
+];
+
+const cachedValues = new Map<string, unknown>();
+const inFlightReads = new Map<string, Promise<unknown>>();
+// Bumped on every write and every onChanged. A read that started before a bump
+// must not install its result, because that result predates the write.
+const generations = new Map<string, number>();
+
+function generationOf(key: string): number {
+  return generations.get(key) ?? 0;
+}
+
+function invalidate(key: string): void {
+  generations.set(key, generationOf(key) + 1);
+  cachedValues.delete(key);
+  inFlightReads.delete(key);
+}
+
+function readCached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  if (cachedValues.has(key)) {
+    return Promise.resolve(cachedValues.get(key) as T);
+  }
+  const pending = inFlightReads.get(key);
+  if (pending) {
+    return pending as Promise<T>;
+  }
+
+  const startedAt = generationOf(key);
+  const run = load().then(
+    value => {
+      if (generationOf(key) === startedAt) {
+        cachedValues.set(key, value);
+        inFlightReads.delete(key);
+      }
+      return value;
+    },
+    error => {
+      // Failures are never cached. getBlacklist and getFavorites propagate on
+      // purpose (see their comments below); caching a rejection would turn one
+      // transient storage error into a permanent one for the life of the
+      // context, which is exactly the silent-degradation failure those
+      // accessors were changed to avoid.
+      if (inFlightReads.get(key) === run) inFlightReads.delete(key);
+      throw error;
+    }
+  );
+  inFlightReads.set(key, run);
+  return run;
+}
+
+// The single write path for the cached keys. Invalidating both before and after
+// the set() closes the window where a read issued mid-write would otherwise
+// park the pre-write value in the cache.
+async function writeCachedKeys(items: Record<string, unknown>): Promise<void> {
+  const keys = Object.keys(items);
+  keys.forEach(invalidate);
+  try {
+    await chrome.storage.local.set(items);
+  } finally {
+    keys.forEach(invalidate);
+  }
+}
+
+if (typeof chrome !== 'undefined' && chrome.storage?.onChanged?.addListener) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return;
+    for (const key of Object.keys(changes)) {
+      if (CACHED_KEYS.includes(key)) invalidate(key);
+    }
+  });
+}
+
 // Favorited (protected) main domains - never auto-cleaned, never counted for deletion
 //
 // Read errors propagate on purpose. Returning [] on failure meant "nothing is
@@ -58,12 +155,14 @@ function withStorageLock<T>(task: () => Promise<T>): Promise<T> {
 // and favorited domains became eligible for deletion. Callers must decide, and
 // for a protection list the only safe decision is to not proceed.
 export async function getFavorites(): Promise<string[]> {
-  const result = await chrome.storage.local.get(STORAGE_KEYS.FAVORITES);
-  return result[STORAGE_KEYS.FAVORITES] || [];
+  return readCached(STORAGE_KEYS.FAVORITES, async () => {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.FAVORITES);
+    return (result[STORAGE_KEYS.FAVORITES] || []) as string[];
+  });
 }
 
 export async function saveFavorites(domains: string[]): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEYS.FAVORITES]: domains });
+  await writeCachedKeys({ [STORAGE_KEYS.FAVORITES]: domains });
 }
 
 export async function addFavorite(domain: string): Promise<void> {
@@ -87,16 +186,18 @@ export async function removeFavorite(domain: string): Promise<void> {
 
 // Per-domain accumulated dwell time (ms)
 export async function getDomainDurations(): Promise<Record<string, number>> {
-  try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.DURATIONS);
-    return result[STORAGE_KEYS.DURATIONS] || {};
-  } catch {
-    return {};
-  }
+  return readCached(STORAGE_KEYS.DURATIONS, async () => {
+    try {
+      const result = await chrome.storage.local.get(STORAGE_KEYS.DURATIONS);
+      return (result[STORAGE_KEYS.DURATIONS] || {}) as Record<string, number>;
+    } catch {
+      return {};
+    }
+  });
 }
 
 export async function saveDomainDurations(durations: Record<string, number>): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEYS.DURATIONS]: durations });
+  await writeCachedKeys({ [STORAGE_KEYS.DURATIONS]: durations });
 }
 
 // Durations with blacklisted domains removed. Mirrors fetchHistory /
@@ -123,16 +224,18 @@ export async function getVisibleDomainDurations(): Promise<Record<string, number
 
 // Settings management
 export async function getSettings(): Promise<Settings> {
-  try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
-    return { ...defaultSettings, ...result[STORAGE_KEYS.SETTINGS] };
-  } catch {
-    return defaultSettings;
-  }
+  return readCached(STORAGE_KEYS.SETTINGS, async () => {
+    try {
+      const result = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
+      return { ...defaultSettings, ...result[STORAGE_KEYS.SETTINGS] };
+    } catch {
+      return defaultSettings;
+    }
+  });
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: settings });
+  await writeCachedKeys({ [STORAGE_KEYS.SETTINGS]: settings });
 }
 
 // Blacklist management
@@ -143,12 +246,14 @@ export async function saveSettings(settings: Settings): Promise<void> {
 // and since background and UI share no message channel, nothing could ever
 // notice. Callers handle the failure explicitly.
 export async function getBlacklist(): Promise<BlacklistEntry[]> {
-  const result = await chrome.storage.local.get(STORAGE_KEYS.BLACKLIST);
-  return result[STORAGE_KEYS.BLACKLIST] || [];
+  return readCached(STORAGE_KEYS.BLACKLIST, async () => {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.BLACKLIST);
+    return (result[STORAGE_KEYS.BLACKLIST] || []) as BlacklistEntry[];
+  });
 }
 
 export async function saveBlacklist(blacklist: BlacklistEntry[]): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEYS.BLACKLIST]: blacklist });
+  await writeCachedKeys({ [STORAGE_KEYS.BLACKLIST]: blacklist });
 }
 
 export async function addToBlacklist(entry: Omit<BlacklistEntry, 'id' | 'createdAt'>): Promise<BlacklistEntry> {
@@ -520,7 +625,7 @@ async function restoreBackupLocked(backupJson: string): Promise<void> {
     throw new Error('Backup contains no restorable data');
   }
 
-  await chrome.storage.local.set(next);
+  await writeCachedKeys(next);
 }
 
 // Delete history older than the retention cutoff, protecting favorited domains.
