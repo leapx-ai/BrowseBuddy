@@ -558,7 +558,6 @@ const CalendarView: React.FC<{
   const [data, setData] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [maxCount, setMaxCount] = useState(1);
-  const [initialized, setInitialized] = useState(false);
   const showSlowLoading = useSlowLoading(isLoading);
 
   useEffect(() => {
@@ -575,7 +574,6 @@ const CalendarView: React.FC<{
       setData(map);
       setMaxCount(max);
       setIsLoading(false);
-      setInitialized(true);
     }).catch(() => {
       if (!cancelled) setIsLoading(false);
     });
@@ -594,6 +592,11 @@ const CalendarView: React.FC<{
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
   }
+  // Always six weeks. A month that starts on a Sunday and has 30 days fits in
+  // five rows, one starting on a Saturday needs six - so without the padding the
+  // grid changed height as you paged through months, and the legend and the day
+  // detail under it moved with it.
+  while (cells.length < 42) cells.push(null);
 
   // Local calendar date - toISOString() would resolve to the UTC day and mark
   // the wrong cell as "today" for any non-UTC timezone.
@@ -604,16 +607,20 @@ const CalendarView: React.FC<{
       ? `rgba(74, 158, 89, ${0.25 + 0.75 * (count / maxCount)})`
       : 'var(--bg-tertiary)';
 
-  // Nothing to render before the first month arrives. Hold the space blank and
-  // only fall back to a spinner if the query is actually slow. Month switches
-  // keep the previous grid on screen, dimmed only if the wait becomes visible.
-  if (!initialized) {
-    return showSlowLoading ? (
-      <div className="loading loading-block">
-        <div className="spinner" />
-      </div>
-    ) : null;
-  }
+  /*
+   * No early return before the first month arrives.
+   *
+   * This used to hold the space blank by returning null, which does not hold any
+   * space: switching to the calendar collapsed the pane to just the segmented
+   * control, then a few milliseconds later ~300px of grid and legend appeared -
+   * the jump that reads as the view shaking as it opens.
+   *
+   * The grid's geometry does not depend on the data at all: the month label, the
+   * day numbers and the six rows are all derived from year/month. So it renders
+   * immediately at its final size with every day at the zero-visit colour, and the
+   * heat fills in when the query lands. Only if that wait becomes visible does the
+   * grid dim, via .is-stale, which changes no metrics.
+   */
 
   return (
     <div>
@@ -624,6 +631,7 @@ const CalendarView: React.FC<{
       </div>
       <div
         className={`calendar-grid ${showSlowLoading ? 'is-stale' : ''}`}
+        aria-busy={isLoading}
       >
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;

@@ -127,6 +127,13 @@ body {
   overflow-y: auto;
   padding: var(--content-padding);
   min-height: 0;
+  /*
+   * Reserve the scrollbar's 6px whether or not it is showing. The history list
+   * overflows and the calendar does not, so switching between them added and
+   * removed the scrollbar - and with it 6px of content width, which relaid out
+   * every row and shifted the whole pane sideways on each switch.
+   */
+  scrollbar-gutter: stable;
 }
 
 .main-content::-webkit-scrollbar {
