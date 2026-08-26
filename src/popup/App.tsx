@@ -33,38 +33,53 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadSettings();
-    
-    // Listen for storage changes to update language and theme
+
+    // storage.onChanged is the only channel between the options page, the
+    // service worker and this popup - there is no message passing - so language
+    // and theme changes arrive here.
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
-      if (changes.browsebuddy_settings) {
-        const newSettings = changes.browsebuddy_settings.newValue;
-        if (newSettings) {
-          setUserLanguage(newSettings.language);
-          applyTheme(newSettings.theme);
-          // Force re-render to update language
-          setRefreshKey(prev => prev + 1);
-        }
-      }
+      if (!changes.browsebuddy_settings) return;
+      const newSettings = changes.browsebuddy_settings.newValue;
+      if (!newSettings) return;
+
+      const previous = changes.browsebuddy_settings.oldValue;
+      setUserLanguage(newSettings.language);
+      applyTheme(newSettings.theme);
+
+      // Remount only for a language change. getMessage() reads a module-level
+      // language and is not reactive, so the tree genuinely has to be rebuilt
+      // for new labels to appear - but a remount also destroys an open delete
+      // confirmation mid-flight, snaps a list scrolled to 600 rows back to 60,
+      // and clears text the user has typed but not submitted. Bumping on *any*
+      // settings write meant flipping a switch on the options page, or the
+      // worker syncing the incognito badge, did all of that for no reason. The
+      // theme needs no remount at all: applyTheme sets a data attribute.
+      if (previous && newSettings.language === previous.language) return;
+      setRefreshKey(prev => prev + 1);
     };
-    
+
     chrome.storage.onChanged.addListener(handleStorageChange);
     return () => {
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
   }, [loadSettings]);
 
+  // No per-module keys: the container below already carries `refreshKey`, so a
+  // bump remounts the whole subtree. Spelling it out on each module as well was
+  // redundant and invited the reading that modules could be remounted
+  // independently.
   const renderContent = () => {
     switch (activeTab) {
       case 'delete':
-        return <DeleteModule key={`delete-${refreshKey}`} />;
+        return <DeleteModule />;
       case 'view':
-        return <ViewModule key={`view-${refreshKey}`} />;
+        return <ViewModule />;
       case 'stats':
-        return <StatsModule key={`stats-${refreshKey}`} />;
+        return <StatsModule />;
       case 'privacy':
-        return <PrivacyModule key={`privacy-${refreshKey}`} />;
+        return <PrivacyModule />;
       default:
-        return <ViewModule key={`view-${refreshKey}`} />;
+        return <ViewModule />;
     }
   };
 

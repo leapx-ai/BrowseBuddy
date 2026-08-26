@@ -1,18 +1,23 @@
 // History record types
 export interface HistoryItem {
+  // `${url}:${visitTime}` - stable for the same record and unique across
+  // records. It used to be `${visitCount}-${lastVisitTime}`, which identified
+  // neither: two different URLs with the same visit count and timestamp
+  // collided, and the value changed whenever the visit count did even though it
+  // was being used as a React key and as an identity in preview lists.
+  // Deliberately equal to the de-duplication key, so identity is defined once.
   id: string;
   url: string;
   title: string;
+  // The record's most recent visit. Chrome calls this lastVisitTime; this type
+  // used to carry BOTH names holding the same value, and downstream code picked
+  // whichever it happened to remember - DeleteModule hid the timestamp entirely
+  // when the optional copy was absent.
   visitTime: number;
   visitCount: number;
   typedCount?: number;
-  lastVisitTime?: number;
   // Primary navigation transition type from getVisits()
   transition?: string;
-}
-
-export interface GroupedHistory {
-  [key: string]: HistoryItem[];
 }
 
 export interface DomainStats {
@@ -36,7 +41,13 @@ export interface DailyStats {
 export interface BlacklistEntry {
   id: string;
   pattern: string;
-  type: 'exact' | 'wildcard' | 'regex';
+  // Only exact main-domain matching is implemented (isUrlBlacklisted compares
+  // `extractMainDomain(url) === pattern`, which already covers subdomains). The
+  // union used to also declare 'wildcard' and 'regex', neither of which any code
+  // path ever read - so the type advertised matching modes the extension does
+  // not have, and a hand-edited backup claiming type: 'regex' was accepted and
+  // then silently matched as an exact domain.
+  type: 'exact';
   enabled: boolean;
   createdAt: number;
 }
@@ -50,16 +61,6 @@ export interface Settings {
   sessionIncognito: boolean;
   autoCleanup: boolean;
   cleanupRetentionDays: number; // keep history newer than this many days
-}
-
-// Export types
-export interface ExportOptions {
-  format: 'csv' | 'html' | 'json';
-  dateRange?: {
-    start: number;
-    end: number;
-  };
-  domains?: string[];
 }
 
 // Delete options
@@ -96,9 +97,11 @@ export interface CalendarData {
 export interface Statistics {
   totalRecords: number;
   totalDomains: number;
+  // start/end, matching SearchOptions and DeleteOptions. This was the only
+  // date range in the codebase spelled earliest/latest.
   dateRange: {
-    earliest: number;
-    latest: number;
+    start: number;
+    end: number;
   };
   topSites: DomainStats[];
   timeDistribution: TimeDistribution[];

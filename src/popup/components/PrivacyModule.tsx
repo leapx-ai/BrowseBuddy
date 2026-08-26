@@ -11,6 +11,7 @@ import {
   extractMainDomain,
   type BlacklistEntry 
 } from '../../utils/storage';
+import { isInternalUrl, isUrlBlacklisted } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
 import { Icon } from './Icon';
 import { useSlowLoading } from '../useSlowLoading';
@@ -186,16 +187,14 @@ const PrivacyModule: React.FC = () => {
     }
   };
 
-  const isCurrentPageBlacklisted = currentTab?.url ? 
-    blacklist.some(entry => entry.enabled && entry.pattern === extractMainDomain(currentTab.url!)) : 
-    false;
+  const isCurrentPageBlacklisted = currentTab?.url
+    // Was reimplemented inline here as `entry.enabled && entry.pattern ===
+    // extractMainDomain(url)`, a second copy of the matching rule that would
+    // drift from the canonical one the moment either changed.
+    ? isUrlBlacklisted(currentTab.url, blacklist)
+    : false;
 
-  // Blacklisting and favouriting both act on a domain, so neither makes sense for
-  // a browser-internal page. The two buttons used to filter different scheme sets
-  // - the blacklist button checked four, the favourites button only chrome:// -
-  // so an extension page could be added to favourites but not to the blacklist.
-  const INTERNAL_SCHEMES = ['chrome://', 'chrome-extension://', 'about:', 'edge://'];
-  const isAddressable = !!currentTab?.url && !INTERNAL_SCHEMES.some(s => currentTab.url!.startsWith(s));
+  const isAddressable = !!currentTab?.url && !isInternalUrl(currentTab.url);
 
   if (isLoading) {
     return showSlowLoading ? (

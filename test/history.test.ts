@@ -1,19 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchAllHistory, calculateStatistics, exportToCsv, exportToHtml, groupByDate, getAllDomains } from '../src/utils/history';
+import { fetchAllHistory, computeStatistics, exportToCsv, exportToHtml, groupByDate, getAllDomains } from '../src/utils/history';
+import { filterBlacklistedItems } from '../src/utils/blacklist';
 import type { HistoryItem, Statistics } from '../src/types';
 
 const BASE_TS = new Date('2026-01-10T00:00:00Z').getTime();
 
-// Helper to build a fake history dataset
-function buildItems(count: number, startTs: number, stepMs: number): HistoryItem[] {
-  const items: HistoryItem[] = [];
+// Helper to build a fake history dataset.
+//
+// Typed as Chrome's own HistoryItem, not ours: these stand in for what
+// chrome.history.search returns, which is where `lastVisitTime` lives. Our
+// HistoryItem carries a single `visitTime`, so a fixture shaped like the domain
+// type quietly let assertions read a field the code no longer produces.
+function buildItems(count: number, startTs: number, stepMs: number): chrome.history.HistoryItem[] {
+  const items: chrome.history.HistoryItem[] = [];
   for (let i = 0; i < count; i++) {
     const ts = startTs - i * stepMs;
     items.push({
       id: `${i}`,
       url: `https://site${i % 5}.com/page${i}`,
       title: `Page ${i}`,
-      visitTime: ts,
       visitCount: 1,
       lastVisitTime: ts,
     });
@@ -23,7 +28,7 @@ function buildItems(count: number, startTs: number, stepMs: number): HistoryItem
 
 // Mock chrome.history.search to simulate Chrome's behavior:
 // returns up to maxResults items sorted by lastVisitTime DESC, filtered by endTime (exclusive).
-function mockHistorySearch(items: HistoryItem[]) {
+function mockHistorySearch(items: chrome.history.HistoryItem[]) {
   const sorted = [...items].sort((a, b) => (b.lastVisitTime || 0) - (a.lastVisitTime || 0));
   (globalThis as unknown as { chrome: { history: { search: unknown } } }).chrome.history.search = vi.fn(
     (query: chrome.history.HistoryQuery, cb: (r: chrome.history.HistoryItem[]) => void) => {
@@ -71,7 +76,7 @@ describe('fetchAllHistory pagination', () => {
     const end = BASE_TS - 50 * 1000;
 
     const all = await fetchAllHistory({ dateRange: { start: 0, end } });
-    expect(all.every(i => (i.lastVisitTime || 0) < end)).toBe(true);
+    expect(all.every(i => i.visitTime < end)).toBe(true);
     // items are at BASE_TS - i*1000. end = BASE_TS - 50000.
     // i*1000 > 50000 => i > 50 => items 51..99 = 49 records (exclusive end).
     expect(all).toHaveLength(49);
@@ -96,38 +101,35 @@ describe('fetchAllHistory pagination', () => {
   });
 });
 
-describe('calculateStatistics', () => {
+describe('computeStatistics', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('aggregates top sites by main domain (www and bare merge)', async () => {
+  it('aggregates top sites by main domain (www and bare merge)', () => {
     const now = BASE_TS;
     const items: HistoryItem[] = [
-      { id: '1', url: 'https://www.example.com/a', title: 'a', visitTime: now - 1000, visitCount: 1, lastVisitTime: now - 1000 },
-      { id: '2', url: 'https://example.com/b', title: 'b', visitTime: now - 2000, visitCount: 1, lastVisitTime: now - 2000 },
-      { id: '3', url: 'https://other.com/c', title: 'c', visitTime: now - 3000, visitCount: 1, lastVisitTime: now - 3000 },
+      { id: '1', url: 'https://www.example.com/a', title: 'a', visitTime: now - 1000, visitCount: 1 },
+      { id: '2', url: 'https://example.com/b', title: 'b', visitTime: now - 2000, visitCount: 1 },
+      { id: '3', url: 'https://other.com/c', title: 'c', visitTime: now - 3000, visitCount: 1 },
     ];
-    mockHistorySearch(items);
 
-    const stats = await calculateStatistics([]);
+    const stats = computeStatistics(items);
     expect(stats.totalRecords).toBe(3);
     expect(stats.totalDomains).toBe(2);
     const example = stats.topSites.find(s => s.domain === 'example.com');
     expect(example?.count).toBe(2);
   });
 
-  it('zero-fills days with no visits in dailyStats', async () => {
-    // Use timestamps well in the past so Date.now() endTime never clips them.
+  it('zero-fills days with no visits in dailyStats', () => {
     const end = new Date('2026-01-05T12:00:00Z').getTime();
     const start = new Date('2026-01-01T12:00:00Z').getTime();
     const items: HistoryItem[] = [
-      { id: '1', url: 'https://a.com', title: 'a', visitTime: start, visitCount: 1, lastVisitTime: start },
-      { id: '2', url: 'https://b.com', title: 'b', visitTime: end, visitCount: 1, lastVisitTime: end },
+      { id: '1', url: 'https://a.com', title: 'a', visitTime: start, visitCount: 1 },
+      { id: '2', url: 'https://b.com', title: 'b', visitTime: end, visitCount: 1 },
     ];
-    mockHistorySearch(items);
 
-    const stats = await calculateStatistics([]);
+    const stats = computeStatistics(items);
     // Jan 1 -> Jan 5 = 5 calendar days, with zero-filled gaps
     expect(stats.dailyStats.length).toBe(5);
     expect(stats.dailyStats[0].count).toBe(1); // Jan 1
@@ -135,26 +137,24 @@ describe('calculateStatistics', () => {
     expect(stats.dailyStats[4].count).toBe(1); // Jan 5
   });
 
-  it('filters blacklisted domains from stats', async () => {
+  it('excludes blacklisted domains when the caller filters first', () => {
     const now = BASE_TS;
     const items: HistoryItem[] = [
-      { id: '1', url: 'https://blocked.com/a', title: 'a', visitTime: now - 1000, visitCount: 1, lastVisitTime: now - 1000 },
-      { id: '2', url: 'https://ok.com/b', title: 'b', visitTime: now - 2000, visitCount: 1, lastVisitTime: now - 2000 },
+      { id: '1', url: 'https://blocked.com/a', title: 'a', visitTime: now - 1000, visitCount: 1 },
+      { id: '2', url: 'https://ok.com/b', title: 'b', visitTime: now - 2000, visitCount: 1 },
     ];
-    mockHistorySearch(items);
 
     const blacklist = [{ id: '1', pattern: 'blocked.com', type: 'exact' as const, enabled: true, createdAt: 1 }];
-    const stats = await calculateStatistics(blacklist);
+    const stats = computeStatistics(filterBlacklistedItems(items, blacklist));
     expect(stats.totalRecords).toBe(1);
     expect(stats.topSites[0].domain).toBe('ok.com');
   });
 
-  it('returns empty defaults when no items', async () => {
-    mockHistorySearch([]);
-    const stats = await calculateStatistics([]);
+  it('returns empty defaults when no items', () => {
+    const stats = computeStatistics([]);
     expect(stats.totalRecords).toBe(0);
     expect(stats.dailyStats).toEqual([]);
-    expect(stats.dateRange).toEqual({ earliest: 0, latest: 0 });
+    expect(stats.dateRange).toEqual({ start: 0, end: 0 });
   });
 });
 
@@ -165,10 +165,10 @@ describe('getAllDomains', () => {
 
   it('returns unique main domains sorted', async () => {
     const now = BASE_TS;
-    const items: HistoryItem[] = [
-      { id: '1', url: 'https://www.example.com/a', title: 'a', visitTime: now - 1000, visitCount: 1, lastVisitTime: now - 1000 },
-      { id: '2', url: 'https://example.com/b', title: 'b', visitTime: now - 2000, visitCount: 1, lastVisitTime: now - 2000 },
-      { id: '3', url: 'https://zed.com/c', title: 'c', visitTime: now - 3000, visitCount: 1, lastVisitTime: now - 3000 },
+    const items: chrome.history.HistoryItem[] = [
+      { id: '1', url: 'https://www.example.com/a', title: 'a', visitCount: 1, lastVisitTime: now - 1000 },
+      { id: '2', url: 'https://example.com/b', title: 'b', visitCount: 1, lastVisitTime: now - 2000 },
+      { id: '3', url: 'https://zed.com/c', title: 'c', visitCount: 1, lastVisitTime: now - 3000 },
     ];
     mockHistorySearch(items);
 
@@ -189,7 +189,7 @@ describe('local date keys', () => {
   const earlyMorning = new Date(2026, 7, 20, 0, 30).getTime();
 
   function visit(id: string, ts: number): HistoryItem {
-    return { id, url: `https://${id}.com`, title: id, visitTime: ts, visitCount: 1, lastVisitTime: ts };
+    return { id, url: `https://${id}.com`, title: id, visitTime: ts, visitCount: 1 };
   }
 
   it('groups by the local calendar date', () => {
@@ -199,20 +199,19 @@ describe('local date keys', () => {
     expect(groups.get('2026-08-20')).toHaveLength(2);
   });
 
-  it('builds the daily trend on local days', async () => {
-    mockHistorySearch([visit('a', earlyMorning), visit('b', evening)]);
-
-    const stats = await calculateStatistics([]);
+  it('builds the daily trend on local days', () => {
+    const stats = computeStatistics([visit('a', earlyMorning), visit('b', evening)]);
 
     // One local day, both visits in it - a UTC timeline split them across two
     // cells (or produced a cell keyed to a day with no visits).
     expect(stats.dailyStats).toEqual([{ date: '2026-08-20', count: 2 }]);
   });
 
-  it('zero-fills the gap between two local days', async () => {
-    mockHistorySearch([visit('a', evening), visit('b', new Date(2026, 7, 22, 9, 0).getTime())]);
-
-    const stats = await calculateStatistics([]);
+  it('zero-fills the gap between two local days', () => {
+    const stats = computeStatistics([
+      visit('a', evening),
+      visit('b', new Date(2026, 7, 22, 9, 0).getTime()),
+    ]);
 
     expect(stats.dailyStats).toEqual([
       { date: '2026-08-20', count: 1 },
@@ -253,7 +252,7 @@ describe('exportToHtml escaping', () => {
   const stats: Statistics = {
     totalRecords: 1,
     totalDomains: 1,
-    dateRange: { earliest: 0, latest: 0 },
+    dateRange: { start: 0, end: 0 },
     topSites: [{ domain: '<img src=x onerror=alert(1)>', count: 1, lastVisit: 0 }],
     timeDistribution: [],
     dailyStats: [],

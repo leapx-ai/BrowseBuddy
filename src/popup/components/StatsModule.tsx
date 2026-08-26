@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getMessage, formatNumber, formatDuration, getCurrentLocale } from '../../utils/i18n';
-import { calculateStatistics, fetchAllHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
+import { computeStatistics, fetchAllHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
 import { filterBlacklistedItems } from '../../utils/blacklist';
 import { getBlacklist, getVisibleDomainDurations } from '../../utils/storage';
 import { Icon } from './Icon';
-import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
+import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry, HistoryItem } from '../../types';
 import { useSlowLoading } from '../useSlowLoading';
 
 // Bar for charts with a hover tooltip. `label` is the tooltip line 1,
@@ -112,12 +112,17 @@ const RANGE_OPTIONS: { key: RangeKey; days?: number }[] = [
 
 const StatsModule: React.FC = () => {
   const [stats, setStats] = useState<Statistics | null>(null);
+  // The items the panel was built from, kept so both exports reuse them.
+  // Fetching them again per export meant a CSV-then-HTML download walked the
+  // whole history three times, and the HTML report's "Total Records" header
+  // (range-scoped) disagreed with the all-time rows printed below it.
+  const [items, setItems] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [range, setRange] = useState<RangeKey>('all');
-  // An export reads up to 20000 records; without this a second click starts a
-  // second pass over the same data and downloads a duplicate file.
+  // Both exports are instant now, but a second click while the first download
+  // is being assembled would still produce a duplicate file.
   const [isExporting, setIsExporting] = useState(false);
   const showSlowLoading = useSlowLoading(isLoading);
 
@@ -130,8 +135,14 @@ const StatsModule: React.FC = () => {
       const dateRange = option?.days
         ? { start: Date.now() - option.days * 24 * 60 * 60 * 1000, end: Date.now() }
         : undefined;
-      const data = await calculateStatistics(list, dateRange);
-      setStats(data);
+      // Paginated so the "all time" range is not truncated by
+      // chrome.history.search's per-query limit, which would zero out older days.
+      const visible = filterBlacklistedItems(
+        await fetchAllHistory({ maxResults: 20000, dateRange }),
+        list
+      );
+      setItems(visible);
+      setStats(computeStatistics(visible));
       const durationData = await getVisibleDomainDurations();
       setDurations(durationData);
     } catch (error) {
@@ -149,7 +160,6 @@ const StatsModule: React.FC = () => {
     if (!stats || isExporting) return;
     setIsExporting(true);
     try {
-      const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
       const csv = exportToCsv(items);
       downloadFile(csv, `browsebuddy-history-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
     } catch (error) {
@@ -163,7 +173,6 @@ const StatsModule: React.FC = () => {
     if (!stats || isExporting) return;
     setIsExporting(true);
     try {
-      const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
       const html = exportToHtml(items, stats, durations);
       downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
     } catch (error) {

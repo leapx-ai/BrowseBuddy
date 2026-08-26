@@ -1,5 +1,5 @@
 import type { Settings, BlacklistEntry } from '../types';
-import { fetchHistory, deleteSingleUrl } from './history';
+import { fetchAllHistory, deleteSingleUrl } from './history';
 import { extractMainDomain, isUrlBlacklisted } from './blacklist';
 
 // Re-export types for convenience
@@ -200,6 +200,31 @@ export async function saveDomainDurations(durations: Record<string, number>): Pr
   await writeCachedKeys({ [STORAGE_KEYS.DURATIONS]: durations });
 }
 
+// Add elapsed dwell time to one domain's running total.
+//
+// The background worker used to hold its own copy of the entire map at module
+// scope and write it back wholesale. That bypassed withStorageLock in the worst
+// way: the copy was loaded once when the worker woke and could be minutes old,
+// so a purge from the UI (addUrlToBlacklist -> removeDomainDuration) was simply
+// overwritten on the next tab switch and the blacklisted domain reappeared
+// under "Most Time Spent".
+//
+// Reading inside the lock makes the operation additive instead of a wholesale
+// replace. The lock is still per-context, so this does not make the increment
+// atomic against a simultaneous write from the popup - but the worker now reads
+// current data (the cache above is dropped by onChanged as soon as the popup
+// writes) rather than a snapshot from an arbitrary point in the past.
+export async function addDwellTime(domain: string, elapsedMs: number): Promise<void> {
+  if (!domain || elapsedMs <= 0) return;
+  return withStorageLock(async () => {
+    const durations = await getDomainDurations();
+    await saveDomainDurations({
+      ...durations,
+      [domain]: (durations[domain] || 0) + elapsedMs,
+    });
+  });
+}
+
 // Durations with blacklisted domains removed. Mirrors fetchHistory /
 // fetchVisibleHistory: the raw accessor above is for the background worker,
 // which needs the full map to write back, while anything user-facing must go
@@ -354,67 +379,22 @@ async function removeDomainDuration(domain: string): Promise<void> {
 // Delete all history entries matching a domain (including subdomains)
 async function deleteHistoryByDomain(domain: string): Promise<number> {
   try {
+    // The page-by-page walk this used to do by hand was a second copy of
+    // fetchAllHistory's loop, with its own PAGE_SIZE, its own MAX_PAGES (200 vs
+    // 50) and its own domain test (main-domain equality vs the exact-or-subdomain
+    // rule used everywhere else). Two loops meant two places to fix whenever
+    // Chrome's pagination semantics bit, and the delete path - the one that
+    // destroys data - was the copy with less test coverage.
+    const matches = await fetchAllHistory({
+      domains: [domain],
+      maxResults: 20000,
+    });
+
     const urlsToDelete = new Set<string>();
     const originalUrls = new Set<string>();
-
-    // Iterate backwards through history page by page so we cover all records,
-    // not just the most recent 10000 returned by a single query.
-    // chrome.history.search's endTime is exclusive ("visited before this date"),
-    // so advancing the cursor to `earliest` neither repeats nor skips records.
-    const PAGE_SIZE = 2000;
-    let endTime = Date.now();
-    let reachedEnd = false;
-    let pagesScanned = 0;
-    const MAX_PAGES = 200;
-
-    while (!reachedEnd) {
-      const page = await fetchHistory({
-        maxResults: PAGE_SIZE,
-        dateRange: { start: 0, end: endTime },
-      });
-
-      if (page.length === 0) {
-        break;
-      }
-
-      pagesScanned++;
-      if (pagesScanned >= MAX_PAGES) {
-        reachedEnd = true;
-        break;
-      }
-
-      // Record the earliest visit time in this page as the boundary for the next query
-      let earliest = Number.POSITIVE_INFINITY;
-
-      page.forEach(item => {
-        if (item.lastVisitTime && item.lastVisitTime < earliest) {
-          earliest = item.lastVisitTime;
-        }
-
-        try {
-          const itemDomain = extractMainDomain(item.url);
-          if (itemDomain === domain) {
-            urlsToDelete.add(item.url);
-            originalUrls.add(item.url);
-          }
-        } catch {
-          // Invalid URL, skip
-        }
-      });
-
-      if (page.length < PAGE_SIZE) {
-        reachedEnd = true;
-      } else if (Number.isFinite(earliest)) {
-        endTime = earliest;
-      } else {
-        // No timestamps on any record - cannot advance the cursor safely.
-        reachedEnd = true;
-      }
-
-      // Safety valve to avoid infinite loops
-      if (endTime <= 0) {
-        break;
-      }
+    for (const item of matches) {
+      urlsToDelete.add(item.url);
+      originalUrls.add(item.url);
     }
 
     // Also add URL variants (http/https, www/non-www) to ensure thorough cleanup
@@ -510,16 +490,33 @@ const settingsValidators: { [K in keyof Settings]: (value: unknown) => boolean }
   cleanupRetentionDays: v => typeof v === 'number' && Number.isFinite(v) && v > 0,
 };
 
-function isBlacklistEntry(value: unknown): value is BlacklistEntry {
-  if (!isPlainObject(value)) return false;
-  return (
-    typeof value.id === 'string' &&
-    typeof value.pattern === 'string' &&
-    value.pattern.length > 0 &&
-    (value.type === 'exact' || value.type === 'wildcard' || value.type === 'regex') &&
-    typeof value.enabled === 'boolean' &&
-    typeof value.createdAt === 'number'
-  );
+// Validate one entry from a backup file and normalize it.
+//
+// `type` is accepted in its legacy spellings ('wildcard', 'regex') because older
+// backups may carry them, but it is stored as 'exact': that is the only matching
+// mode implemented, so keeping the original string would have the entry claim a
+// behaviour it does not get.
+function toBlacklistEntry(value: unknown): BlacklistEntry | null {
+  if (!isPlainObject(value)) return null;
+  const typeIsKnown =
+    value.type === 'exact' || value.type === 'wildcard' || value.type === 'regex';
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.pattern !== 'string' ||
+    value.pattern.length === 0 ||
+    !typeIsKnown ||
+    typeof value.enabled !== 'boolean' ||
+    typeof value.createdAt !== 'number'
+  ) {
+    return null;
+  }
+  return {
+    id: value.id,
+    pattern: value.pattern,
+    type: 'exact',
+    enabled: value.enabled,
+    createdAt: value.createdAt,
+  };
 }
 
 // Restore from a user-supplied file.
@@ -582,7 +579,9 @@ async function restoreBackupLocked(backupJson: string): Promise<void> {
     // Otherwise a stale backup would silently remove domains the user has
     // already blacklisted, re-exposing history that was previously scrubbed.
     const current = await getBlacklist();
-    const valid = incoming.filter(isBlacklistEntry);
+    const valid = incoming
+      .map(toBlacklistEntry)
+      .filter((entry): entry is BlacklistEntry => entry !== null);
     const byPattern = new Map<string, BlacklistEntry>();
     for (const entry of [...valid, ...current]) {
       byPattern.set(entry.pattern, entry); // current wins on collision
@@ -633,7 +632,15 @@ export async function cleanupOldHistory(retentionDays: number): Promise<number> 
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
   const favorites = await getFavorites();
 
-  const items = await fetchHistory({ maxResults: 10000, dateRange: { start: 0, end: cutoff } });
+  // Paginated. A single fetchHistory() call is capped at the most recent N
+  // records of the range, so on a large history the daily auto-cleanup deleted
+  // the newest 10000 of the *old* records and silently left the rest - the ones
+  // furthest past the retention cutoff, which are exactly the ones it exists to
+  // remove. It then reported the truncated count as success.
+  const items = await fetchAllHistory({
+    maxResults: 20000,
+    dateRange: { start: 0, end: cutoff },
+  });
 
   const toDelete = items.filter(item => {
     if (!item.url) return false;

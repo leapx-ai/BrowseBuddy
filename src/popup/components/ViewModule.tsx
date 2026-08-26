@@ -590,7 +590,9 @@ const CalendarView: React.FC<{
   const cells: (string | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+    // Same day-key rule as the heat-map data it is matched against. Spelled out
+    // inline here, it was the third implementation of that format in the repo.
+    cells.push(toLocalDateKey(new Date(year, month, d).getTime()));
   }
   // Always six weeks. A month that starts on a Sunday and has 30 days fits in
   // five rows, one starting on a Saturday needs six - so without the padding the

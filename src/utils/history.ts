@@ -56,15 +56,20 @@ function searchHistoryRaw(options: SearchOptions = {}): Promise<HistoryItem[]> {
         return;
       }
 
-      resolve(results.map(item => ({
-        id: `${item.visitCount}-${item.lastVisitTime}`,
-        url: item.url || '',
-        title: item.title || '',
-        visitTime: item.lastVisitTime || 0,
-        visitCount: item.visitCount || 0,
-        typedCount: item.typedCount,
-        lastVisitTime: item.lastVisitTime,
-      })));
+      resolve(results.map(item => {
+        const url = item.url || '';
+        const visitTime = item.lastVisitTime || 0;
+        return {
+          // Same string used as the de-duplication key below, so a record has
+          // exactly one identity.
+          id: `${url}:${visitTime}`,
+          url,
+          title: item.title || '',
+          visitTime,
+          visitCount: item.visitCount || 0,
+          typedCount: item.typedCount,
+        };
+      }));
     });
   });
 }
@@ -149,7 +154,15 @@ export async function fetchAllHistory(
   // so advancing to the earliest visit time neither repeats nor skips records.
   let endTime = dateRange?.end ?? Date.now();
   let pages = 0;
-  const MAX_PAGES = 50;
+  // Safety valve against a cursor that never advances, not a coverage limit -
+  // the loop normally stops on `maxResults` or an exhausted range. 200 pages of
+  // 2000 is what the domain-delete sweep in storage.ts used before it was folded
+  // into this function; that loop allowed 200 while this one allowed 50, so the
+  // same "scan everything" intent had two different ceilings depending on which
+  // copy you happened to call. A filtered query (e.g. one domain) can walk many
+  // pages without ever reaching maxResults, which is exactly where the ceiling
+  // matters.
+  const MAX_PAGES = 200;
 
   while (all.length < maxResults && pages < MAX_PAGES) {
     const raw = await searchHistoryRaw({
@@ -165,13 +178,12 @@ export async function fetchAllHistory(
     let newRaw = 0;
     let earliest = Infinity;
     for (const item of raw) {
-      const key = `${item.url}:${item.lastVisitTime}`;
-      if (!seenRaw.has(key)) {
-        seenRaw.add(key);
+      if (!seenRaw.has(item.id)) {
+        seenRaw.add(item.id);
         newRaw++;
       }
-      if (item.lastVisitTime && item.lastVisitTime < earliest) {
-        earliest = item.lastVisitTime;
+      if (item.visitTime && item.visitTime < earliest) {
+        earliest = item.visitTime;
       }
     }
 
@@ -181,9 +193,8 @@ export async function fetchAllHistory(
 
     // De-duplicate (same URL + timestamp can appear on page boundaries)
     for (const item of page) {
-      const key = `${item.url}:${item.lastVisitTime}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
       all.push(item);
       // Stop exactly at the requested limit
       if (all.length >= maxResults) break;
@@ -438,23 +449,22 @@ export function groupByHour(items: HistoryItem[]): Map<number, HistoryItem[]> {
   return groups;
 }
 
-// Calculate statistics
-export async function calculateStatistics(
-  blacklist: BlacklistEntry[] = [],
-  dateRange?: { start: number; end: number }
-): Promise<Statistics> {
-  const items = filterBlacklistedItems(
-    // Use paginated fetch so the "all time" range is not truncated by
-    // chrome.history.search's per-query limit, which would zero out older days.
-    await fetchAllHistory({ maxResults: 20000, dateRange }),
-    blacklist
-  );
-  
+// Derive every statistic from an already-fetched item list.
+//
+// This used to fetch its own 20000-record page and throw the items away, which
+// made the stats panel's two export buttons walk the whole history again - one
+// walk for the panel, one for CSV, one more for HTML. It also meant the HTML
+// report combined range-scoped stats with an all-time item list, so its
+// "Total Records" header disagreed with the rows printed underneath it.
+//
+// Pure and synchronous: the caller owns the fetch and can reuse the same items
+// for the panel and for both exports.
+export function computeStatistics(items: HistoryItem[]): Statistics {
   if (items.length === 0) {
     return {
       totalRecords: 0,
       totalDomains: 0,
-      dateRange: { earliest: 0, latest: 0 },
+      dateRange: { start: 0, end: 0 },
       topSites: [],
       timeDistribution: [],
       dailyStats: [],
@@ -535,15 +545,17 @@ export async function calculateStatistics(
     }
   }
 
-  // Date range
+  // Date range. Named start/end like every other date range in the codebase;
+  // Statistics was the one type that called them earliest/latest, so every
+  // consumer had to remember which spelling this particular object used.
   const visitTimes = items.map(item => item.visitTime);
-  const earliest = Math.min(...visitTimes);
-  const latest = Math.max(...visitTimes);
+  const start = Math.min(...visitTimes);
+  const end = Math.max(...visitTimes);
 
   return {
     totalRecords: items.length,
     totalDomains: domainMap.size,
-    dateRange: { earliest, latest },
+    dateRange: { start, end },
     topSites,
     timeDistribution,
     dailyStats,
@@ -693,7 +705,7 @@ export function exportToHtml(
   <div class="stats">
     <p><strong>Total Records:</strong> ${stats.totalRecords}</p>
     <p><strong>Total Domains:</strong> ${stats.totalDomains}</p>
-    <p><strong>Period:</strong> ${stats.dateRange.earliest ? new Date(stats.dateRange.earliest).toLocaleDateString() : 'N/A'} - ${stats.dateRange.latest ? new Date(stats.dateRange.latest).toLocaleDateString() : 'N/A'}</p>
+    <p><strong>Period:</strong> ${stats.dateRange.start ? new Date(stats.dateRange.start).toLocaleDateString() : 'N/A'} - ${stats.dateRange.end ? new Date(stats.dateRange.end).toLocaleDateString() : 'N/A'}</p>
   </div>
   <h2>Top Sites</h2>
   ${topSitesHtml || '<p>No data</p>'}

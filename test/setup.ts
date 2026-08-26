@@ -3,7 +3,7 @@
 
 const storageStore: Record<string, unknown> = {};
 
-const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
+const listeners: Record<string, Array<(changes: unknown, area: string) => void>> = {};
 
 const chromeMock = {
   runtime: {
@@ -86,12 +86,11 @@ const chromeMock = {
   },
 };
 
-declare global {
-  // eslint-disable-next-line no-var
-  var chrome: typeof chromeMock;
-}
+// @types/chrome already declares `chrome` globally, so tests reference the real
+// API surface and the mock only has to satisfy the parts they touch.
+export {};
 
-(globalThis as unknown as { chrome: typeof chromeMock }).chrome = chromeMock;
+(globalThis as unknown as { chrome: unknown }).chrome = chromeMock;
 
 // jsdom-free environment: provide minimal window/document shims where needed
 if (typeof (globalThis as unknown as { window?: unknown }).window === 'undefined') {

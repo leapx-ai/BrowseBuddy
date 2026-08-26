@@ -16,7 +16,8 @@ function entry(pattern: string): BlacklistEntry {
   return { id: pattern, pattern, type: 'exact', enabled: true, createdAt: 0 };
 }
 
-function mockSearch(items: HistoryItem[]) {
+// Fixtures are Chrome-shaped (lastVisitTime), matching what the API returns.
+function mockSearch(items: chrome.history.HistoryItem[]) {
   const sorted = [...items].sort((a, b) => (b.lastVisitTime || 0) - (a.lastVisitTime || 0));
   chrome.history.search = vi.fn(
     (query: chrome.history.HistoryQuery, cb: (r: chrome.history.HistoryItem[]) => void) => {
@@ -27,13 +28,13 @@ function mockSearch(items: HistoryItem[]) {
       if (query.startTime !== undefined) {
         result = result.filter(i => (i.lastVisitTime || 0) >= (query.startTime as number));
       }
-      cb(result.slice(0, query.maxResults) as chrome.history.HistoryItem[]);
+      cb(result.slice(0, query.maxResults));
     }
   ) as unknown as typeof chrome.history.search;
 }
 
-function visit(url: string, ts: number): HistoryItem {
-  return { id: `${url}${ts}`, url, title: url, visitTime: ts, visitCount: 1, lastVisitTime: ts };
+function visit(url: string, ts: number): chrome.history.HistoryItem {
+  return { id: `${url}${ts}`, url, title: url, visitCount: 1, lastVisitTime: ts };
 }
 
 async function resetStorage() {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { getMessage, formatDateTime } from '../../utils/i18n';
-import { deleteHistory, previewDelete, type DeleteOptions, type HistoryItem } from '../../utils/history';
+import { deleteHistory, previewDelete, toLocalDateKey, type DeleteOptions, type HistoryItem } from '../../utils/history';
 import { extractMainDomain } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
 import { Icon } from './Icon';
@@ -10,12 +10,12 @@ type DeleteType = 'date' | 'domain' | 'keyword';
 // How many preview rows to render before collapsing into a count.
 const PREVIEW_LIMIT = 20;
 
-// `<input type="date">` expects a local calendar date. toISOString() would shift
-// it by the UTC offset and pick the wrong day for most timezones.
+// `<input type="date">` expects a local calendar date, which is exactly what
+// toLocalDateKey produces. This was a third private copy of that formatting
+// (history.ts had one, the calendar view built a fourth inline); toISOString()
+// would shift the value by the UTC offset and pick the wrong day.
 function toDateInputValue(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
+  return toLocalDateKey(date.getTime());
 }
 
 // Mirror of the above on the way out. `new Date("2026-08-25")` is parsed as UTC
@@ -299,8 +299,8 @@ const DeleteModule: React.FC = () => {
                 <div key={item.id} className="preview-item">
                   <div className="history-title">{item.title || item.url}</div>
                   <div className="history-url">{item.url}</div>
-                  {item.lastVisitTime && (
-                    <div className="history-time">{formatDateTime(item.lastVisitTime)}</div>
+                  {item.visitTime > 0 && (
+                    <div className="history-time">{formatDateTime(item.visitTime)}</div>
                   )}
                 </div>
               ))}

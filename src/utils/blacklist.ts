@@ -59,6 +59,29 @@ export function hostMatchesDomain(hostname: string, domain: string): boolean {
   return host === target || host.endsWith(`.${target}`);
 }
 
+// Browser-internal pages, which have no domain worth blacklisting, favouriting
+// or timing.
+//
+// One list, because the three call sites used to carry three different ones:
+// the privacy page's blacklist button checked four schemes, its favourites
+// button only chrome://, and the background worker's dwell timer only chrome://
+// and chrome-extension://. So an extension page could be favourited but not
+// blacklisted, and about: pages accumulated dwell time.
+const INTERNAL_SCHEMES = [
+  'chrome://',
+  'chrome-extension://',
+  'about:',
+  'edge://',
+  'moz-extension://',
+  'devtools://',
+  'view-source:',
+];
+
+export function isInternalUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  return INTERNAL_SCHEMES.some(scheme => url.startsWith(scheme));
+}
+
 // Check if URL matches blacklist
 // Now all entries are main domains and match any subdomain of that domain
 export function isUrlBlacklisted(url: string, blacklist: BlacklistEntry[]): boolean {

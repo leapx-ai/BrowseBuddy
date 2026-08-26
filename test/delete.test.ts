@@ -8,8 +8,9 @@ const BASE_TS = new Date('2026-01-10T00:00:00Z').getTime();
 type Visit = { url: string; visitTime: number };
 
 // Mock chrome.history.search the way Chrome behaves: newest first, endTime
-// exclusive, truncated to maxResults.
-function mockSearch(items: HistoryItem[]) {
+// exclusive, truncated to maxResults. Fixtures are Chrome-shaped (lastVisitTime),
+// not domain-shaped, since that is what the API hands back.
+function mockSearch(items: chrome.history.HistoryItem[]) {
   const sorted = [...items].sort((a, b) => (b.lastVisitTime || 0) - (a.lastVisitTime || 0));
   chrome.history.search = vi.fn(
     (query: chrome.history.HistoryQuery, cb: (r: chrome.history.HistoryItem[]) => void) => {
@@ -20,7 +21,7 @@ function mockSearch(items: HistoryItem[]) {
       if (query.startTime !== undefined) {
         result = result.filter(i => (i.lastVisitTime || 0) >= (query.startTime as number));
       }
-      cb(result.slice(0, query.maxResults) as chrome.history.HistoryItem[]);
+      cb(result.slice(0, query.maxResults));
     }
   ) as unknown as typeof chrome.history.search;
 }
@@ -49,8 +50,15 @@ function mockDeletions(visits: Visit[] = []) {
   return { deletedUrls, deletedRanges };
 }
 
+// What chrome.history.search hands back (lastVisitTime, no visitTime).
+function raw(url: string, ts: number): chrome.history.HistoryItem {
+  return { id: url, url, title: url, visitCount: 1, lastVisitTime: ts };
+}
+
+// What our layer produces and deleteHistory consumes: a single visitTime, and an
+// id equal to the de-duplication key.
 function item(url: string, ts: number): HistoryItem {
-  return { id: url, url, title: url, visitTime: ts, visitCount: 1, lastVisitTime: ts };
+  return { id: `${url}:${ts}`, url, title: url, visitTime: ts, visitCount: 1 };
 }
 
 describe('hostMatchesDomain', () => {
@@ -134,12 +142,12 @@ describe('fetchAllHistory with a domain filter', () => {
     // 5000 filler records newer than the 10 records we actually want. The first
     // two 2000-record pages contain zero matches, which used to look like
     // "end of history" and truncated the result to nothing.
-    const items: HistoryItem[] = [];
+    const items: chrome.history.HistoryItem[] = [];
     for (let i = 0; i < 5000; i++) {
-      items.push(item(`https://filler.com/page${i}`, BASE_TS - i * 1000));
+      items.push(raw(`https://filler.com/page${i}`, BASE_TS - i * 1000));
     }
     for (let i = 0; i < 10; i++) {
-      items.push(item(`https://target.com/page${i}`, BASE_TS - (5000 + i) * 1000));
+      items.push(raw(`https://target.com/page${i}`, BASE_TS - (5000 + i) * 1000));
     }
     mockSearch(items);
 
@@ -159,9 +167,9 @@ describe('deleteHistory', () => {
     const { deletedUrls } = mockDeletions();
     // A record that exists in history but was not previewed must survive.
     mockSearch([
-      item('https://a.com/1', BASE_TS),
-      item('https://b.com/2', BASE_TS - 1000),
-      item('https://recorded-after-preview.com/3', BASE_TS - 2000),
+      raw('https://a.com/1', BASE_TS),
+      raw('https://b.com/2', BASE_TS - 1000),
+      raw('https://recorded-after-preview.com/3', BASE_TS - 2000),
     ]);
 
     const previewed = [item('https://a.com/1', BASE_TS), item('https://b.com/2', BASE_TS - 1000)];
