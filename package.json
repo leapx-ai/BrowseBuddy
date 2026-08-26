@@ -1,6 +1,6 @@
 {
   "name": "browsebuddy",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A powerful browser history management extension with privacy protection",
   "private": true,
   "scripts": {
