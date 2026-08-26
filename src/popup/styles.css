@@ -675,11 +675,28 @@ body {
   box-shadow: inset 0 0 0 2px var(--primary-color);
 }
 
+/*
+ * Row favicon slot. The letter tile inherits everything except its size and its
+ * per-domain colour, which are the only two things the component still passes
+ * inline - a hash-derived colour cannot live in a stylesheet.
+ */
 .history-favicon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
   margin-top: 2px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Placeholder used when a closed-tab entry has no URL to derive a letter from. */
+.history-favicon-blank {
+  background: var(--bg-tertiary);
 }
 
 .history-content {
@@ -1272,3 +1289,125 @@ body {
   color: var(--text-muted);
   flex-shrink: 0;
 }
+
+/* ---------------------------------------------------------------------------
+ * Shared layout pieces
+ *
+ * These exist because the same handful of declarations was being retyped as
+ * inline style props in every module - 86 of them, each a visual decision the
+ * stylesheet could not see and a global restyle could not reach. Named after the
+ * situation they serve rather than after what they declare.
+ */
+
+/* Title on the left, action or count on the right. */
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Icon plus label on one line, allowed to shrink so .truncate can do its job. */
+.row-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* One vertical gap between a control and whatever follows it. */
+.gap-below {
+  margin-bottom: var(--space-2);
+}
+
+/*
+ * Stale content during a slow reload. Kept interactive-looking but inert, so a
+ * slow query neither collapses the layout nor accepts clicks that would be
+ * applied to results already being replaced.
+ */
+.is-stale {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Small text tiers that were being written inline over and over. */
+.field-hint {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.text-note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  padding: var(--space-2) 0;
+}
+
+/* Spinner wrappers: the same .loading box at two weights. */
+.loading-inline {
+  padding: var(--space-2);
+}
+
+.loading-block {
+  padding: var(--space-4);
+}
+
+/* A select or input that has to fit beside other controls. */
+.input-compact {
+  padding: 8px 10px;
+  font-size: var(--text-sm);
+}
+
+/* Group headers: "17 条" on the right of a date, last-visit time and a count
+   pill on the right of a domain. */
+.group-count {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.group-recent {
+  font-size: var(--text-2xs);
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+/* Right-hand cluster of a group header: never shrinks, so a long domain name
+   loses characters instead of pushing the count off the row. */
+.group-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.count-badge {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+}
+
+.card-title.is-flush {
+  margin-bottom: 0;
+}
+
+.day-detail {
+  margin-top: var(--space-3);
+}
+
+.calendar-month {
+  font-weight: 700;
+}
+
+/* Paging trigger for the flat list - a 1px box the observer watches. */
+.list-sentinel {
+  height: 1px;
+}
+

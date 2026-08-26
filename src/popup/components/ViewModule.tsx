@@ -118,20 +118,13 @@ const DomainIcon: React.FC<{ url: string; size?: number }> = ({ url, size = 16 }
       // Decorative: the domain itself is spelled out on the URL line, so the
       // letter is redundant for a screen reader.
       aria-hidden="true"
+      // Only the two values a stylesheet cannot know: the requested size and the
+      // colour hashed from the domain.
       style={{
         width: size,
         height: size,
-        borderRadius: 'var(--radius)',
         background: domainColor(url),
-        color: '#fff',
         fontSize: Math.round(size * 0.6),
-        fontWeight: 600,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        overflow: 'hidden',
-        marginTop: 0,
       }}
     >
       {domainLetter(url)}
@@ -190,15 +183,15 @@ const RestoreSession: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div style={{ marginBottom: 'var(--space-2)' }}>
+        <div className="gap-below">
           {isLoading && items.length === 0 ? (
             showSlowLoading ? (
-              <div className="loading" style={{ padding: '10px' }}>
+              <div className="loading loading-inline">
                 <div className="spinner" />
               </div>
             ) : null
           ) : items.length === 0 ? (
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '8px 0' }}>
+            <div className="text-note">
               {getMessage('noClosedTabs')}
             </div>
           ) : (
@@ -224,7 +217,7 @@ const RestoreSession: React.FC = () => {
                     {url ? (
                       <DomainIcon url={url} />
                     ) : (
-                      <div className="history-favicon" style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius)' }} />
+                      <div className="history-favicon history-favicon-blank" />
                     )}
                     <div className="history-content">
                       <div className="history-title">{title || getMessage('closedWindow')}</div>
@@ -393,7 +386,7 @@ const ViewModule: React.FC = () => {
     // The stale list stays interactive for fast reloads; if a query really is
     // slow, dim it so the wait is visible without collapsing the layout.
     return (
-      <div style={showSlowLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+      <div className={showSlowLoading ? 'is-stale' : undefined}>
         {viewMode === 'date' && <DateGroupView items={history} />}
         {viewMode === 'domain' && <DomainGroupView items={history} />}
         {viewMode === 'list' && <ListView items={history} />}
@@ -437,12 +430,11 @@ const ViewModule: React.FC = () => {
         appearing on the first keystroke shifted the whole list down.
       */}
       {viewMode !== 'calendar' && (showFilters || transitionType) && (
-        <div style={{ marginBottom: 'var(--space-2)' }}>
+        <div className="gap-below">
           <select
-            className="input"
+            className="input input-compact"
             value={transitionType}
             onChange={(e) => setTransitionType(e.target.value)}
-            style={{ padding: '8px 10px', fontSize: '13px' }}
           >
             <option value="">{getMessage('allVisitTypes')}</option>
             <option value="typed">{getMessage('visitTypeTyped')}</option>
@@ -453,7 +445,7 @@ const ViewModule: React.FC = () => {
             <option value="keyword">{getMessage('visitTypeKeyword')}</option>
           </select>
           {showFilters && (
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+            <div className="field-hint">
               {getMessage('searchSyntaxHint')}
             </div>
           )}
@@ -515,9 +507,9 @@ const ViewModule: React.FC = () => {
 
       {/* Day detail below calendar */}
       {viewMode === 'calendar' && selectedDay && (
-        <div style={{ marginTop: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 className="card-title" style={{ marginBottom: 0 }}>{selectedDay}</h3>
+        <div className="day-detail">
+          <div className="row-between gap-below">
+            <h3 className="card-title is-flush">{selectedDay}</h3>
             <button className="btn btn-sm btn-secondary" onClick={() => setSelectedDay(null)}>
               {getMessage('close')}
             </button>
@@ -603,7 +595,7 @@ const CalendarView: React.FC<{
   // keep the previous grid on screen, dimmed only if the wait becomes visible.
   if (!initialized) {
     return showSlowLoading ? (
-      <div className="loading" style={{ padding: '20px' }}>
+      <div className="loading loading-block">
         <div className="spinner" />
       </div>
     ) : null;
@@ -611,14 +603,13 @@ const CalendarView: React.FC<{
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div className="row-between gap-below">
         <button className="btn btn-sm btn-secondary" onClick={onPrevMonth}>‹</button>
-        <span style={{ fontWeight: 'bold' }}>{monthLabel}</span>
+        <span className="calendar-month">{monthLabel}</span>
         <button className="btn btn-sm btn-secondary" onClick={onNextMonth}>›</button>
       </div>
       <div
-        className="calendar-grid"
-        style={showSlowLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+        className={`calendar-grid ${showSlowLoading ? 'is-stale' : ''}`}
       >
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="calendar-cell calendar-cell-empty" />;
@@ -732,7 +723,7 @@ const ListView: React.FC<{ items: HistoryItem[]; showDateHeaders?: boolean }> = 
         })}
       </div>
       {visibleCount < items.length && (
-        <div ref={sentinelRef} style={{ height: '1px' }} aria-hidden="true" />
+        <div ref={sentinelRef} className="list-sentinel" aria-hidden="true" />
       )}
     </>
   );
@@ -773,9 +764,9 @@ const DateGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
     <div>
       {sortedDates.map((date) => (
         <div key={date} className="card">
-          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div className="card-title row-between">
             <span>{date}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+            <span className="group-count">
               {grouped.get(date)?.length} {getMessage('items')}
             </span>
           </div>
@@ -796,24 +787,18 @@ const DomainGroupView: React.FC<{ items: HistoryItem[] }> = ({ items }) => {
     <div>
       {sortedDomains.map(([domain, domainItems]: [string, HistoryItem[]]) => (
         <div key={domain} className="card">
-          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          <div className="card-title row-between">
+            <span className="row-inline">
               <DomainIcon url={`https://${domain}`} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{domain}</span>
+              <span className="truncate">{domain}</span>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <span className="group-meta">
               {/* Most recent visit for this domain - the counts alone did not say
                   whether a domain is current or months stale. */}
-              <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)' }}>
+              <span className="group-recent">
                 {formatDateTime(Math.max(...domainItems.map(i => i.visitTime)))}
               </span>
-              <span style={{
-                background: 'var(--primary-color)',
-                color: 'white',
-                padding: '2px 8px',
-                borderRadius: '999px',
-                fontSize: '12px'
-              }}>
+              <span className="count-badge">
                 {domainItems.length}
               </span>
             </span>
