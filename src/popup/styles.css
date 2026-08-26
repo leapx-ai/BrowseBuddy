@@ -13,41 +13,50 @@
    * hue) and differ only in lightness, so stacking reads as depth rather than as
    * a colour change. --bg-tertiary used to be #0f3460 - a 72%-saturated blue,
    * which made .btn-secondary compete with .btn-primary for attention.
+   *
+   * The three raised surfaces were lifted one step in the "柔和中性" pass: softer
+   * edges need a slightly wider surface ladder to keep panels legible without
+   * relying on the border.
    */
   --bg-primary: #1a1a2e;
-  --bg-secondary: #202037;
-  --bg-card: #252547;
-  --bg-tertiary: #2f2f50;
+  --bg-secondary: #23233c;
+  --bg-card: #28284c;
+  --bg-tertiary: #313154;
   
   --text-primary: #eaeaea;
   --text-secondary: #a0a0b0;
-  /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1). */
-  --text-muted: #9a9aab;
+  /* Was #6b6b7b, which only reached ~3.3:1 on --bg-primary (WCAG AA needs 4.5:1).
+     Raised again from #9a9aab when the surfaces lifted: on the new --bg-tertiary
+     that value measured 4.47:1, just under AA. Now 4.98:1 there, 6.9:1 on the
+     page. */
+  --text-muted: #a3a3b5;
   
-  /* Above every surface it is drawn on, but kept dark enough that --text-muted
-     still clears 4.5:1 when a row is hovered. */
-  --border-color: #3c3c62;
+  /* Softer than the previous #3c3c62 to match the low-contrast-edge direction.
+     Separation now comes mostly from the surface ladder above. */
+  --border-color: #34344f;
   --hover-bg: #2a2a45;
   /* Secondary buttons start at --bg-tertiary, so their hover needs its own step
      above it. Only --text-primary is ever drawn on this one. */
   --bg-tertiary-hover: #3a3a60;
   
   /*
-   * One radius for every surface. The four-step scale meant a card, its input
-   * and the button inside it each curved differently, and the difference read as
-   * sloppiness rather than hierarchy. Pills (999px) and circles (50%) stay as
-   * they are - those are shapes, not radii.
+   * One radius for every surface: a card, its input and the button inside it
+   * curving differently reads as sloppiness, not hierarchy. The value is 8px
+   * per the chosen "柔和中性" direction - it was briefly 4px, which made the same
+   * components feel harder than the direction intends. Pills (999px) and circles
+   * (50%) stay as they are - those are shapes, not radii.
    */
-  --radius: 4px;
+  --radius: 8px;
 
   /*
-   * Spacing scale, 4px base. Prefer these over ad-hoc pixel values so the
-   * rhythm stays consistent across components.
+   * Spacing scale. Quantised to 2px rather than a strict 4px base because the
+   * chosen direction is the airier one: the middle steps sit between the old
+   * 8/12/16 and the next 4px stop.
    */
   --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
   --space-6: 24px;
 
   /*
@@ -87,19 +96,22 @@
  * almost invisible - exactly the separation this list depends on.
  */
 [data-theme="light"] {
-  --bg-primary: #f1f2f8;
+  --bg-primary: #f5f6fb;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e7e9f4;
+  --bg-tertiary: #edeef8;
   --bg-card: #ffffff;
 
   --text-primary: #1f2033;
   --text-secondary: #4b4d63;
   /* Was #6c757d, which reached only ~4.45:1 on the page background (AA needs
      4.5:1). The dark theme's muted was fixed for this earlier; this one had not
-     been checked. Now ~5.7:1 on the page, ~4.7:1 at its worst surface. */
+     been checked. Now ~5.9:1 on the page, ~5.5:1 on the day band. */
   --text-muted: #5c5e75;
 
-  --border-color: #d5d8e8;
+  /* Softer than the #d5d8e8 measured before the direction was chosen: 1.28:1
+     against a white panel instead of 1.42:1. That is the cost of the softer
+     direction and it is deliberate - the surface ladder does the separating. */
+  --border-color: #e0e3ef;
   --hover-bg: #e9ebf5;
   --bg-tertiary-hover: #dbdeee;
 

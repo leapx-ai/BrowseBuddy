@@ -154,30 +154,12 @@
 }
 
 /*
- * Direction A "密度优先" is the current token set, so it has no overrides -
- * it is the baseline the other two are judged against.
+ * Direction A is the shipping token set - "柔和中性" was chosen and folded into
+ * popup/styles.css, so it needs no overrides here and serves as the baseline.
  */
 
-/* Direction B "柔和中性": rounder, airier, lower-contrast edges. */
-[data-direction="soft"] {
-  --radius: 8px;
-  --space-2: 10px;
-  --space-3: 14px;
-  --space-4: 18px;
-  --border-color: #34344f;
-  --bg-secondary: #23233c;
-  --bg-card: #28284c;
-  --bg-tertiary: #313154;
-}
-
-[data-direction="soft"][data-theme="light"],
-[data-direction="soft"] [data-theme="light"] {
-  --border-color: #e0e3ef;
-  --bg-primary: #f5f6fb;
-  --bg-tertiary: #edeef8;
-}
-
-/* Direction C "高对比": tighter, flatter, edges do the separating. */
+/* Direction C "高对比": tighter, flatter, edges do the separating. Kept as the
+   standing alternative to compare against when a surface looks unclear. */
 [data-direction="contrast"] {
   --radius: 2px;
   --space-2: 6px;

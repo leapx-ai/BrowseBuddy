@@ -14,9 +14,8 @@ import '../popup/styles.css';
 import './styleguide.css';
 
 const DIRECTIONS = [
-  { id: 'density', label: 'A 密度优先（当前令牌）' },
-  { id: 'soft', label: 'B 柔和中性' },
-  { id: 'contrast', label: 'C 高对比' },
+  { id: 'density', label: 'A 柔和中性（已采纳，当前令牌）' },
+  { id: 'contrast', label: 'C 高对比（备选参照）' },
 ];
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
