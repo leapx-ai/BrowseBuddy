@@ -22,6 +22,11 @@ const ChartBar: React.FC<{
   return (
     <div
       className="chart-col"
+      // The tooltip is mouse-only, so without this the whole chart is invisible
+      // to a screen reader. role="img" plus a label is readable in browse mode
+      // and, unlike tabIndex on every bar, does not add 54 tab stops to a popup.
+      role="img"
+      aria-label={`${label}: ${value}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -111,6 +116,9 @@ const StatsModule: React.FC = () => {
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [range, setRange] = useState<RangeKey>('all');
+  // An export reads up to 20000 records; without this a second click starts a
+  // second pass over the same data and downloads a duplicate file.
+  const [isExporting, setIsExporting] = useState(false);
   const showSlowLoading = useSlowLoading(isLoading);
 
   const loadStats = useCallback(async () => {
@@ -138,17 +146,31 @@ const StatsModule: React.FC = () => {
   }, [range, loadStats]);
 
   const handleExportCSV = async () => {
-    if (!stats) return;
-    const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
-    const csv = exportToCsv(items);
-    downloadFile(csv, `browsebuddy-history-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+    if (!stats || isExporting) return;
+    setIsExporting(true);
+    try {
+      const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
+      const csv = exportToCsv(items);
+      downloadFile(csv, `browsebuddy-history-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleExportHTML = async () => {
-    if (!stats) return;
-    const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
-    const html = exportToHtml(items, stats, durations);
-    downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
+    if (!stats || isExporting) return;
+    setIsExporting(true);
+    try {
+      const items = filterBlacklistedItems(await fetchAllHistory({ maxResults: 20000 }), blacklist);
+      const html = exportToHtml(items, stats, durations);
+      downloadFile(html, `browsebuddy-report-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
+    } catch (error) {
+      console.error('Failed to export HTML:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Keep the previous numbers on screen while a new range loads. Unmounting
@@ -202,144 +224,164 @@ const StatsModule: React.FC = () => {
         ))}
       </div>
 
-      {/* Stats Overview */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-value">{formatNumber(stats.totalRecords)}</div>
-          <div className="stat-label">{getMessage('totalRecords')}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{formatNumber(stats.totalDomains)}</div>
-          <div className="stat-label">{getMessage('domainsVisited')}</div>
-        </div>
-        {/*
-          Totals alone do not say whether the range was one heavy day or spread
-          out. Active days and the per-active-day average come out of dailyStats,
-          which is already computed - averaging over calendar days instead would
-          be diluted by every day the browser was not used.
-        */}
-        <div className="stat-card">
-          <div className="stat-value">{formatNumber(activeDays)}</div>
-          <div className="stat-label">{getMessage('activeDays')}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{formatNumber(avgPerActiveDay)}</div>
-          <div className="stat-label">{getMessage('avgPerActiveDay')}</div>
-        </div>
-      </div>
-
-      {/* Top Sites */}
-      <div className="card">
-        <h3 className="card-title">{getMessage('topSites')}</h3>
-        <RankedDomains
-          accent="var(--primary-color)"
-          rows={stats.topSites.map((site: DomainStats) => ({
-            domain: site.domain,
-            value: site.count,
-            ratio: site.count / Math.max(stats.topSites[0].count, 1),
-            display: formatNumber(site.count),
-          }))}
-        />
-      </div>
-
-      {/* Top Sites by Dwell Time */}
-      {durationRows.length > 0 && (
-        <div className="card">
-          <h3 className="card-title">
-            {getMessage('topSitesByTime')}
-            {range !== 'all' && (
-              <span className="card-title-note">
-                {getMessage('lifetimeAccumulated')}
-              </span>
-            )}
-          </h3>
-          <RankedDomains accent="var(--secondary-color)" secondaryFill rows={durationRows} />
-        </div>
-      )}
-
-      {/* Time Distribution */}
-      <div className="card">
-        <h3 className="card-title">{getMessage('timeDistribution')}</h3>
-        <div className="chart-row chart-row-hours">
-          {stats.timeDistribution.map((hour: TimeDistribution) => {
-            const maxCount = Math.max(...stats.timeDistribution.map((h: TimeDistribution) => h.count), 1);
-            const height = (hour.count / maxCount) * 100;
-            return (
-              <ChartBar
-                key={hour.hour}
-                heightPct={height}
-                color="var(--primary-color)"
-                value={formatNumber(hour.count)}
-                label={getMessage('hourLabel', `${hour.hour}:00` )}
-                subLabel={getMessage('visitsInHour')}
-                showAxis={hour.hour % 6 === 0 ? `${hour.hour}` : undefined}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Daily Trend (Last 30 days) */}
-      {stats.dailyStats.length > 0 && (
-        <div className="card">
+      {/*
+        Numbers stay on screen while a new range loads, so stale data is
+        indistinguishable from fresh data. is-stale dims it, the same signal the
+        browse list uses. The range switcher stays outside the wrapper because
+        is-stale also blocks pointer events, and switching range is exactly what
+        the user may want to do while a slow range is still loading.
+      */}
+      <div className={showSlowLoading ? 'is-stale' : undefined}>
+        {/* Stats Overview */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-value">{formatNumber(stats.totalRecords)}</div>
+            <div className="stat-label">{getMessage('totalRecords')}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{formatNumber(stats.totalDomains)}</div>
+            <div className="stat-label">{getMessage('domainsVisited')}</div>
+          </div>
           {/*
-            The window used to be spelled out in a centred caption under the
-            chart; as part of the title it is the same fact in ~35px less space,
-            and the axis labels plus the hover tooltip already carry the rest of
-            what the caption repeated.
+            Totals alone do not say whether the range was one heavy day or spread
+            out. Active days and the per-active-day average come out of dailyStats,
+            which is already computed - averaging over calendar days instead would
+            be diluted by every day the browser was not used.
           */}
-          <h3 className="card-title">
-            {getMessage('dailyTrend')}
-            <span className="card-title-note">
-              {getMessage('range_30')}
-            </span>
-          </h3>
-          <div className="chart-row chart-row-days">
-            {stats.dailyStats.slice(-30).map((day: DailyStats, index: number, arr: DailyStats[]) => {
-              const maxCount = Math.max(...stats.dailyStats.map((d: DailyStats) => d.count), 1);
-              const height = (day.count / maxCount) * 100;
-              const d = new Date(day.date + 'T00:00:00');
-              const weekday = d.toLocaleDateString(getCurrentLocale().replace('_', '-'), { weekday: 'short' });
-              // Show axis label on first, middle and last bar
-              const isFirst = index === 0;
-              const isLast = index === arr.length - 1;
-              const isMiddle = index === Math.floor(arr.length / 2);
-              const showAxis = isFirst || isMiddle || isLast
-                ? d.toLocaleDateString(getCurrentLocale().replace('_', '-'), { month: 'numeric', day: 'numeric' })
-                : undefined;
+          <div className="stat-card">
+            <div className="stat-value">{formatNumber(activeDays)}</div>
+            <div className="stat-label">{getMessage('activeDays')}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{formatNumber(avgPerActiveDay)}</div>
+            <div className="stat-label">{getMessage('avgPerActiveDay')}</div>
+          </div>
+        </div>
+
+        {/* Top Sites */}
+        <div className="card">
+          <h3 className="card-title">{getMessage('topSites')}</h3>
+          <RankedDomains
+            accent="var(--primary-color)"
+            rows={stats.topSites.map((site: DomainStats) => ({
+              domain: site.domain,
+              value: site.count,
+              ratio: site.count / Math.max(stats.topSites[0].count, 1),
+              display: formatNumber(site.count),
+            }))}
+          />
+        </div>
+
+        {/* Top Sites by Dwell Time */}
+        {durationRows.length > 0 && (
+          <div className="card">
+            <h3 className="card-title">
+              {getMessage('topSitesByTime')}
+              {range !== 'all' && (
+                <span className="card-title-note">
+                  {getMessage('lifetimeAccumulated')}
+                </span>
+              )}
+            </h3>
+            <RankedDomains accent="var(--secondary-color)" secondaryFill rows={durationRows} />
+          </div>
+        )}
+
+        {/* Time Distribution */}
+        <div className="card">
+          <h3 className="card-title">{getMessage('timeDistribution')}</h3>
+          <div className="chart-row chart-row-hours">
+            {stats.timeDistribution.map((hour: TimeDistribution) => {
+              const maxCount = Math.max(...stats.timeDistribution.map((h: TimeDistribution) => h.count), 1);
+              const height = (hour.count / maxCount) * 100;
               return (
                 <ChartBar
-                  key={day.date}
+                  key={hour.hour}
                   heightPct={height}
-                  color="var(--secondary-color)"
-                  value={formatNumber(day.count)}
-                  label={day.date}
-                  subLabel={weekday}
-                  showAxis={showAxis}
+                  color="var(--primary-color)"
+                  value={formatNumber(hour.count)}
+                  label={getMessage('hourLabel', `${hour.hour}:00` )}
+                  subLabel={getMessage('visitsInHour')}
+                  showAxis={hour.hour % 6 === 0 ? `${hour.hour}` : undefined}
                 />
               );
             })}
           </div>
         </div>
-      )}
 
-      {/*
-        Two buttons do not need a card and a heading to announce themselves - the
-        icons and labels already say "download". That wrapper was ~50px.
-      */}
-      <div className="btn-row">
-        <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-          </svg>
-          {getMessage('exportCSV')}
-        </button>
-        <button className="btn btn-secondary btn-sm" onClick={handleExportHTML}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-          </svg>
-          {getMessage('exportHTML')}
-        </button>
+        {/* Daily Trend (Last 30 days) */}
+        {stats.dailyStats.length > 0 && (
+          <div className="card">
+            {/*
+              The window used to be spelled out in a centred caption under the
+              chart; as part of the title it is the same fact in ~35px less space,
+              and the axis labels plus the hover tooltip already carry the rest of
+              what the caption repeated.
+            */}
+            <h3 className="card-title">
+              {getMessage('dailyTrend')}
+              <span className="card-title-note">
+                {getMessage('range_30')}
+              </span>
+            </h3>
+            <div className="chart-row chart-row-days">
+              {stats.dailyStats.slice(-30).map((day: DailyStats, index: number, arr: DailyStats[]) => {
+                const maxCount = Math.max(...stats.dailyStats.map((d: DailyStats) => d.count), 1);
+                const height = (day.count / maxCount) * 100;
+                const d = new Date(day.date + 'T00:00:00');
+                const weekday = d.toLocaleDateString(getCurrentLocale().replace('_', '-'), { weekday: 'short' });
+                // Show axis label on first, middle and last bar
+                const isFirst = index === 0;
+                const isLast = index === arr.length - 1;
+                const isMiddle = index === Math.floor(arr.length / 2);
+                const showAxis = isFirst || isMiddle || isLast
+                  ? d.toLocaleDateString(getCurrentLocale().replace('_', '-'), { month: 'numeric', day: 'numeric' })
+                  : undefined;
+                return (
+                  <ChartBar
+                    key={day.date}
+                    heightPct={height}
+                    color="var(--secondary-color)"
+                    value={formatNumber(day.count)}
+                    label={day.date}
+                    subLabel={weekday}
+                    showAxis={showAxis}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/*
+          Two buttons do not need a card and a heading to announce themselves - the
+          icons and labels already say "download". That wrapper was ~50px.
+          While an export runs the icon becomes a spinner and both buttons go
+          disabled: the work happens in the background with no other feedback, so
+          a still button reads as "nothing happened" and invites a second click.
+        */}
+        <div className="btn-row">
+          <button className="btn btn-primary btn-sm" onClick={handleExportCSV} disabled={isExporting}>
+            {isExporting ? (
+              <div className="spinner is-sm" />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+            )}
+            {getMessage('exportCSV')}
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportHTML} disabled={isExporting}>
+            {isExporting ? (
+              <div className="spinner is-sm" />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+            )}
+            {getMessage('exportHTML')}
+          </button>
+        </div>
       </div>
     </div>
   );
