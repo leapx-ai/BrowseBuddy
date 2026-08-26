@@ -1411,3 +1411,123 @@ body {
   height: 1px;
 }
 
+/* ---- Charts and ranked lists (statistics) --------------------------------- */
+
+/* One column of a bar chart: bar area on top, fixed axis row underneath so a
+   row with a label is exactly as tall as one without. */
+.chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+}
+
+.chart-plot {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chart-axis {
+  height: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chart-axis-label {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+/* Emphasis while the column is hovered moved out of JS state: the tooltip still
+   needs the hover flag, the appearance does not. */
+.chart-bar {
+  width: 100%;
+  opacity: 0.85;
+}
+
+.chart-col:hover .chart-bar {
+  opacity: 1;
+}
+
+.chart-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.chart-row-hours {
+  height: 110px;
+}
+
+.chart-row-days {
+  height: 100px;
+}
+
+.tooltip-sub {
+  color: var(--text-secondary);
+}
+
+/* Ranked domain list: index badge, name over a share bar, value on the right. */
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The badge's fill is the only dynamic part - top three get the accent. */
+.rank-index {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-domain {
+  font-size: var(--text-sm);
+}
+
+.rank-value {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Share bar under a domain name: thinner than a standalone progress bar. */
+.progress-bar.is-thin {
+  margin-top: 3px;
+  height: 6px;
+}
+
+/* Qualifier printed next to a card title ("最近 30 天", "累计"). */
+.card-title-note {
+  font-size: var(--text-2xs);
+  font-weight: normal;
+  color: var(--text-muted);
+  margin-left: var(--space-2);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--space-2);
+}
+

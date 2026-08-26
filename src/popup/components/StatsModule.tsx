@@ -21,41 +21,28 @@ const ChartBar: React.FC<{
 
   return (
     <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        cursor: 'pointer',
-      }}
+      className="chart-col"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Chart drawing area - bars are % of this area, excluding the axis row */}
-      <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'flex-end' }}>
+      <div className="chart-plot">
         {hovered && (
           <div className="chart-tooltip">
             <div className="tooltip-value">{value}</div>
             <div>{label}</div>
-            {subLabel && <div style={{ color: 'var(--text-secondary)' }}>{subLabel}</div>}
+            {subLabel && <div className="tooltip-sub">{subLabel}</div>}
           </div>
         )}
         <div
           className="chart-bar"
-          style={{
-            width: '100%',
-            height: `${Math.max(heightPct, 2)}%`,
-            background: hovered ? color : color,
-            opacity: hovered ? 1 : 0.85,
-            filter: hovered ? 'brightness(1.2)' : undefined,
-          }}
+          // Height and colour are data; the hover emphasis lives in CSS.
+          style={{ height: `${Math.max(heightPct, 2)}%`, background: color }}
         />
       </div>
       {/* Fixed axis row - same height whether or not a label is present */}
-      <div style={{ height: '18px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        {showAxis && (
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{showAxis}</div>
-        )}
+      <div className="chart-axis">
+        {showAxis && <div className="chart-axis-label">{showAxis}</div>}
       </div>
     </div>
   );
@@ -77,35 +64,27 @@ const RankedDomains: React.FC<{
   const visible = expanded ? rows : rows.slice(0, RANK_LIMIT);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+    <div className="rank-list">
       {visible.map((row, index) => (
-        <div key={row.domain} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <span style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            background: index < 3 ? accent : 'var(--bg-tertiary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            flexShrink: 0,
-          }}>
+        <div key={row.domain} className="rank-row">
+          <span
+            className="rank-index"
+            style={{ background: index < 3 ? accent : 'var(--bg-tertiary)' }}
+          >
             {index + 1}
           </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div className="rank-body">
+            <div className="rank-domain truncate">
               {row.domain}
             </div>
-            <div className="progress-bar" style={{ marginTop: '3px', height: '6px' }}>
+            <div className="progress-bar is-thin">
               <div
                 className={`progress-fill ${secondaryFill ? 'progress-fill-secondary' : ''}`}
                 style={{ width: `${row.ratio * 100}%` }}
               />
             </div>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', flexShrink: 0 }}>
+          <span className="rank-value">
             {row.display}
           </span>
         </div>
@@ -269,7 +248,7 @@ const StatsModule: React.FC = () => {
           <h3 className="card-title">
             {getMessage('topSitesByTime')}
             {range !== 'all' && (
-              <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)', marginLeft: '8px' }}>
+              <span className="card-title-note">
                 {getMessage('lifetimeAccumulated')}
               </span>
             )}
@@ -281,7 +260,7 @@ const StatsModule: React.FC = () => {
       {/* Time Distribution */}
       <div className="card">
         <h3 className="card-title">{getMessage('timeDistribution')}</h3>
-        <div style={{ display: 'flex', alignItems: 'flex-end', height: '110px', gap: '2px' }}>
+        <div className="chart-row chart-row-hours">
           {stats.timeDistribution.map((hour: TimeDistribution) => {
             const maxCount = Math.max(...stats.timeDistribution.map((h: TimeDistribution) => h.count), 1);
             const height = (hour.count / maxCount) * 100;
@@ -311,11 +290,11 @@ const StatsModule: React.FC = () => {
           */}
           <h3 className="card-title">
             {getMessage('dailyTrend')}
-            <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)', marginLeft: '8px' }}>
+            <span className="card-title-note">
               {getMessage('range_30')}
             </span>
           </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', height: '100px', gap: '2px' }}>
+          <div className="chart-row chart-row-days">
             {stats.dailyStats.slice(-30).map((day: DailyStats, index: number, arr: DailyStats[]) => {
               const maxCount = Math.max(...stats.dailyStats.map((d: DailyStats) => d.count), 1);
               const height = (day.count / maxCount) * 100;
@@ -348,7 +327,7 @@ const StatsModule: React.FC = () => {
         Two buttons do not need a card and a heading to announce themselves - the
         icons and labels already say "download". That wrapper was ~50px.
       */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+      <div className="btn-row">
         <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
