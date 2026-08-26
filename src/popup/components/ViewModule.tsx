@@ -5,6 +5,7 @@ import { getBlacklist, getFavorites, addFavorite, removeFavorite } from '../../u
 import { extractMainDomain } from '../../utils/blacklist';
 import { parseSearchQuery } from '../../utils/search';
 import { useSlowLoading } from '../useSlowLoading';
+import { Icon } from './Icon';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
 
@@ -185,7 +186,7 @@ const RestoreSession: React.FC = () => {
           {getMessage('restoreClosedTabs')}
           {items.length > 0 && ` (${items.length})`}
         </span>
-        <span aria-hidden="true">{isOpen ? '▾' : '▸'}</span>
+        <Icon name={isOpen ? 'chevron-down' : 'chevron-right'} size={14} />
       </button>
 
       {isOpen && (
@@ -382,7 +383,7 @@ const ViewModule: React.FC = () => {
     if (history.length === 0) {
       return (
         <div className="empty-state">
-          <div className="empty-icon">📭</div>
+          <div className="empty-icon"><Icon name="inbox" size={40} /></div>
           <div className="empty-title">{getMessage('noHistoryFound')}</div>
           <div className="empty-desc">{getMessage('tryAdjustingSearch')}</div>
         </div>
@@ -528,7 +529,7 @@ const ViewModule: React.FC = () => {
               <ListView items={history} showDateHeaders={false} />
             ) : (
               <div className="empty-state">
-                <div className="empty-icon">📭</div>
+                <div className="empty-icon"><Icon name="inbox" size={40} /></div>
                 <div className="empty-title">{getMessage('noHistoryFound')}</div>
               </div>
             )}
@@ -875,7 +876,7 @@ const HistoryListItem: React.FC<{ item: HistoryItem; showDate?: boolean }> = ({ 
           aria-label={isFav ? getMessage('removeFromFavorites') : getMessage('addToFavorites')}
           title={isFav ? getMessage('removeFromFavorites') : getMessage('addToFavorites')}
         >
-          {isFav ? '★' : '☆'}
+          <Icon name={isFav ? 'star-filled' : 'star'} size={15} />
         </button>
       </div>
     </a>

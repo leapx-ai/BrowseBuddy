@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import '../popup/styles.css';
 import './styleguide.css';
+import { Icon } from '../popup/components/Icon';
 
 const DIRECTIONS = [
   { id: 'density', label: 'A 柔和中性（已采纳，当前令牌）' },
@@ -47,7 +48,9 @@ const ListRow: React.FC<{
     </div>
     <div className="history-meta">
       <span className="history-time">{time}</span>
-      <span className={`fav-btn ${fav ? 'fav-btn-active' : ''}`}>{fav ? '★' : '☆'}</span>
+      <span className={`fav-btn ${fav ? 'fav-btn-active' : ''}`}>
+        <Icon name={fav ? 'star-filled' : 'star'} size={15} />
+      </span>
     </div>
   </div>
 );
@@ -223,21 +226,20 @@ const Gallery: React.FC = () => (
         <div className="disclosure-body">折叠起来的静态说明，展开后才占纵向空间。</div>
       </details>
     </Section>
-    <Section title="空状态：emoji 现状 vs 线性图标提案">
+    <Section title="空状态">
       <div className="empty-state">
-        <div className="empty-icon">📭</div>
+        <div className="empty-icon">
+          <Icon name="inbox" size={40} />
+        </div>
         <div className="empty-title">没有找到记录</div>
         <div className="empty-desc">换个关键词，或清除筛选条件</div>
       </div>
       <div className="empty-state">
-        <div className="empty-icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M3 8h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8Z" />
-            <path d="M3 8l3-4h12l3 4M9 12h6" />
-          </svg>
+        <div className="empty-icon">
+          <Icon name="shield" size={40} />
         </div>
-        <div className="empty-title">没有找到记录</div>
-        <div className="empty-desc">线性图标随 currentColor 变化，两个主题下都不跑色</div>
+        <div className="empty-title">黑名单为空</div>
+        <div className="empty-desc">加入的域名不会出现在任何列表和统计里</div>
       </div>
     </Section>
 

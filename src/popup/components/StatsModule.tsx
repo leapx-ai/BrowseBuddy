@@ -3,6 +3,7 @@ import { getMessage, formatNumber, formatDuration, getCurrentLocale } from '../.
 import { calculateStatistics, fetchAllHistory, exportToCsv, exportToHtml, downloadFile, type Statistics } from '../../utils/history';
 import { filterBlacklistedItems } from '../../utils/blacklist';
 import { getBlacklist, getVisibleDomainDurations } from '../../utils/storage';
+import { Icon } from './Icon';
 import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry } from '../../types';
 import { useSlowLoading } from '../useSlowLoading';
 
@@ -185,7 +186,7 @@ const StatsModule: React.FC = () => {
   if (stats.totalRecords === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">📊</div>
+        <div className="empty-icon"><Icon name="chart" size={40} /></div>
         <div className="empty-title">{getMessage('noDataAvailable')}</div>
         <div className="empty-desc">
           {blacklist.length > 0 ? getMessage('allFilteredByBlacklist') : getMessage('startBrowsing')}

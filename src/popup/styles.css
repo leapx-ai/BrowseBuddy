@@ -731,7 +731,10 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 15px;
+  /* Holds an svg now, not a ★ glyph: flex so the icon centres on the row's
+     baseline box instead of sitting on a text baseline. */
+  display: inline-flex;
+  align-items: center;
   line-height: 1;
   color: var(--text-muted);
   padding: 0;
@@ -945,7 +948,14 @@ body {
 
 .blacklist-pattern {
   font-family: monospace;
-  font-size: 13px;
+  font-size: var(--text-sm);
+  /* The favourites list prefixes the pattern with a star icon, so this cell is a
+     flex line rather than plain text - an inline svg would sit on the text
+     baseline and ride 2px low. */
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .blacklist-type {
@@ -990,15 +1000,19 @@ body {
   color: var(--text-secondary);
 }
 
+/* Holds a 40px line icon instead of a 48px emoji. Stroke icons read heavier at
+   the same size, so the box is smaller and the colour is muted rather than
+   dimmed by opacity - opacity on a stroke thins it unevenly. */
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
 }
 
 .empty-title {
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-2);
   color: var(--text-primary);
 }
 

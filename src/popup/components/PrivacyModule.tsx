@@ -12,6 +12,7 @@ import {
   type BlacklistEntry 
 } from '../../utils/storage';
 import ConfirmDialog from './ConfirmDialog';
+import { Icon } from './Icon';
 import { useSlowLoading } from '../useSlowLoading';
 
 const PrivacyModule: React.FC = () => {
@@ -331,7 +332,7 @@ const PrivacyModule: React.FC = () => {
         
         {blacklist.length === 0 ? (
           <div className="empty-state" style={{ padding: '30px 20px' }}>
-            <div className="empty-icon">🛡️</div>
+            <div className="empty-icon"><Icon name="shield" size={40} /></div>
             <div className="empty-title">{getMessage('noBlacklistEntries')}</div>
             <div className="empty-desc">{getMessage('addDomainsToProtectPrivacy')}</div>
           </div>
@@ -418,7 +419,7 @@ const PrivacyModule: React.FC = () => {
 
         {favorites.length === 0 ? (
           <div className="empty-state" style={{ padding: '20px' }}>
-            <div className="empty-icon">⭐</div>
+            <div className="empty-icon"><Icon name="star" size={40} /></div>
             <div className="empty-title">{getMessage('noFavorites')}</div>
           </div>
         ) : (
@@ -426,7 +427,9 @@ const PrivacyModule: React.FC = () => {
             {favorites.map((domain) => (
               <div key={domain} className="blacklist-item">
                 <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                  <span className="blacklist-pattern" style={{ flex: 1 }}>★ {domain}</span>
+                  <span className="blacklist-pattern" style={{ flex: 1 }}>
+                    <Icon name="star-filled" size={13} /> {domain}
+                  </span>
                 </div>
                 <button
                   className="btn btn-sm btn-danger"
