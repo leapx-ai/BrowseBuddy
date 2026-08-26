@@ -1531,3 +1531,73 @@ body {
   gap: var(--space-2);
 }
 
+/* ---- Privacy page pieces -------------------------------------------------- */
+
+/* A block-level button that is followed by more content. */
+.gap-below-lg {
+  margin-bottom: var(--space-3);
+}
+
+.card.is-spaced {
+  margin-top: var(--space-4);
+}
+
+/* "当前域名: example.com" above the quick-add button. */
+.meta-line {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+/* Explanatory line under a field or inside an alert. */
+.form-note {
+  margin-top: var(--space-1);
+  margin-bottom: 0;
+}
+
+.field-note {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.empty-state.is-roomy {
+  padding: 30px 20px;
+}
+
+.empty-state.is-compact {
+  padding: var(--space-4);
+}
+
+/* Left half of a blacklist/favourite row: takes the slack so the remove button
+   stays pinned right and long patterns truncate instead of pushing it out. */
+.entry-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.is-fill {
+  flex: 1;
+}
+
+/* A disabled rule still shows its pattern, struck through. */
+.is-muted-text {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* Square-ish button whose whole content is a 14px icon. */
+.btn-icon-only {
+  padding: 4px 8px;
+}
+
+.disclosure-body p {
+  margin-bottom: var(--space-2);
+}
+
+.disclosure-body p:last-child {
+  margin-bottom: 0;
+}
+

@@ -204,7 +204,7 @@ const PrivacyModule: React.FC = () => {
       {/* Info Card */}
       <div className="alert alert-info">
         <strong>{getMessage('realtimeProtection')}</strong>
-        <p style={{ marginTop: '4px', marginBottom: 0 }}>
+        <p className="form-note">
           {getMessage('blacklistDescription')}
         </p>
       </div>
@@ -218,7 +218,7 @@ const PrivacyModule: React.FC = () => {
 
       {/* Current Domain Display */}
       {currentTab?.url && (
-        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+        <div className="meta-line">
           {getMessage('currentDomain')}: {extractMainDomain(currentTab.url)}
         </div>
       )}
@@ -226,12 +226,11 @@ const PrivacyModule: React.FC = () => {
       {/* Quick Add Current Page */}
       {currentTab?.url && !currentTab.url.startsWith('chrome://') && !currentTab.url.startsWith('chrome-extension://') && !currentTab.url.startsWith('about:') && !currentTab.url.startsWith('edge://') && (
         <button
-          className={`btn btn-block ${isCurrentPageBlacklisted ? 'btn-secondary' : 'btn-primary'}`}
+          className={`btn btn-block gap-below-lg ${isCurrentPageBlacklisted ? 'btn-secondary' : 'btn-primary'}`}
           onClick={handleAddCurrentPage}
           disabled={isCurrentPageBlacklisted}
-          style={{ marginBottom: '12px' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             {isCurrentPageBlacklisted ? (
               <polyline points="20 6 9 17 4 12" />
             ) : (
@@ -249,11 +248,10 @@ const PrivacyModule: React.FC = () => {
 
       {/* Add Button */}
       <button
-        className="btn btn-secondary btn-block"
+        className="btn btn-secondary btn-block gap-below-lg"
         onClick={() => setShowAddForm(!showAddForm)}
-        style={{ marginBottom: '12px' }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
@@ -273,12 +271,12 @@ const PrivacyModule: React.FC = () => {
               onChange={(e) => setNewBlacklistUrl(e.target.value)}
             />
             {blacklistDomain && (
-              <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <p className="field-note">
                 {getMessage('willAddMainDomain')} <strong>{blacklistDomain}</strong>{getMessage('includesAllSubdomains')}
               </p>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="btn-row">
             <button className="btn btn-secondary" onClick={() => setShowAddForm(false)}>
               {getMessage('cancel')}
             </button>
@@ -331,7 +329,7 @@ const PrivacyModule: React.FC = () => {
         </h3>
         
         {blacklist.length === 0 ? (
-          <div className="empty-state" style={{ padding: '30px 20px' }}>
+          <div className="empty-state is-roomy">
             <div className="empty-icon"><Icon name="shield" size={40} /></div>
             <div className="empty-title">{getMessage('noBlacklistEntries')}</div>
             <div className="empty-desc">{getMessage('addDomainsToProtectPrivacy')}</div>
@@ -340,8 +338,8 @@ const PrivacyModule: React.FC = () => {
           <div>
             {blacklist.map((entry) => (
               <div key={entry.id} className="blacklist-item">
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                  <label className="checkbox-wrapper" style={{ flex: 1 }}>
+                <div className="entry-main">
+                  <label className="checkbox-wrapper is-fill">
                     <input
                       type="checkbox"
                       className="checkbox-input"
@@ -355,19 +353,15 @@ const PrivacyModule: React.FC = () => {
                         </svg>
                       )}
                     </span>
-                    <span className="blacklist-pattern" style={{ 
-                      opacity: entry.enabled ? 1 : 0.5,
-                      textDecoration: entry.enabled ? 'none' : 'line-through'
-                    }}>
+                    <span className={`blacklist-pattern ${entry.enabled ? '' : 'is-muted-text'}`}>
                       {entry.pattern}
                     </span>
                   </label>
                 </div>
                 <button
-                  className="btn btn-sm btn-danger"
+                  className="btn btn-sm btn-danger btn-icon-only"
                   onClick={() => handleRemove(entry.id)}
                   aria-label={getMessage('removeFromBlacklistLabel', entry.pattern)}
-                  style={{ padding: '4px 8px' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -381,7 +375,7 @@ const PrivacyModule: React.FC = () => {
       </div>
 
       {/* Favorites (Protected Domains) */}
-      <div className="card" style={{ marginTop: '16px' }}>
+      <div className="card is-spaced">
         <h3 className="card-title">
           {getMessage('favorites')} ({favorites.length})
         </h3>
@@ -390,11 +384,11 @@ const PrivacyModule: React.FC = () => {
 
         {currentTab?.url && !currentTab.url.startsWith('chrome://') && (
           <button
-            className="btn btn-secondary btn-block"
+            className="btn btn-secondary btn-block gap-below-lg"
             onClick={handleAddCurrentAsFavorite}
-            style={{ marginBottom: '12px' }}
           >
-            ★ {getMessage('addCurrentToFavorites', extractMainDomain(currentTab.url))}
+            <Icon name="star" size={16} />
+            {getMessage('addCurrentToFavorites', extractMainDomain(currentTab.url))}
           </button>
         )}
 
@@ -409,16 +403,16 @@ const PrivacyModule: React.FC = () => {
           />
         </div>
         <button
-          className="btn btn-primary btn-block"
+          className="btn btn-primary btn-block gap-below-lg"
           onClick={handleAddFavorite}
           disabled={!favoriteDomain}
-          style={{ marginBottom: '12px' }}
         >
-          ★ {getMessage('addFavorite')}
+          <Icon name="star" size={16} />
+          {getMessage('addFavorite')}
         </button>
 
         {favorites.length === 0 ? (
-          <div className="empty-state" style={{ padding: '20px' }}>
+          <div className="empty-state is-compact">
             <div className="empty-icon"><Icon name="star" size={40} /></div>
             <div className="empty-title">{getMessage('noFavorites')}</div>
           </div>
@@ -426,16 +420,15 @@ const PrivacyModule: React.FC = () => {
           <div>
             {favorites.map((domain) => (
               <div key={domain} className="blacklist-item">
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                  <span className="blacklist-pattern" style={{ flex: 1 }}>
+                <div className="entry-main">
+                  <span className="blacklist-pattern is-fill">
                     <Icon name="star-filled" size={13} /> {domain}
                   </span>
                 </div>
                 <button
-                  className="btn btn-sm btn-danger"
+                  className="btn btn-sm btn-danger btn-icon-only"
                   onClick={() => handleRemoveFavorite(domain)}
                   aria-label={getMessage('removeFromFavoritesLabel', domain)}
-                  style={{ padding: '4px 8px' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -453,10 +446,10 @@ const PrivacyModule: React.FC = () => {
       <details className="disclosure">
         <summary className="disclosure-summary">{getMessage('usageInstructions')}</summary>
         <div className="disclosure-body">
-          <p style={{ marginBottom: '8px' }}>
+          <p>
             {getMessage('autoExtractDescription')}
           </p>
-          <p style={{ marginBottom: '8px' }}>
+          <p>
             <strong>{getMessage('example')}:</strong> <code>https://www.example.com/page</code> → <code>example.com</code>
           </p>
           <p>
