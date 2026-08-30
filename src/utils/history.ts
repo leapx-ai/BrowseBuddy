@@ -696,7 +696,7 @@ export function exportToHtml(
     .item-count { color: #777; margin-left: auto; }
     .rank { color: #999; width: 20px; }
     .chart { display: flex; align-items: flex-end; height: 100px; gap: 2px; margin: 10px 0; }
-    .hbar { flex: 1; background: #6366f1; border-radius: 2px 2px 0 0; min-height: 2px; }
+    .hbar { flex: 1; background: #6366f1; border-radius: 6px 6px 0 0; min-height: 2px; }
     .hbar-alt { background: #8b5cf6; }
   </style>
 </head>

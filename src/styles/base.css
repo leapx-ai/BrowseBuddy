@@ -61,18 +61,24 @@ body {
   line-height: 1.2;
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease);
+    border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease),
+    transform var(--duration) var(--ease), filter var(--duration-fast) var(--ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
+/* Primary is the one filled action on the screen - solid indigo, not a
+   gradient, so the accent reads as "the button" rather than as decoration.
+   On hover it lifts a pixel and deepens: two cues for the same promise. */
 .btn-primary {
   background: var(--primary-color);
   color: #fff;
@@ -80,21 +86,32 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-/* The 1px border is declared on .btn for every variant, so a secondary button is
-   exactly the same box as a primary one - without that the two sat 2px apart in
-   height wherever they shared a row. It stays transparent here: --bg-tertiary is
-   already a step away from every surface a button lands on, and these buttons sit
-   inside bordered cards and rows, where one more visible edge is a third
-   concentric frame rather than useful separation. */
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary is a recessed surface: tertiary fill on a hairline border, one
+   step up on hover. */
 .btn-secondary {
   background: var(--bg-tertiary);
+  border-color: var(--border-color);
   color: var(--text-primary);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-tertiary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -104,6 +121,13 @@ body {
 
 .btn-danger:hover:not(:disabled) {
   background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-sm {
@@ -136,7 +160,14 @@ body {
   color: var(--text-primary);
   font-family: inherit;
   font-size: var(--text-md);
-  transition: border-color var(--duration-fast) var(--ease);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
+}
+
+.input:hover:not(:focus):not(:disabled),
+.form-input:hover:not(:focus):not(:disabled),
+.form-select:hover:not(:focus) {
+  border-color: var(--text-muted);
 }
 
 .input:focus,
@@ -144,6 +175,7 @@ body {
 .form-select:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--glow-primary);
 }
 
 /* Border colour alone is too subtle to locate focus; restore a real ring. */
@@ -163,6 +195,17 @@ body {
   cursor: pointer;
 }
 
+.input:disabled,
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Text selection follows the accent in both themes. */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+}
+
 /* ---- Segmented control ---------------------------------------------------- */
 
 /*
@@ -176,12 +219,13 @@ body {
   width: 100%;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-1);
   gap: var(--space-1);
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .segmented::-webkit-scrollbar {
@@ -200,17 +244,20 @@ body {
   font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
   white-space: nowrap;
 }
 
 .segmented-item:hover {
   color: var(--text-primary);
+  background: var(--hover-bg);
 }
 
 .segmented-item.active {
   background: var(--primary-color);
   color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---- Alerts --------------------------------------------------------------- */
@@ -218,7 +265,7 @@ body {
 .alert {
   padding: var(--space-3) var(--space-4);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   margin-bottom: var(--space-3);
   font-size: var(--text-sm);
 }

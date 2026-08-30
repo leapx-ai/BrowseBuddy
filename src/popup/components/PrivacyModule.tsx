@@ -14,6 +14,7 @@ import {
 import { isInternalUrl, isUrlBlacklisted } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
 import { Icon } from './Icon';
+import SubTabs from './SubTabs';
 import { useSlowLoading } from '../useSlowLoading';
 
 const PrivacyModule: React.FC = () => {
@@ -37,6 +38,11 @@ const PrivacyModule: React.FC = () => {
   // the dialog stayed live the whole time - a second click started a second
   // blacklist insert and a second deletion sweep over the same domain.
   const [isAdding, setIsAdding] = useState(false);
+  // Blacklist and favourites are two lists of the same kind, now split into
+  // sub-tabs like the other three main tabs. All form state stays at module
+  // level, so switching the sub-tab never loses a half-typed domain or an
+  // open add form.
+  const [activeList, setActiveList] = useState<'blacklist' | 'favorites'>('blacklist');
   const showSlowLoading = useSlowLoading(isLoading);
 
   useEffect(() => {
@@ -207,6 +213,18 @@ const PrivacyModule: React.FC = () => {
 
   return (
     <div>
+      <SubTabs
+        label={getMessage('navPrivacy')}
+        activeId={activeList}
+        onChange={setActiveList}
+        items={[
+          { id: 'blacklist', label: getMessage('blacklist') },
+          { id: 'favorites', label: getMessage('favorites') },
+        ]}
+      />
+
+      {activeList === 'blacklist' && (
+      <>
       {/* Info Card */}
       <div className="alert alert-info">
         <strong>{getMessage('realtimeProtection')}</strong>
@@ -367,6 +385,29 @@ const PrivacyModule: React.FC = () => {
         )}
       </div>
 
+      {/* Pattern Examples - reference material, collapsed so it does not
+          push the actual controls off the first screen. */}
+      <details className="disclosure">
+        <summary className="disclosure-summary">{getMessage('usageInstructions')}</summary>
+        <div className="disclosure-body">
+          <p>
+            {getMessage('autoExtractDescription')}
+          </p>
+          <p>
+            <strong>{getMessage('example')}:</strong> <code>https://www.example.com/page</code> → <code>example.com</code>
+          </p>
+          <p>
+            {/* Comma, not the CJK "、" that used to be hard-coded here - these are
+                latin code samples and the page also renders in English. */}
+            {getMessage('autoMatchDescription')}: <code>example.com</code>, <code>www.example.com</code>, <code>sub.example.com</code>
+          </p>
+        </div>
+      </details>
+      </>
+      )}
+
+      {activeList === 'favorites' && (
+      <>
       {/* Favorites (Protected Domains) */}
       <div className="card">
         <h3 className="card-title">
@@ -430,25 +471,8 @@ const PrivacyModule: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Pattern Examples - reference material, collapsed so it does not
-          push the actual controls off the first screen. */}
-      <details className="disclosure">
-        <summary className="disclosure-summary">{getMessage('usageInstructions')}</summary>
-        <div className="disclosure-body">
-          <p>
-            {getMessage('autoExtractDescription')}
-          </p>
-          <p>
-            <strong>{getMessage('example')}:</strong> <code>https://www.example.com/page</code> → <code>example.com</code>
-          </p>
-          <p>
-            {/* Comma, not the CJK "、" that used to be hard-coded here - these are
-                latin code samples and the page also renders in English. */}
-            {getMessage('autoMatchDescription')}: <code>example.com</code>, <code>www.example.com</code>, <code>sub.example.com</code>
-          </p>
-        </div>
-      </details>
+      </>
+      )}
     </div>
   );
 };

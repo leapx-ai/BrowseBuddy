@@ -6,6 +6,7 @@ import { extractMainDomain } from '../../utils/blacklist';
 import { parseSearchQuery } from '../../utils/search';
 import { useSlowLoading } from '../useSlowLoading';
 import { Icon } from './Icon';
+import SubTabs from './SubTabs';
 
 type ViewMode = 'list' | 'date' | 'domain' | 'calendar';
 
@@ -467,32 +468,17 @@ const ViewModule: React.FC = () => {
       )}
 
       {/* View Mode Tabs */}
-      <div className="segmented">
-        <button
-          className={`segmented-item ${viewMode === 'list' ? 'active' : ''}`}
-          onClick={() => setViewMode('list')}
-        >
-          {getMessage('listView')}
-        </button>
-        <button
-          className={`segmented-item ${viewMode === 'date' ? 'active' : ''}`}
-          onClick={() => setViewMode('date')}
-        >
-          {getMessage('groupByDate')}
-        </button>
-        <button
-          className={`segmented-item ${viewMode === 'domain' ? 'active' : ''}`}
-          onClick={() => setViewMode('domain')}
-        >
-          {getMessage('groupByDomain')}
-        </button>
-        <button
-          className={`segmented-item ${viewMode === 'calendar' ? 'active' : ''}`}
-          onClick={() => setViewMode('calendar')}
-        >
-          {getMessage('calendarView')}
-        </button>
-      </div>
+      <SubTabs
+        label={getMessage('navView')}
+        activeId={viewMode}
+        onChange={setViewMode}
+        items={[
+          { id: 'list', label: getMessage('listView') },
+          { id: 'date', label: getMessage('groupByDate') },
+          { id: 'domain', label: getMessage('groupByDomain') },
+          { id: 'calendar', label: getMessage('calendarView') },
+        ]}
+      />
 
       {/* What is on screen right now, and what produced it */}
       {viewMode !== 'calendar' && hasLoaded && history.length > 0 && (
@@ -604,9 +590,11 @@ const CalendarView: React.FC<{
   // the wrong cell as "today" for any non-UTC timezone.
   const today = toLocalDateKey(Date.now());
 
+  // Brand indigo, the same hue as the rest of the panel - a green heatmap next
+  // to an indigo UI read as a third product's chart.
   const heatColor = (count: number) =>
     count > 0
-      ? `rgba(74, 158, 89, ${0.25 + 0.75 * (count / maxCount)})`
+      ? `rgba(99, 102, 241, ${0.25 + 0.75 * (count / maxCount)})`
       : 'var(--bg-tertiary)';
 
   /*

@@ -15,6 +15,10 @@
     "message": "查看",
     "description": "Navigation - View"
   },
+  "navMain": {
+    "message": "主导航",
+    "description": "Navigation - aria label for the main tab bar"
+  },
   "navStats": {
     "message": "统计",
     "description": "Navigation - Statistics"

@@ -15,6 +15,10 @@
     "message": "View",
     "description": "Navigation - View"
   },
+  "navMain": {
+    "message": "Main navigation",
+    "description": "Navigation - aria label for the main tab bar"
+  },
   "navStats": {
     "message": "Statistics",
     "description": "Navigation - Statistics"

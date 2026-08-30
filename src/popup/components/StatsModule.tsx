@@ -4,6 +4,7 @@ import { computeStatistics, fetchAllHistory, exportToCsv, exportToHtml, download
 import { filterBlacklistedItems } from '../../utils/blacklist';
 import { getBlacklist, getVisibleDomainDurations } from '../../utils/storage';
 import { Icon } from './Icon';
+import SubTabs from './SubTabs';
 import type { DomainStats, TimeDistribution, DailyStats, BlacklistEntry, HistoryItem } from '../../types';
 import { useSlowLoading } from '../useSlowLoading';
 
@@ -74,7 +75,12 @@ const RankedDomains: React.FC<{
         <div key={row.domain} className="rank-row">
           <span
             className="rank-index"
-            style={{ background: index < 3 ? accent : 'var(--bg-tertiary)' }}
+            style={{
+              background: index < 3 ? accent : 'var(--bg-tertiary)',
+              // White number on the filled badge in both themes - the inherited
+              // text colour would turn dark on it in light mode.
+              color: index < 3 ? '#fff' : undefined,
+            }}
           >
             {index + 1}
           </span>
@@ -221,17 +227,12 @@ const StatsModule: React.FC = () => {
   return (
     <div>
       {/* Time range switcher */}
-      <div className="segmented">
-        {RANGE_OPTIONS.map(opt => (
-          <button
-            key={opt.key}
-            className={`segmented-item ${range === opt.key ? 'active' : ''}`}
-            onClick={() => setRange(opt.key)}
-          >
-            {getMessage(`range_${opt.key}`)}
-          </button>
-        ))}
-      </div>
+      <SubTabs
+        label={getMessage('navStats')}
+        activeId={range}
+        onChange={setRange}
+        items={RANGE_OPTIONS.map(opt => ({ id: opt.key, label: getMessage(`range_${opt.key}`) }))}
+      />
 
       {/*
         Numbers stay on screen while a new range loads, so stale data is

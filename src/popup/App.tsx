@@ -100,11 +100,16 @@ const App: React.FC = () => {
 
   return (
     <div className="popup-container" key={refreshKey}>
-      <header className="header">
-        <div className="header-title">
-          <img 
-            className="header-icon" 
-            src={chrome.runtime.getURL('icons/icon64.png')} 
+      {/*
+        Brand bar at the top, blended into the page: no frame around it, just
+        the mark and the name. The settings control stays a quiet secondary
+        button. The privacy promise below is the real footer.
+      */}
+      <header className="brand-bar">
+        <div className="brand-bar-title">
+          <img
+            className="brand-bar-icon"
+            src={chrome.runtime.getURL('icons/icon64.png')}
             alt="BrowseBuddy"
           />
           BrowseBuddy
@@ -122,9 +127,12 @@ const App: React.FC = () => {
         </button>
       </header>
 
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-
-      <main className="main-content">
+      <main
+        className="main-content"
+        role="tabpanel"
+        id={`panel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+      >
         {renderContent()}
       </main>
 
@@ -138,6 +146,12 @@ const App: React.FC = () => {
           {getMessage('privacyPromise')}
         </footer>
       )}
+
+      {/*
+        The four tabs sit at the bottom, thumb-reach for the mouse and the
+        common pattern for a tool whose content is the top of the stack.
+      */}
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };

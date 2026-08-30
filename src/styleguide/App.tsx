@@ -15,7 +15,7 @@ import './styleguide.css';
 import { Icon } from '../popup/components/Icon';
 
 const DIRECTIONS = [
-  { id: 'contrast', label: 'C 高对比（已采纳，当前令牌）' },
+  { id: 'contrast', label: 'B 安静工具（已采纳，当前令牌）' },
   { id: 'soft', label: 'A 柔和中性（前一版，备选参照）' },
 ];
 
@@ -113,17 +113,22 @@ const Gallery: React.FC = () => (
         <span className="checkbox-label">同时删除已存在的记录</span>
       </label>
     </Section>
-    <Section title="导航与分段控件">
-      <div className="nav">
+    <Section title="导航与子标签">
+      <div className="nav" style={{ '--active-index': 0 } as React.CSSProperties}>
+        <span className="nav-indicator" aria-hidden="true" />
         <button className="nav-item active">浏览</button>
         <button className="nav-item">统计</button>
         <button className="nav-item sg-hover">隐私（hover）</button>
         <button className="nav-item">删除</button>
       </div>
-      <div className="segmented" style={{ marginTop: 8 }}>
-        <button className="segmented-item active">列表</button>
-        <button className="segmented-item">按域名</button>
-        <button className="segmented-item">日历</button>
+      <div
+        className="subtabs"
+        style={{ marginTop: 8, '--tab-count': 3, '--active-index': 0 } as React.CSSProperties}
+      >
+        <button className="subtabs-item active">列表</button>
+        <button className="subtabs-item">按域名</button>
+        <button className="subtabs-item">日历</button>
+        <span className="subtabs-indicator" aria-hidden="true" />
       </div>
     </Section>
 
@@ -179,7 +184,7 @@ const Gallery: React.FC = () => (
           {[8, 22, 14, 33, 27, 40, 18].map((h, i) => (
             <div
               key={i}
-              style={{ flex: 1, height: `${h}px`, background: 'var(--primary-color)', borderRadius: '2px 2px 0 0' }}
+              style={{ flex: 1, height: `${h}px`, background: 'var(--primary-color)', borderRadius: '6px 6px 0 0' }}
             />
           ))}
         </div>
@@ -294,8 +299,22 @@ const Gallery: React.FC = () => (
       </div>
     </Section>
 
-    <Section title="页脚">
+    <Section title="页脚与品牌栏">
       <footer className="footer">数据仅保存在本地，不会上传</footer>
+      <footer className="brand-bar">
+        <div className="brand-bar-title">
+          <span
+            className="brand-bar-icon"
+            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'inline-block', color: '#fff', fontSize: 11, lineHeight: '20px', textAlign: 'center' }}
+          >
+            B
+          </span>
+          BrowseBuddy
+        </div>
+        <button className="btn btn-sm btn-secondary">
+          <Icon name="eye" size={14} />
+        </button>
+      </footer>
     </Section>
   </>
 );

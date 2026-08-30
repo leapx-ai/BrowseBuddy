@@ -23,22 +23,22 @@
  * from the shared tokens; this file must never redeclare those again.
  */
 :root:not([data-theme="light"]) {
-  --bg-primary: #101020;
-  --bg-secondary: #1d1d33;
-  --bg-card: #1d1d33;
-  --bg-tertiary: #17172a;
-  --bg-tertiary-hover: #22223c;
+  --bg-primary: #0c0d1a;
+  --bg-secondary: #141527;
+  --bg-card: #1a1c31;
+  --bg-tertiary: #15162a;
+  --bg-tertiary-hover: #20223b;
 }
 
 /* Same three steps in the same order as the dark set - page darkest, panel
    lightest, inset controls between - which is what keeps the two themes reading
    as one page rather than two. */
 :root[data-theme="light"] {
-  --bg-primary: #eaecf4;
-  --bg-secondary: #fbfbfe;
-  --bg-card: #fbfbfe;
-  --bg-tertiary: #eef0f7;
-  --bg-tertiary-hover: #e4e7f1;
+  --bg-primary: #e8eaf4;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-tertiary: #eef0f8;
+  --bg-tertiary-hover: #e2e5f1;
 }
 
 /* The roomy surface: the shared controls are scaled up here by raising the two
@@ -104,7 +104,7 @@ body {
 /* Section */
 .section {
   background: var(--bg-card);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-6) var(--space-6);
   margin-bottom: var(--space-6);
   border: 1px solid var(--border-color);
@@ -377,7 +377,7 @@ body {
 .welcome-feature {
   background: var(--bg-card);
   padding: 20px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-card);
 }
@@ -386,9 +386,9 @@ body {
   width: 56px;
   height: 56px;
   margin: 0 auto 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  background: var(--glow-primary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -413,15 +413,15 @@ body {
   /* Tertiary, not secondary - the unfilled track has to stay visible against
      a white card in light mode. */
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   margin-top: 12px;
 }
 
 .storage-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  border-radius: 6px;
+  background: var(--primary-color);
+  border-radius: var(--radius-sm);
   transition: width var(--duration) var(--ease);
 }
 

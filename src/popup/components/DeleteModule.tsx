@@ -4,6 +4,7 @@ import { deleteHistory, previewDelete, toLocalDateKey, type DeleteOptions, type 
 import { extractMainDomain } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
 import { Icon } from './Icon';
+import SubTabs from './SubTabs';
 
 type DeleteType = 'date' | 'domain' | 'keyword';
 
@@ -139,26 +140,16 @@ const DeleteModule: React.FC = () => {
   return (
     <div>
       {/* Delete Type Tabs */}
-      <div className="segmented">
-        <button
-          className={`segmented-item ${deleteType === 'date' ? 'active' : ''}`}
-          onClick={() => { setDeleteType('date'); clearResult(); }}
-        >
-          {getMessage('deleteByDate')}
-        </button>
-        <button
-          className={`segmented-item ${deleteType === 'domain' ? 'active' : ''}`}
-          onClick={() => { setDeleteType('domain'); clearResult(); }}
-        >
-          {getMessage('deleteByDomain')}
-        </button>
-        <button
-          className={`segmented-item ${deleteType === 'keyword' ? 'active' : ''}`}
-          onClick={() => { setDeleteType('keyword'); clearResult(); }}
-        >
-          {getMessage('deleteByKeyword')}
-        </button>
-      </div>
+      <SubTabs
+        label={getMessage('navDelete')}
+        activeId={deleteType}
+        onChange={(type) => { setDeleteType(type); clearResult(); }}
+        items={[
+          { id: 'date', label: getMessage('deleteByDate') },
+          { id: 'domain', label: getMessage('deleteByDomain') },
+          { id: 'keyword', label: getMessage('deleteByKeyword') },
+        ]}
+      />
 
       {/* Result Alert */}
       {result && (

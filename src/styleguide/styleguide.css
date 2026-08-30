@@ -13,7 +13,7 @@
 
 .sg-root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #16161f;
+  background: #0c0d1a;
   color: #e8e8ee;
   min-height: 100vh;
   padding: 16px 20px 64px;
@@ -29,8 +29,8 @@
   flex-wrap: wrap;
   padding: 12px 0;
   margin-bottom: 16px;
-  background: #16161f;
-  border-bottom: 1px solid #33334a;
+  background: #0c0d1a;
+  border-bottom: 1px solid #2c2e4a;
 }
 
 .sg-bar h1 {
@@ -51,9 +51,9 @@
   font: inherit;
   font-size: 12px;
   padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #44445e;
-  background: #22222f;
+  border-radius: 6px;
+  border: 1px solid #2c2e4a;
+  background: #1a1c31;
   color: #e8e8ee;
 }
 
@@ -78,8 +78,8 @@
   flex: 0 0 auto;
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 1px solid #33334a;
-  border-radius: 6px;
+  border: 1px solid #2c2e4a;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -88,9 +88,9 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: #22222f;
+  background: #1a1c31;
   color: #9a9ab0;
-  border-bottom: 1px solid #33334a;
+  border-bottom: 1px solid #2c2e4a;
 }
 
 .sg-panel-body {
@@ -165,41 +165,45 @@
 }
 
 /*
- * Direction C "高对比" is the shipping token set - it was chosen and folded into
+ * Direction "液态玻璃" is the shipping token set - it was chosen and folded into
  * styles/tokens.css, so it needs no overrides here and serves as the baseline.
  */
 
-/* Direction A "柔和中性": the previous shipping set, kept as the standing
-   alternative to compare against when an edge looks too hard or a screen too
-   tight. Softer edges need a longer surface ladder to keep panels legible without
-   the border, which is why this one restores the fourth surface. */
+/* Direction "soft" (legacy "柔和中性"): the previous shipping set, kept as the
+   standing alternative to compare against when an edge looks too hard or a
+   screen too tight. It is the solid-elevated set that the glass direction
+   replaced - no translucent fills, a longer radius ladder, softer text. */
 [data-direction="soft"] {
-  --radius: 8px;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 22px;
   --space-2: 10px;
   --space-3: 14px;
   --space-4: 18px;
-  --space-6: 24px;
-  --border-color: #34344f;
-  --text-secondary: #a0a0b0;
-  --text-muted: #a3a3b5;
-  --bg-secondary: #23233c;
-  --bg-card: #28284c;
-  --bg-tertiary: #313154;
-  --hover-bg: #2a2a45;
-  --bg-tertiary-hover: #3a3a60;
+  --space-6: 26px;
+  --border-color: #31334f;
+  --text-secondary: #a8a9bc;
+  --text-muted: #8d8fa5;
+  --bg-primary: #0a0b16;
+  --bg-secondary: #121322;
+  --bg-card: #17182b;
+  --bg-tertiary: #20223a;
+  --hover-bg: #1b1c31;
+  --bg-tertiary-hover: #2a2c49;
+  --shadow-card: 0 1px 2px rgba(5, 5, 12, 0.2), 0 10px 32px rgba(5, 5, 12, 0.34);
 }
 
 [data-direction="soft"][data-theme="light"],
 [data-direction="soft"] [data-theme="light"] {
-  --border-color: #e0e3ef;
+  --border-color: #dfe1ef;
   --text-secondary: #4b4d63;
   --text-muted: #5c5e75;
-  --bg-primary: #f5f6fb;
+  --bg-primary: #f2f3fa;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --bg-tertiary: #edeef8;
-  --bg-tertiary-hover: #dbdeee;
+  --bg-tertiary: #ebedf7;
+  --bg-tertiary-hover: #dcdfee;
   /* The soft direction's border cannot lift a white card off a near-white page,
      so in that direction this theme pays for a shadow. */
-  --shadow-card: var(--shadow-sm);
+  --shadow-card: 0 1px 2px rgba(28, 30, 51, 0.06), 0 10px 28px rgba(28, 30, 51, 0.1);
 }

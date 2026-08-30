@@ -50,12 +50,43 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
     },
   ];
 
+  const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === activeTab));
+
+  /*
+   * Arrow keys move between tabs (and activate them, matching what a click
+   * does). Roving tabindex keeps one tab stop for the whole bar: Tab lands on
+   * the active tab, the arrows do the rest.
+   */
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (activeIndex + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') next = (activeIndex - 1 + tabs.length) % tabs.length;
+    else return;
+    e.preventDefault();
+    onTabChange(tabs[next].id);
+    const items = e.currentTarget.querySelectorAll<HTMLButtonElement>('.nav-item');
+    items[next]?.focus();
+  };
+
   return (
-    <nav className="nav">
+    <nav
+      className="nav"
+      role="tablist"
+      aria-label={getMessage('navMain')}
+      onKeyDown={handleKeyDown}
+      // --active-index positions the sliding capsule (see .nav-indicator).
+      style={{ '--active-index': activeIndex } as React.CSSProperties}
+    >
+      <span className="nav-indicator" aria-hidden="true" />
       {tabs.map((tab) => (
         <button
           key={tab.id}
+          id={`tab-${tab.id}`}
+          role="tab"
           className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+          aria-selected={activeTab === tab.id}
+          aria-controls={`panel-${tab.id}`}
+          tabIndex={activeTab === tab.id ? 0 : -1}
           onClick={() => onTabChange(tab.id)}
         >
           {tab.icon}
