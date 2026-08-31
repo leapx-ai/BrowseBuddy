@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getMessage, initI18n, applyTheme, setUserLanguage } from '../utils/i18n';
+import { getMessage, initI18n, setUserLanguage } from '../utils/i18n';
+import { applyTheme } from '../utils/theme';
 import { getSettings } from '../utils/storage';
 import Navigation from './components/Navigation';
 import DeleteModule from './components/DeleteModule';

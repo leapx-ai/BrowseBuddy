@@ -212,11 +212,11 @@ export async function fetchAllHistory(
 }
 
 // Remove items whose main domain is favorited (protected from deletion).
-async function filterFavoritedItems(items: HistoryItem[]): Promise<HistoryItem[]> {
-  if (items.length === 0) return items;
-  const { getFavorites } = await import('./storage');
-  const favorites = await getFavorites();
-  if (favorites.length === 0) return items;
+// The list arrives as a parameter like the blacklist everywhere else: this
+// module is the browser-API layer and must not reach back into storage (the
+// dynamic import() that used to live here made the two modules a cycle).
+function filterFavoritedItems(items: HistoryItem[], favorites: string[]): HistoryItem[] {
+  if (items.length === 0 || favorites.length === 0) return items;
   return items.filter(item => {
     const mainDomain = extractMainDomain(item.url);
     return !favorites.includes(mainDomain);
@@ -225,13 +225,14 @@ async function filterFavoritedItems(items: HistoryItem[]): Promise<HistoryItem[]
 
 // Remove items whose domain is blacklisted or favorited.
 // Both protections use the same main-domain semantics as the blacklist.
-async function filterDeleteItems(
+function filterDeleteItems(
   items: HistoryItem[],
-  blacklist: BlacklistEntry[]
-): Promise<HistoryItem[]> {
+  blacklist: BlacklistEntry[],
+  favorites: string[]
+): HistoryItem[] {
   if (items.length === 0) return items;
   const visible = filterBlacklistedItems(items, blacklist);
-  return filterFavoritedItems(visible);
+  return filterFavoritedItems(visible, favorites);
 }
 
 // Delete the exact items that were previewed.
@@ -310,12 +311,14 @@ async function deleteVisitsInRange(
   }
 }
 
-// Preview items to be deleted (blacklisted & favorited domains are protected)
-export async function previewDelete(options: DeleteOptions): Promise<HistoryItem[]> {
-  return fetchHistoryForDelete(options);
-}
-
-async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryItem[]> {
+// Preview items to be deleted (blacklisted & favorited domains are protected).
+// The caller supplies both protection lists; this module is the browser-API
+// layer and does not read storage itself.
+export async function previewDelete(
+  options: DeleteOptions,
+  blacklist: BlacklistEntry[],
+  favorites: string[]
+): Promise<HistoryItem[]> {
   // Defence in depth: an options object with no criteria means "everything".
   // The UI guards against producing one, but this path deletes history, so it
   // refuses rather than trusting the caller.
@@ -351,9 +354,7 @@ async function fetchHistoryForDelete(options: DeleteOptions): Promise<HistoryIte
 
   // Apply protections (blacklist + favorites) so preview and actual
   // deletion always use the exact same item set.
-  const { getBlacklist } = await import('./storage');
-  const blacklist = await getBlacklist();
-  return filterDeleteItems(items, blacklist);
+  return filterDeleteItems(items, blacklist, favorites);
 }
 
 // Delete single URL
@@ -562,11 +563,14 @@ export function computeStatistics(items: HistoryItem[]): Statistics {
   };
 }
 
-// Get calendar data.
-// Reads the blacklist itself rather than taking it as a parameter - this was the
-// one read path that had no blacklist argument at all, so blacklisted domains
-// were still shaded into the heat map and still skewed its normalization.
-export async function getCalendarData(year: number, month: number): Promise<CalendarData[]> {
+// Get calendar data. The blacklist arrives as a parameter like every other
+// read path in this module (fetchVisibleHistory set the pattern) - anything
+// user-facing must be filtered, and this module does not read storage itself.
+export async function getCalendarData(
+  year: number,
+  month: number,
+  blacklist: BlacklistEntry[]
+): Promise<CalendarData[]> {
   const startDate = new Date(year, month, 1);
   // Last day of the month at 23:59:59.999 local. `new Date(year, month + 1, 0)`
   // alone is that day at 00:00, which excluded the whole final day of the month.
@@ -580,8 +584,7 @@ export async function getCalendarData(year: number, month: number): Promise<Cale
     maxResults: 20000,
   });
 
-  const { getBlacklist } = await import('./storage');
-  const visible = filterBlacklistedItems(items, await getBlacklist());
+  const visible = filterBlacklistedItems(items, blacklist);
 
   // Count by date. The keys must be *local* calendar dates because that is what
   // the calendar grid is built from; toISOString() resolves to the UTC day and

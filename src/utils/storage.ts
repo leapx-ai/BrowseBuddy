@@ -668,11 +668,12 @@ export async function cleanupOldHistory(retentionDays: number): Promise<number> 
 // Get storage usage
 export async function getStorageUsage(): Promise<{ used: number; total: number }> {
   const bytes = await chrome.storage.local.getBytesInUse();
-  // Chrome storage limit is typically 5MB (5,242,880 bytes) for local storage
-  return { used: bytes, total: 5242880 };
+  // Ask the browser for the real quota; the 5MB literal is only a fallback for
+  // mocks and old Firefox.
+  return { used: bytes, total: chrome.storage.local.QUOTA_BYTES ?? 5242880 };
 }
 
 // Helper function
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }

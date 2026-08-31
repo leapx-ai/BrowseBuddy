@@ -1,5 +1,23 @@
 import type { BlacklistEntry } from '../types';
 
+// Country second-level public suffixes and hosting platforms where each
+// subdomain is an independent site. Membership is checked on the last two
+// labels of the host. Curated, not exhaustive - see extractMainDomain.
+const KNOWN_PUBLIC_SUFFIXES = new Set([
+  // Country second levels
+  'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk',
+  'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'ac.cn',
+  'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au',
+  'co.jp', 'ne.jp', 'or.jp', 'ac.jp', 'go.jp',
+  'co.kr', 'com.br', 'com.tw', 'com.hk', 'com.sg', 'co.in', 'co.nz',
+  'com.mx', 'com.my', 'com.tr',
+  // Hosting platforms (user subdomains are separate sites)
+  'github.io', 'gitlab.io', 'blogspot.com', 'wordpress.com', 'tumblr.com',
+  'appspot.com', 'web.app', 'firebaseapp.com', 'vercel.app', 'netlify.app',
+  'herokuapp.com', 'azurewebsites.net', 'cloudfront.net', 'myshopify.com',
+  'weebly.com', 'wixsite.com', 'livejournal.com',
+]);
+
 // Extract main domain from URL or hostname
 // e.g., "www.xchina.co" -> "xchina.co", "sub.www.example.com.cn" -> "example.com.cn"
 export function extractMainDomain(url: string): string {
@@ -25,16 +43,18 @@ export function extractMainDomain(url: string): string {
       return hostname;
     }
 
-    // Handle special cases like .co.uk, .com.cn, .org.cn, .net.cn, .gov.cn, .ac.uk, etc.
-    const specialTlds = ['co', 'com', 'org', 'net', 'gov', 'ac', 'edu', 'mil'];
-
-    if (parts.length >= 3) {
-      // Check if it's a special TLD pattern (e.g., example.co.uk)
-      if (specialTlds.includes(lastTwo[0]) && lastTwo[1].length <= 3) {
-        return parts.slice(-3).join('.');
-      }
+    // Well-known public suffixes: under these, each subdomain is an
+    // independent site (user.github.io, shop.blogspot.com), and country
+    // second levels make the registrable name three labels deep
+    // (example.co.uk). This is a curated list of what actually shows up in
+    // browsing history, not the full Public Suffix List - the heuristic it
+    // replaces (a generic "co/com/org + short TLD" test) both under-split
+    // platform domains and over-split ordinary ones like co.io.
+    const lastTwoJoined = lastTwo.join('.');
+    if (parts.length >= 3 && KNOWN_PUBLIC_SUFFIXES.has(lastTwoJoined)) {
+      return parts.slice(-3).join('.');
     }
-    
+
     // Standard case: last two parts are the main domain
     return parts.slice(-2).join('.');
   } catch {

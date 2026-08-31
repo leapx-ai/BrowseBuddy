@@ -19,6 +19,12 @@ describe('parseSearchQuery', () => {
     expect(r.domains).toEqual(['github.com']);
   });
 
+  it('accumulates multiple site: filters instead of keeping only the last', () => {
+    const r = parseSearchQuery('site:github.com site:stackoverflow.com react');
+    expect(r.domains).toEqual(['github.com', 'stackoverflow.com']);
+    expect(r.keyword).toBe('react');
+  });
+
   it('drops an empty site: operator instead of matching everything', () => {
     const r = parseSearchQuery('site:');
     expect(r.domains).toBeUndefined();

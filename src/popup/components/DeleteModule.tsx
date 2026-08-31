@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getMessage, formatDateTime } from '../../utils/i18n';
 import { deleteHistory, previewDelete, toLocalDateKey, type DeleteOptions, type HistoryItem } from '../../utils/history';
+import { getBlacklist, getFavorites } from '../../utils/storage';
 import { extractMainDomain } from '../../utils/blacklist';
 import ConfirmDialog from './ConfirmDialog';
 import { Icon } from './Icon';
@@ -45,7 +46,10 @@ const DeleteModule: React.FC = () => {
     setIsLoading(true);
     try {
       const options = buildDeleteOptions();
-      const items = await previewDelete(options);
+      // The protection lists come from here, not from inside history.ts: the
+      // history module is the browser-API layer and does not read storage.
+      const [blacklist, favorites] = await Promise.all([getBlacklist(), getFavorites()]);
+      const items = await previewDelete(options, blacklist, favorites);
       setPreviewItems(items);
       setShowConfirm(true);
     } catch (error) {

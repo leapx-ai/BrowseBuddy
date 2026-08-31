@@ -14,7 +14,10 @@ export function parseSearchQuery(query: string): SearchOptions {
     if (lower.startsWith('site:')) {
       const domain = extractMainDomain(token.slice(5));
       if (domain) {
-        options.domains = [domain];
+        // Accumulate, not overwrite: `site:a.com site:b.com` used to keep only
+        // b.com. The downstream filter (applySearchFilters) already matches any
+        // of the listed domains.
+        options.domains = [...(options.domains ?? []), domain];
       }
     } else if (lower.startsWith('before:')) {
       const date = token.slice(7);

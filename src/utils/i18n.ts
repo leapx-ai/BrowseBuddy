@@ -175,33 +175,3 @@ export function formatDuration(seconds: number): string {
   }
   return isZh ? `${hours}小时${mins}分` : `${hours}h ${mins}m`;
 }
-
-// Theme management
-let mediaListener: (() => void) | null = null;
-
-export function applyTheme(theme: 'dark' | 'light' | 'system'): void {
-  let effectiveTheme = theme;
-  if (theme === 'system') {
-    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  document.documentElement.setAttribute('data-theme', effectiveTheme);
-
-  // When in "system" mode, follow OS theme changes live.
-  if (theme === 'system') {
-    if (!mediaListener) {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = () => applyTheme('system');
-      mq.addEventListener?.('change', handler);
-      mediaListener = handler;
-    }
-  } else if (mediaListener) {
-    window.matchMedia('(prefers-color-scheme: dark)').removeEventListener?.('change', mediaListener);
-    mediaListener = null;
-  }
-}
-
-// Initialize theme on page load
-export async function initTheme(): Promise<void> {
-  const settings = await getSettings();
-  applyTheme(settings.theme);
-}

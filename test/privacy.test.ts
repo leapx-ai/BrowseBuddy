@@ -68,7 +68,6 @@ describe('getCalendarData', () => {
   });
 
   it('excludes blacklisted domains from the heat map', async () => {
-    await saveBlacklist([entry('secret.tld')]);
     const day = new Date(2026, 7, 12, 10, 0).getTime();
     mockSearch([
       visit('https://secret.tld/a', day),
@@ -76,7 +75,9 @@ describe('getCalendarData', () => {
       visit('https://public.tld/c', day + 2000),
     ]);
 
-    const data = await getCalendarData(2026, 7);
+    // The blacklist arrives as a parameter - history.ts no longer reads
+    // storage itself, so the test hands the list over directly.
+    const data = await getCalendarData(2026, 7, [entry('secret.tld')]);
 
     expect(data).toEqual([{ date: '2026-08-12', count: 1, intensity: 1 }]);
   });
@@ -89,7 +90,7 @@ describe('getCalendarData', () => {
     const late = new Date(2026, 7, 12, 23, 30).getTime();
     mockSearch([visit('https://a.tld/1', early), visit('https://a.tld/2', late)]);
 
-    const data = await getCalendarData(2026, 7);
+    const data = await getCalendarData(2026, 7, []);
 
     expect(data).toEqual([{ date: '2026-08-12', count: 2, intensity: 1 }]);
   });
@@ -99,7 +100,7 @@ describe('getCalendarData', () => {
     const lastDay = new Date(2026, 7, 31, 18, 0).getTime();
     mockSearch([visit('https://a.tld/1', lastDay)]);
 
-    const data = await getCalendarData(2026, 7);
+    const data = await getCalendarData(2026, 7, []);
 
     expect(data).toEqual([{ date: '2026-08-31', count: 1, intensity: 1 }]);
   });

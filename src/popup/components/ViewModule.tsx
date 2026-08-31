@@ -549,7 +549,12 @@ const CalendarView: React.FC<{
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    getCalendarData(year, month).then(entries => {
+    // The blacklist is supplied here rather than read inside history.ts - the
+    // history module is the browser-API layer and does not read storage.
+    // getBlacklist is cached, so a month flip costs one lookup, not one read.
+    getBlacklist()
+      .then(blacklist => getCalendarData(year, month, blacklist))
+      .then(entries => {
       if (cancelled) return;
       const map: Record<string, number> = {};
       let max = 1;

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fetchAllHistory, previewDelete, deleteHistory } from '../src/utils/history';
 import { hostMatchesDomain } from '../src/utils/blacklist';
-import type { HistoryItem } from '../src/types';
+import type { HistoryItem, BlacklistEntry } from '../src/types';
 
 const BASE_TS = new Date('2026-01-10T00:00:00Z').getTime();
 
@@ -97,7 +97,7 @@ describe('previewDelete scoping', () => {
       item('https://notexample.com/d', BASE_TS - 3000),
     ]);
 
-    const preview = await previewDelete({ domain: 'example.com' });
+    const preview = await previewDelete({ domain: 'example.com' }, [], []);
 
     expect(preview.map(i => i.url).sort()).toEqual([
       'https://example.com/a',
@@ -112,7 +112,7 @@ describe('previewDelete scoping', () => {
       item('https://contest.com/c', BASE_TS - 2000),
     ]);
 
-    const preview = await previewDelete({ domain: 'test.com' });
+    const preview = await previewDelete({ domain: 'test.com' }, [], []);
 
     expect(preview.map(i => i.url)).toEqual(['https://test.com/a']);
   });
@@ -120,7 +120,7 @@ describe('previewDelete scoping', () => {
   it('refuses an options object with no criteria', async () => {
     mockSearch([item('https://example.com/a', BASE_TS)]);
 
-    await expect(previewDelete({})).rejects.toThrow(/no delete criteria/i);
+    await expect(previewDelete({}, [], [])).rejects.toThrow(/no delete criteria/i);
   });
 
   it('treats an unparseable domain as no criteria rather than everything', async () => {
@@ -129,7 +129,28 @@ describe('previewDelete scoping', () => {
       item('https://unrelated.com/b', BASE_TS - 1000),
     ]);
 
-    await expect(previewDelete({ domain: '' })).rejects.toThrow(/no delete criteria/i);
+    await expect(previewDelete({ domain: '' }, [], [])).rejects.toThrow(/no delete criteria/i);
+  });
+
+  it('protects blacklisted and favorited domains from the preview', async () => {
+    mockSearch([
+      item('https://example.com/a', BASE_TS),
+      item('https://blocked.com/b', BASE_TS - 1000),
+      item('https://fav.com/c', BASE_TS - 2000),
+    ]);
+    const blacklist: BlacklistEntry[] = [
+      { id: 'b1', pattern: 'blocked.com', type: 'exact', enabled: true, createdAt: 0 },
+    ];
+
+    // The caller supplies the protection lists; with an enabled blacklist
+    // entry and a favorite, only the unprotected record may be previewed.
+    const preview = await previewDelete(
+      { dateRange: { start: 0, end: BASE_TS + 1000 } },
+      blacklist,
+      ['fav.com']
+    );
+
+    expect(preview.map(i => i.url)).toEqual(['https://example.com/a']);
   });
 });
 

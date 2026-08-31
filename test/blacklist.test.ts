@@ -42,6 +42,21 @@ describe('extractMainDomain', () => {
     expect(extractMainDomain('example.com')).toBe('example.com');
     expect(extractMainDomain('sub.example.org.cn')).toBe('example.org.cn');
   });
+
+  it('treats hosting-platform subdomains as independent sites', () => {
+    // Under a public suffix like github.io, each user subdomain is its own
+    // registrable site - blacklisting one must not sweep up the platform.
+    expect(extractMainDomain('user.github.io')).toBe('user.github.io');
+    expect(extractMainDomain('shop.blogspot.com')).toBe('shop.blogspot.com');
+    expect(extractMainDomain('app.vercel.app')).toBe('app.vercel.app');
+  });
+
+  it('does not over-split ordinary two-syllable TLDs', () => {
+    // The old heuristic ("co/com/org" + a short final label) read co.io as a
+    // public suffix; .io registrations are direct, so co.io is the domain.
+    expect(extractMainDomain('sub.co.io')).toBe('co.io');
+    expect(extractMainDomain('github.io')).toBe('github.io');
+  });
 });
 
 describe('isUrlBlacklisted', () => {

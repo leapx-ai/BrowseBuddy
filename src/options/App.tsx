@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getMessage, setUserLanguage, applyTheme, initI18n } from '../utils/i18n';
+import { getMessage, setUserLanguage, initI18n } from '../utils/i18n';
+import { applyTheme } from '../utils/theme';
 import { getSettings, saveSettings, getStorageUsage, createBackup, restoreBackup, type Settings } from '../utils/storage';
 
 type ToastType = 'success' | 'error';
